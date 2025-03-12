@@ -93,6 +93,17 @@ private:
     // Vaccin Pages
     QWidget *vaccinsTablePage;
     QWidget *addVaccinFormPage;
+    QWidget *editVaccinFormPage;
+
+    QLineEdit *m_idInput = nullptr;
+    QLineEdit *m_nomVaccinInput = nullptr;
+    QLineEdit *m_referenceInput = nullptr;
+    QLineEdit *m_typeInput = nullptr;
+    QLineEdit *m_maladieChronicInput = nullptr;
+    QSpinBox *m_nbDoseInput = nullptr;
+    QSpinBox *m_quantiteInput = nullptr;
+    QDateEdit *m_dateExpInput = nullptr;
+
 
     // Vaccin Summary Components
     QTableWidget *vaccinSummaryTable;
@@ -120,6 +131,8 @@ private:
     void setupVaccinsPage();
     void setupVaccinsTablePage();
     void setupAddVaccinFormPage();
+    void setupEditVaccinFormPage();
+
 
     // Vaccin page helper methods
     void addPageTitle(QVBoxLayout *vaccinsLayout);
@@ -128,7 +141,7 @@ private:
     void addStatisticsSection(QVBoxLayout *vaccinsLayout);
     QWidget* createAgeGroupVaccinationWidget();
     QHBoxLayout* createVaccinationRateRow(const QString &ageGroup, double rate);
-    QProgressBar* createVaccinationRateBar(double rate);
+    QProgressBar* createVaccinationRateBar(double percentage);
     QWidget* createNotificationsWidget();
     void addMoreButton(QVBoxLayout *vaccinsLayout);
 

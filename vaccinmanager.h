@@ -22,6 +22,13 @@ public:
     void setNbDose(int doses) { nbDose = doses; }
     void setQuantite(int qty) { quantite = qty; }
     void setDateExp(const QDate &date) { dateExp = date; }
+    QMap<QString, QVariant> getVaccinById(int id);
+    QMap<QString, int> getVaccinTypeStats();
+    QStringList getSoonToExpireVaccins(int daysThreshold = 7);
+
+
+
+
 
 
     // Database operations
@@ -31,6 +38,11 @@ public:
     bool editVaccin();
     bool deleteVaccin();
     bool loadVaccinSummary(QTableWidget *summaryTable);
+signals:
+    void editVaccinRequested(int id);
+    void deleteVaccinRequested(int id);
+    void showVaccinTypeStats();
+
 
 private:
     // Ajoutez cette méthode de validation

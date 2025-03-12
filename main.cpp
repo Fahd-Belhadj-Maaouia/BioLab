@@ -11,6 +11,7 @@ int main(int argc, char *argv[])
 
     if (connectionResult) {
         qDebug() << "Database connection established successfully";
+
     } else {
         qDebug() << "Failed to establish database connection";
     }

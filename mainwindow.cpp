@@ -4,7 +4,7 @@
 #include <QHeaderView>
 #include <QMessageBox>
 #include <QInputDialog>
-
+#include <QSqlError>
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent) {
     setupUI();
@@ -141,15 +141,17 @@ void MainWindow::setupPages() {
     // Vaccin Pages
     vaccinsTablePage = new QWidget();
     addVaccinFormPage = new QWidget();
+    editVaccinFormPage = new QWidget();  // Add this line to create the missing widget
 
     // Setup Pages
     setupToolsPage();
     setupToolsTablePage();
     setupAddToolFormPage();
-
     setupVaccinsPage();
     setupVaccinsTablePage();
     setupAddVaccinFormPage();
+    setupEditVaccinFormPage();
+    // Remove the empty function call: ();
 
     // Add Pages to Stacked Widget
     stackedWidget->addWidget(patientsPage);
@@ -163,11 +165,11 @@ void MainWindow::setupPages() {
     stackedWidget->addWidget(addToolFormPage);
     stackedWidget->addWidget(vaccinsTablePage);
     stackedWidget->addWidget(addVaccinFormPage);
+    stackedWidget->addWidget(editVaccinFormPage);  // Add this line to add the widget to the stack
 
     // Set Default Page
     stackedWidget->setCurrentWidget(patientsPage);
 }
-
 void MainWindow::setupToolsPage() {
     QVBoxLayout *toolsLayout = new QVBoxLayout(toolsPage);
 
@@ -540,6 +542,251 @@ QWidget* MainWindow::createAgeGroupVaccinationWidget() {
 
     return ageGroupWidget;
 }
+void MainWindow::setupEditVaccinFormPage() {
+    editVaccinFormPage = new QWidget(this);
+    QVBoxLayout *formLayout = new QVBoxLayout(editVaccinFormPage);
+
+    // Create input fields
+    QLineEdit *nomVaccinInput = new QLineEdit();
+    QLineEdit *referenceInput = new QLineEdit();
+    QLineEdit *typeInput = new QLineEdit();
+    QLineEdit *maladieChronicInput = new QLineEdit();
+    QSpinBox *nbDoseInput = new QSpinBox();
+    nbDoseInput->setMinimum(1);
+    nbDoseInput->setMaximum(10);
+    QSpinBox *quantiteInput = new QSpinBox();
+    quantiteInput->setMinimum(0);
+    quantiteInput->setMaximum(10000);
+    QDateEdit *dateExpInput = new QDateEdit(QDate::currentDate().addYears(1));
+    dateExpInput->setCalendarPopup(true);
+    dateExpInput->setDisplayFormat("dd/MM/yyyy");
+    dateExpInput->setMinimumDate(QDate::currentDate().addDays(1));
+    dateExpInput->setMaximumDate(QDate::currentDate().addYears(10));
+
+    // Tooltips pour guider l'utilisateur
+    nomVaccinInput->setPlaceholderText("Entrez le nom du vaccin");
+    nomVaccinInput->setToolTip("50 caractères maximum");
+
+    referenceInput->setPlaceholderText("Format: XXX-0000");
+    referenceInput->setToolTip("Trois lettres majuscules, un tiret, quatre chiffres (ex: VCC-1234)");
+
+    // Validator pour la référence
+    QRegularExpression refRegex("^[A-Z]{3}-\\d{4}$");
+    QRegularExpressionValidator *refValidator = new QRegularExpressionValidator(refRegex, this);
+    referenceInput->setValidator(refValidator);
+
+    // Changer la couleur du champ en fonction de la validité
+    connect(referenceInput, &QLineEdit::textChanged, [referenceInput, refRegex](const QString &text) {
+        if (text.isEmpty() || refRegex.match(text).hasMatch()) {
+            referenceInput->setStyleSheet("QLineEdit { background-color: white; }");
+        } else {
+            referenceInput->setStyleSheet("QLineEdit { background-color: #FFCCCC; }");
+        }
+    });
+
+    // Limiter la longueur du nom du vaccin
+    nomVaccinInput->setMaxLength(50);
+
+    // Save vaccine ID (hidden from user)
+    QLineEdit *idInput = new QLineEdit();
+    idInput->setVisible(false);
+
+    // Add fields to the form
+    QFormLayout *inputLayout = new QFormLayout();
+    inputLayout->addRow("Nom Vaccin *:", nomVaccinInput);
+    inputLayout->addRow("Référence *:", referenceInput);
+    inputLayout->addRow("Type *:", typeInput);
+    inputLayout->addRow("Maladie Chronique:", maladieChronicInput);
+    inputLayout->addRow("Nombre de Doses *:", nbDoseInput);
+    inputLayout->addRow("Quantité *:", quantiteInput);
+    inputLayout->addRow("Date d'Expiration *:", dateExpInput);
+
+    // Label explicatif
+    QLabel *infoLabel = new QLabel("Les champs marqués d'un * sont obligatoires");
+    infoLabel->setStyleSheet("color: #666; font-style: italic;");
+    inputLayout->addRow(infoLabel);
+
+    // Add buttons
+    QPushButton *updateButton = new QPushButton("Mettre à jour");
+    QPushButton *backButton = new QPushButton("Retour");
+
+    // Add buttons to a horizontal layout
+    QHBoxLayout *buttonLayout = new QHBoxLayout();
+    buttonLayout->addWidget(backButton);
+    buttonLayout->addWidget(updateButton);
+
+    // Add input layout and buttons to the main layout
+    formLayout->addLayout(inputLayout);
+    formLayout->addLayout(buttonLayout);
+
+    // Style the form
+    editVaccinFormPage->setStyleSheet(
+        "QLineEdit, QSpinBox, QDateEdit {"
+        "    padding: 8px;"
+        "    border: 1px solid #ddd;"
+        "    border-radius: 4px;"
+        "}"
+        "QPushButton {"
+        "    background-color: #198754;"
+        "    color: white;"
+        "    padding: 10px 20px;"
+        "    border-radius: 8px;"
+        "    font-size: 14px;"
+        "}"
+        "QPushButton:hover {"
+        "    background-color: #157347;"
+        "}"
+        );
+
+    // Connect the update button
+    connect(updateButton, &QPushButton::clicked, this, [this, nomVaccinInput, referenceInput, typeInput,
+                                                        maladieChronicInput, nbDoseInput, quantiteInput, dateExpInput, idInput]() {
+        // Validation préliminaire côté UI
+        bool isValid = true;
+
+        if (nomVaccinInput->text().trimmed().isEmpty()) {
+            nomVaccinInput->setStyleSheet("QLineEdit { background-color: #FFCCCC; }");
+            isValid = false;
+        }
+
+        if (referenceInput->text().trimmed().isEmpty()) {
+            referenceInput->setStyleSheet("QLineEdit { background-color: #FFCCCC; }");
+            isValid = false;
+        }
+
+        if (typeInput->text().trimmed().isEmpty()) {
+            typeInput->setStyleSheet("QLineEdit { background-color: #FFCCCC; }");
+            isValid = false;
+        }
+
+        if (!isValid) {
+            QMessageBox::warning(this, "Erreur", "Veuillez remplir tous les champs obligatoires");
+            return;
+        }
+
+        // Get input values
+        int id = idInput->text().toInt();
+        QString nomVaccin = nomVaccinInput->text();
+        QString reference = referenceInput->text();
+        QString type = typeInput->text();
+        QString maladieChronique = maladieChronicInput->text();
+        int nbDose = nbDoseInput->value();
+        int quantite = quantiteInput->value();
+        QDate dateExp = dateExpInput->date();
+
+        // Set values in VaccinManager
+        vaccinManager->setId(id);
+        vaccinManager->setNomVaccin(nomVaccin);
+        vaccinManager->setReference(reference);
+        vaccinManager->setType(type);
+        vaccinManager->setMaladieChronique(maladieChronique);
+        vaccinManager->setNbDose(nbDose);
+        vaccinManager->setQuantite(quantite);
+        vaccinManager->setDateExp(dateExp);
+
+        // Update the vaccine in the database
+        if (vaccinManager->editVaccin()) {
+            // Return to the table page on success
+            stackedWidget->setCurrentWidget(vaccinsTablePage);
+        }
+    });
+
+    // Connect the back button
+    connect(backButton, &QPushButton::clicked, this, [this]() {
+        stackedWidget->setCurrentWidget(vaccinsTablePage);
+    });
+
+    // Stocker les widgets pour pouvoir les retrouver plus tard
+    editVaccinFormPage->setProperty("idInput", QVariant::fromValue(idInput));
+    editVaccinFormPage->setProperty("nomVaccinInput", QVariant::fromValue(nomVaccinInput));
+    editVaccinFormPage->setProperty("referenceInput", QVariant::fromValue(referenceInput));
+    editVaccinFormPage->setProperty("typeInput", QVariant::fromValue(typeInput));
+    editVaccinFormPage->setProperty("maladieChronicInput", QVariant::fromValue(maladieChronicInput));
+    editVaccinFormPage->setProperty("nbDoseInput", QVariant::fromValue(nbDoseInput));
+    editVaccinFormPage->setProperty("quantiteInput", QVariant::fromValue(quantiteInput));
+    editVaccinFormPage->setProperty("dateExpInput", QVariant::fromValue(dateExpInput));
+
+    // Réinitialiser le style lorsqu'on entre du texte
+    connect(nomVaccinInput, &QLineEdit::textEdited, [nomVaccinInput]() {
+        nomVaccinInput->setStyleSheet("QLineEdit { background-color: white; }");
+    });
+
+    connect(typeInput, &QLineEdit::textEdited, [typeInput]() {
+        typeInput->setStyleSheet("QLineEdit { background-color: white; }");
+    });
+}
+
+void MainWindow::onEditVaccinClicked() {
+    // Obtenir la table des vaccins
+    QTableWidget *vaccinsTable = nullptr;
+
+    // Trouver la table de manière plus fiable
+    QList<QTableWidget*> tables = vaccinsTablePage->findChildren<QTableWidget*>();
+    if (!tables.isEmpty()) {
+        vaccinsTable = tables.first();
+    }
+
+    if (!vaccinsTable) {
+        QMessageBox::warning(this, "Erreur", "Table des vaccins non trouvée");
+        return;
+    }
+
+    // Vérifier qu'une ligne est sélectionnée
+    if (vaccinsTable->selectedItems().isEmpty()) {
+        QMessageBox::information(this, "Information", "Veuillez sélectionner un vaccin à modifier");
+        return;
+    }
+
+    // Obtenir l'ID du vaccin sélectionné
+    int row = vaccinsTable->selectedItems().first()->row();
+    int id = vaccinsTable->item(row, 0)->text().toInt();
+
+    // Charger les données du vaccin
+    QMap<QString, QVariant> vaccinData = vaccinManager->getVaccinById(id);
+    if (vaccinData.isEmpty()) {
+        QMessageBox::warning(this, "Erreur", "Impossible de charger les données du vaccin");
+        return;
+    }
+
+    // Obtenir les widgets du formulaire d'édition
+    QLineEdit *idInput = editVaccinFormPage->property("idInput").value<QLineEdit*>();
+    QLineEdit *nomVaccinInput = editVaccinFormPage->property("nomVaccinInput").value<QLineEdit*>();
+    QLineEdit *referenceInput = editVaccinFormPage->property("referenceInput").value<QLineEdit*>();
+    QLineEdit *typeInput = editVaccinFormPage->property("typeInput").value<QLineEdit*>();
+    QLineEdit *maladieChronicInput = editVaccinFormPage->property("maladieChronicInput").value<QLineEdit*>();
+    QSpinBox *nbDoseInput = editVaccinFormPage->property("nbDoseInput").value<QSpinBox*>();
+    QSpinBox *quantiteInput = editVaccinFormPage->property("quantiteInput").value<QSpinBox*>();
+    QDateEdit *dateExpInput = editVaccinFormPage->property("dateExpInput").value<QDateEdit*>();
+
+    // Vérifier que tous les widgets sont correctement récupérés
+    if (!idInput || !nomVaccinInput || !referenceInput || !typeInput ||
+        !maladieChronicInput || !nbDoseInput || !quantiteInput || !dateExpInput) {
+        QMessageBox::warning(this, "Erreur", "Impossible de récupérer les champs du formulaire");
+        return;
+    }
+
+    // Remplir le formulaire avec les données du vaccin
+    idInput->setText(QString::number(vaccinData["id"].toInt()));
+    nomVaccinInput->setText(vaccinData["nom_vaccin"].toString());
+    referenceInput->setText(vaccinData["reference"].toString());
+    typeInput->setText(vaccinData["type"].toString());
+    maladieChronicInput->setText(vaccinData["maladie_chronique"].toString());
+    nbDoseInput->setValue(vaccinData["nb_dose"].toInt());
+    quantiteInput->setValue(vaccinData["quantite"].toInt());
+
+    // Gestion sécurisée de la date
+    QDate dateExp = QDate::currentDate().addYears(1); // Date par défaut
+    if (vaccinData.contains("date_exp") && vaccinData["date_exp"].isValid()) {
+        QVariant dateVar = vaccinData["date_exp"];
+        if (dateVar.canConvert<QDate>()) {
+            dateExp = dateVar.toDate();
+        }
+    }
+    dateExpInput->setDate(dateExp);
+
+    // Afficher le formulaire d'édition
+    stackedWidget->setCurrentWidget(editVaccinFormPage);
+}
 
 QHBoxLayout* MainWindow::createVaccinationRateRow(const QString &ageGroup, double rate) {
     QHBoxLayout *groupRowLayout = new QHBoxLayout();
@@ -747,21 +994,54 @@ void MainWindow::setupAddVaccinFormPage() {
     QLineEdit *maladieChronicInput = new QLineEdit();
     QSpinBox *nbDoseInput = new QSpinBox();
     nbDoseInput->setMinimum(1);
+    nbDoseInput->setMaximum(10);
     QSpinBox *quantiteInput = new QSpinBox();
     quantiteInput->setMinimum(0);
+    quantiteInput->setMaximum(10000);
     QDateEdit *dateExpInput = new QDateEdit(QDate::currentDate().addYears(1));
     dateExpInput->setCalendarPopup(true);
     dateExpInput->setDisplayFormat("dd/MM/yyyy");
+    dateExpInput->setMinimumDate(QDate::currentDate().addDays(1));
+    dateExpInput->setMaximumDate(QDate::currentDate().addYears(10));
+
+    // Tooltips pour guider l'utilisateur
+    nomVaccinInput->setPlaceholderText("Entrez le nom du vaccin");
+    nomVaccinInput->setToolTip("50 caractères maximum");
+
+    referenceInput->setPlaceholderText("Format: XXX-0000");
+    referenceInput->setToolTip("Trois lettres majuscules, un tiret, quatre chiffres (ex: VCC-1234)");
+
+    // Validator pour la référence
+    QRegularExpression refRegex("^[A-Z]{3}-\\d{4}$");
+    QRegularExpressionValidator *refValidator = new QRegularExpressionValidator(refRegex, this);
+    referenceInput->setValidator(refValidator);
+
+    // Changer la couleur du champ en fonction de la validité
+    connect(referenceInput, &QLineEdit::textChanged, [referenceInput, refRegex](const QString &text) {
+        if (text.isEmpty() || refRegex.match(text).hasMatch()) {
+            referenceInput->setStyleSheet("QLineEdit { background-color: white; }");
+        } else {
+            referenceInput->setStyleSheet("QLineEdit { background-color: #FFCCCC; }");
+        }
+    });
+
+    // Limiter la longueur du nom du vaccin
+    nomVaccinInput->setMaxLength(50);
 
     // Add fields to the form
     QFormLayout *inputLayout = new QFormLayout();
-    inputLayout->addRow("Nom Vaccin:", nomVaccinInput);
-    inputLayout->addRow("Référence:", referenceInput);
-    inputLayout->addRow("Type:", typeInput);
+    inputLayout->addRow("Nom Vaccin *:", nomVaccinInput);
+    inputLayout->addRow("Référence *:", referenceInput);
+    inputLayout->addRow("Type *:", typeInput);
     inputLayout->addRow("Maladie Chronique:", maladieChronicInput);
-    inputLayout->addRow("Nombre de Doses:", nbDoseInput);
-    inputLayout->addRow("Quantité:", quantiteInput);
-    inputLayout->addRow("Date d'Expiration:", dateExpInput);
+    inputLayout->addRow("Nombre de Doses *:", nbDoseInput);
+    inputLayout->addRow("Quantité *:", quantiteInput);
+    inputLayout->addRow("Date d'Expiration *:", dateExpInput);
+
+    // Label explicatif
+    QLabel *infoLabel = new QLabel("Les champs marqués d'un * sont obligatoires");
+    infoLabel->setStyleSheet("color: #666; font-style: italic;");
+    inputLayout->addRow(infoLabel);
 
     // Add a submit button
     QPushButton *submitButton = new QPushButton("Ajouter");
@@ -797,6 +1077,29 @@ void MainWindow::setupAddVaccinFormPage() {
 
     // Connect the submit button
     connect(submitButton, &QPushButton::clicked, this, [this, nomVaccinInput, referenceInput, typeInput, maladieChronicInput, nbDoseInput, quantiteInput, dateExpInput]() {
+        // Validation préliminaire côté UI
+        bool isValid = true;
+
+        if (nomVaccinInput->text().trimmed().isEmpty()) {
+            nomVaccinInput->setStyleSheet("QLineEdit { background-color: #FFCCCC; }");
+            isValid = false;
+        }
+
+        if (referenceInput->text().trimmed().isEmpty()) {
+            referenceInput->setStyleSheet("QLineEdit { background-color: #FFCCCC; }");
+            isValid = false;
+        }
+
+        if (typeInput->text().trimmed().isEmpty()) {
+            typeInput->setStyleSheet("QLineEdit { background-color: #FFCCCC; }");
+            isValid = false;
+        }
+
+        if (!isValid) {
+            QMessageBox::warning(this, "Erreur", "Veuillez remplir tous les champs obligatoires");
+            return;
+        }
+
         // Get input values
         QString nomVaccin = nomVaccinInput->text();
         QString reference = referenceInput->text();
@@ -816,17 +1119,36 @@ void MainWindow::setupAddVaccinFormPage() {
         vaccinManager->setDateExp(dateExp);
 
         // Add the vaccine to the database
-        vaccinManager->addVaccin();
+        if (vaccinManager->addVaccin()) {
+            // Si l'ajout est réussi, vider les champs
+            nomVaccinInput->clear();
+            referenceInput->clear();
+            typeInput->clear();
+            maladieChronicInput->clear();
+            nbDoseInput->setValue(1);
+            quantiteInput->setValue(0);
+            dateExpInput->setDate(QDate::currentDate().addYears(1));
 
-        // Switch back to the table page
-        stackedWidget->setCurrentWidget(vaccinsTablePage);
+            // Retourner à la page du tableau
+            stackedWidget->setCurrentWidget(vaccinsTablePage);
+        }
     });
 
     // Connect the back button
     connect(backButton, &QPushButton::clicked, this, [this]() {
         stackedWidget->setCurrentWidget(vaccinsTablePage);
     });
+
+    // Réinitialiser le style lorsqu'on entre du texte
+    connect(nomVaccinInput, &QLineEdit::textEdited, [nomVaccinInput]() {
+        nomVaccinInput->setStyleSheet("QLineEdit { background-color: white; }");
+    });
+
+    connect(typeInput, &QLineEdit::textEdited, [typeInput]() {
+        typeInput->setStyleSheet("QLineEdit { background-color: white; }");
+    });
 }
+
 
 // Tools-related slots
 void MainWindow::onAddToolClicked() {
@@ -869,33 +1191,41 @@ void MainWindow::onAddVaccinClicked() {
     stackedWidget->setCurrentWidget(addVaccinFormPage);
 }
 
-void MainWindow::onEditVaccinClicked() {
-    // Example: Edit an existing vaccine
-    bool ok;
-    int id = QInputDialog::getInt(this, "Modifier Vaccin", "Entrez l'ID du vaccin à modifier:", 1, 1, 100, 1, &ok);
-    if (ok) {
-        vaccinManager->setId(id);
-        vaccinManager->setNomVaccin("Vaccin Modifié");
-        vaccinManager->setReference("REF-MOD-001");
-        vaccinManager->setType("Type Modifié");
-        vaccinManager->setMaladieChronique("Maladie Modifiée");
-        vaccinManager->setNbDose(2);
-        vaccinManager->setQuantite(50);
-        vaccinManager->setDateExp(QDate::currentDate().addYears(2));
-        vaccinManager->editVaccin();
-    }
-}
+
 
 void MainWindow::onDeleteVaccinClicked() {
-    // Example: Delete a vaccine
-    bool ok;
-    int id = QInputDialog::getInt(this, "Supprimer Vaccin", "Entrez l'ID du vaccin à supprimer:", 1, 1, 100, 1, &ok);
-    if (ok) {
+    // Get the currently selected row in the vaccins table
+    QTableWidget *vaccinsTable = vaccinsTablePage->findChild<QTableWidget*>();
+    if (!vaccinsTable) {
+        QMessageBox::warning(this, "Erreur", "Table des vaccins non trouvée");
+        return;
+    }
+
+    QList<QTableWidgetItem*> selectedItems = vaccinsTable->selectedItems();
+    if (selectedItems.isEmpty()) {
+        QMessageBox::information(this, "Information", "Veuillez sélectionner un vaccin à supprimer");
+        return;
+    }
+
+    // Get the ID from the first column of the selected row
+    int row = selectedItems.first()->row();
+    int id = vaccinsTable->item(row, 0)->text().toInt();
+    QString nomVaccin = vaccinsTable->item(row, 1)->text();
+
+    // Ask for confirmation before deleting
+    QMessageBox::StandardButton confirmation;
+    confirmation = QMessageBox::question(this, "Confirmation de suppression",
+                                         "Êtes-vous sûr de vouloir supprimer le vaccin \"" + nomVaccin + "\" ?",
+                                         QMessageBox::Yes | QMessageBox::No);
+
+    if (confirmation == QMessageBox::Yes) {
         vaccinManager->setId(id);
-        vaccinManager->deleteVaccin();
+        if (vaccinManager->deleteVaccin()) {
+            // Refresh the table or remove the row
+            vaccinsTable->removeRow(row);
+        }
     }
 }
-
 // Navigation Functions
 void MainWindow::showPatientsPage() {
     stackedWidget->setCurrentWidget(patientsPage);
