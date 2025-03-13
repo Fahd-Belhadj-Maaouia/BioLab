@@ -1,5 +1,15 @@
 #include "mainwindow.h"
 #include <QHeaderView>
+#include <QWidget>
+#include <QVBoxLayout>
+#include <QLabel>
+#include <QLineEdit>
+#include <QSpinBox>
+#include <QPushButton>
+#include<QMessageBox>
+#include<QTextEdit>
+#include "projetderecherche.h"
+
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -203,8 +213,6 @@ void MainWindow::setupPages()
     QLabel *researchesTableLabel = new QLabel("Researcehs Table Page");
     researchesTableLayout->addWidget(researchesTableLabel);
 
-    QLabel *researchesFormAddPageLabel = new QLabel("Form Add");
-    researchesFormAddPageLayout->addWidget(researchesFormAddPageLabel);
 
     setupTable();
     setupResearchCards();
@@ -330,8 +338,8 @@ void MainWindow::updateSidebarIcons(QPushButton *selectedButton)
 
 void MainWindow::setupFormAddPage()
 {
-    // Ensure researchesTablePage exists and has a layout
-    if (!researchesTablePage) return; // Prevent crash if the page is not initialized
+    // Vérification et configuration de la page researchesTablePage
+    if (!researchesTablePage) return; // Évite le crash si la page n'est pas initialisée
 
     QVBoxLayout *researchesTableLayout = qobject_cast<QVBoxLayout*>(researchesTablePage->layout());
     if (!researchesTableLayout) {
@@ -339,11 +347,10 @@ void MainWindow::setupFormAddPage()
         researchesTablePage->setLayout(researchesTableLayout);
     }
 
-    // Check if button already exists
+    // Vérifier si le bouton existe déjà
     if (researchesTablePage->findChild<QPushButton*>("addButton") == nullptr) {
-        // Create the button
         QPushButton *addButton = new QPushButton("Add Item");
-        addButton->setObjectName("addButton"); // Set unique name
+        addButton->setObjectName("addButton");
         addButton->setStyleSheet(
             "QPushButton {"
             "   background-color: #28a745;"
@@ -357,13 +364,103 @@ void MainWindow::setupFormAddPage()
             "}"
             );
 
-        // Connect the button to a function when clicked
         connect(addButton, &QPushButton::clicked, this, &MainWindow::showResearchFormAdd);
-
-        // Add the button to the layout of researchesTablePage
         researchesTableLayout->addWidget(addButton);
     }
+
+    // Vérification et configuration de la page researchesFormAddPage
+    if (!researchesFormAddPage) return;
+    QVBoxLayout *formLayout = qobject_cast<QVBoxLayout*>(researchesFormAddPage->layout());
+    if (!formLayout) {
+        formLayout = new QVBoxLayout(researchesFormAddPage);
+        researchesFormAddPage->setLayout(formLayout);
+    }
+
+    // Ajouter une carte blanche derrière le formulaire
+    QFrame *card = new QFrame();
+    card->setStyleSheet("background-color: #FFFFFF; border-radius: 10px; padding: 15px;");
+    card->setMinimumHeight(300); // Adjust this value as needed
+    QVBoxLayout *cardLayout = new QVBoxLayout(card);
+
+    QLabel *titleLabel = new QLabel("Ajouter une Recherche");
+    titleLabel->setStyleSheet("font-size: 18px; font-weight: bold; color: black;");
+    cardLayout->addWidget(titleLabel);
+
+    QStringList labels = {"TITRE", "SPONSOR", "PARTICIPANTS", "OBJECTIF", "LOCALISATION", "DESCRIPTION", "DATE_DEBUT", "DATE_FIN", "COUT"};
+    QMap<QString, QWidget*> inputFields;
+
+    QGridLayout *gridLayout = new QGridLayout();
+    int row = 0, col = 0;
+
+    for (const QString &labelText : labels) {
+        QLabel *label = new QLabel(labelText + ":");
+        label->setStyleSheet("color: black;");
+        QWidget *input = new QLineEdit();  // All fields are QLineEdit now
+
+        static_cast<QLineEdit*>(input)->setPlaceholderText("Entrez " + labelText.toLower());
+        gridLayout->addWidget(label, row, col);
+        gridLayout->addWidget(input, row, col + 1);
+
+        col += 2;
+        if (col >= 4) { // Move to the next row after 2 columns
+            col = 0;
+            row++;
+        }
+
+        input->setStyleSheet("background-color: #f8f8ff;");
+        inputFields[labelText] = input;
+    }
+
+
+    cardLayout->addLayout(gridLayout);
+
+    QPushButton *submitButton = new QPushButton("Ajouter");
+    submitButton->setStyleSheet("background-color: #007BFF; color: white; padding: 10px; border-radius: 5px;");
+    cardLayout->addWidget(submitButton);
+
+    formLayout->addWidget(card);
+
+    connect(submitButton, &QPushButton::clicked, this, [=]() {
+        QString titre = qobject_cast<QLineEdit*>(inputFields["TITRE"])->text();
+        QString sponsor = qobject_cast<QLineEdit*>(inputFields["SPONSOR"])->text();
+        QString participants = qobject_cast<QLineEdit*>(inputFields["PARTICIPANTS"])->text();
+        QString objectif = qobject_cast<QLineEdit*>(inputFields["OBJECTIF"])->text();
+        QString localisation = qobject_cast<QLineEdit*>(inputFields["LOCALISATION"])->text();
+        QString description = qobject_cast<QLineEdit*>(inputFields["DESCRIPTION"])->text();
+        QString date_debut = qobject_cast<QLineEdit*>(inputFields["DATE_DEBUT"])->text();
+        QString date_fin = qobject_cast<QLineEdit*>(inputFields["DATE_FIN"])->text();
+        int cout = qobject_cast<QLineEdit*>(inputFields["COUT"])->text().toInt();
+
+        // Validate fields
+        if (titre.isEmpty() || sponsor.isEmpty() || participants.isEmpty() || objectif.isEmpty() ||
+            localisation.isEmpty() || description.isEmpty() || date_debut.isEmpty() || date_fin.isEmpty()) {
+            QMessageBox::warning(this, "Erreur", "Veuillez remplir tous les champs !");
+            return;
+        }
+
+        // Create an object and insert it into the database
+        ProjetDeRecherche projet(titre, sponsor, participants, objectif, localisation, description, cout, QDate::fromString(date_debut, "yyyy-MM-dd"), QDate::fromString(date_fin, "yyyy-MM-dd"));
+
+        if (projet.Add()) {
+            QMessageBox::information(this, "Succès", "Recherche ajoutée avec succès !");
+
+            // Clear fields
+            for (const QString &labelText : labels) {
+                QWidget *input = inputFields[labelText];
+                if (qobject_cast<QLineEdit*>(input)) {
+                    qobject_cast<QLineEdit*>(input)->clear();
+                }
+            }
+        } else {
+            QMessageBox::critical(this, "Erreur", "Échec de l'ajout de la recherche !");
+        }
+    });
 }
+
+
+
+
+
 
 
 

@@ -14,10 +14,25 @@ ProjetDeRecherche::ProjetDeRecherche(QString TITRE,QString SPONSOR,QString PARTI
 
 bool ProjetDeRecherche::Add()
 {
-    //ToDo
+    QSqlQuery query;
+    query.prepare("INSERT INTO PROJETDERECHERCHES (TITRE, SPONSOR, PARTICIPANTS, OBJECTIF, LOCALISATION, DESCRIPTION, DATEDEBUT, DATEFIN, COUT) "
+                  "VALUES (:TITRE, :SPONSOR, :PARTICIPANTS, :OBJECTIF, :LOCALISATION, :DESCRIPTION, :DATEDEBUT, :DATEFIN, :COUT)");
+
+    query.bindValue(":TITRE", TITRE);
+    query.bindValue(":SPONSOR", SPONSOR);
+    query.bindValue(":PARTICIPANTS", PARTICIPANTS);
+    query.bindValue(":OBJECTIF", OBJECTIF);
+    query.bindValue(":LOCALISATION", LOCALISATION);
+    query.bindValue(":DESCRIPTION", DESCRIPTION);
+    query.bindValue(":DATEDEBUT", DATE_DEBUT);
+    query.bindValue(":DATEFIN", DATE_FIN);
+    query.bindValue(":COUT", COUT);
+
+
+    return query.exec();
 }
 
-QSqlQueryModel * ProjetDeRecherche::Post()
+/*QSqlQueryModel * ProjetDeRecherche::Post()
 {
     //ToDo
 }
@@ -26,3 +41,4 @@ bool ProjetDeRecherche::Delete(int ID)
 {
     //ToDo
 }
+*/
