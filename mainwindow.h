@@ -7,9 +7,11 @@
 #include <QPushButton>
 #include <QFrame>
 #include <QTableWidget>
+#include <QTableView>
 #include <QStackedWidget>
 #include <QLabel>
 #include <QButtonGroup>
+#include "projetderecherche.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -34,11 +36,14 @@ private slots:
     void showResearchTablePage();
     void updateSidebarIcons(QPushButton *selectedButton);
     void setupResearchCards();
-    void setupFormAddPage();
+    void setupResearchesFormAddPage();
     void showResearchFormAdd();
+    void setupResearchesTablePage();
 
 
 private:
+    QTableView *tableView;
+    ProjetDeRecherche Etmp;
     QWidget *centralWidget;
     QWidget *contentWrapper;
     QVBoxLayout *mainLayout;

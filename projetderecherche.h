@@ -38,7 +38,7 @@ public:
     void setDATE_FIN(QDate DF){DATE_FIN=DF;}
     //Functions
     bool Add();
-    QSqlQueryModel * Post();
+    static QSqlQueryModel * Post();
     bool Delete(int);
 
 

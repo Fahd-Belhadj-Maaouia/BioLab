@@ -9,12 +9,18 @@
 #include<QMessageBox>
 #include<QTextEdit>
 #include "projetderecherche.h"
+#include <QSqlError>
+
+
+
 
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
+    stackedWidget = new QStackedWidget(this);
     setupUI();
+
 }
 
 MainWindow::~MainWindow() {}
@@ -216,7 +222,8 @@ void MainWindow::setupPages()
 
     setupTable();
     setupResearchCards();
-    setupFormAddPage();
+    setupResearchesTablePage();
+    setupResearchesFormAddPage();
     researchersLayout->addWidget(dataTable);
 
     stackedWidget->addWidget(patientsPage);
@@ -336,38 +343,95 @@ void MainWindow::updateSidebarIcons(QPushButton *selectedButton)
         btnSettings->setIcon(QIcon(":/icons/svg/settings-selected.svg"));
 }
 
-void MainWindow::setupFormAddPage()
+void MainWindow::setupResearchesTablePage()
 {
-    // Vérification et configuration de la page researchesTablePage
-    if (!researchesTablePage) return; // Évite le crash si la page n'est pas initialisée
+    if (!researchesTablePage) return;
 
-    QVBoxLayout *researchesTableLayout = qobject_cast<QVBoxLayout*>(researchesTablePage->layout());
-    if (!researchesTableLayout) {
-        researchesTableLayout = new QVBoxLayout(researchesTablePage);
-        researchesTablePage->setLayout(researchesTableLayout);
+    // Clear existing layout if any
+    QLayout *existingLayout = researchesTablePage->layout();
+    if (existingLayout) {
+        QLayoutItem *item;
+        while ((item = existingLayout->takeAt(0))) {
+            delete item->widget();
+            delete item;
+        }
+        delete existingLayout;
     }
 
-    // Vérifier si le bouton existe déjà
-    if (researchesTablePage->findChild<QPushButton*>("addButton") == nullptr) {
-        QPushButton *addButton = new QPushButton("Add Item");
-        addButton->setObjectName("addButton");
-        addButton->setStyleSheet(
-            "QPushButton {"
-            "   background-color: #28a745;"
-            "   color: white;"
-            "   padding: 10px;"
-            "   border-radius: 5px;"
-            "   font-size: 16px;"
-            "}"
-            "QPushButton:hover {"
-            "   background-color: #218838;"
-            "}"
+    // Create main layout
+    QVBoxLayout *mainLayout = new QVBoxLayout(researchesTablePage);
+    researchesTablePage->setLayout(mainLayout);
+
+    // 1. Create and configure the table view
+    tableView = new QTableView();  // Use the member variable
+    tableView->setModel(ProjetDeRecherche::Post());  // Use your Post() method
+
+    // Table configuration
+    tableView->setSelectionMode(QAbstractItemView::SingleSelection);
+    tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
+    tableView->setEditTriggers(QAbstractItemView::NoEditTriggers); // Read-only
+    tableView->verticalHeader()->setVisible(false); // Hide row numbers
+
+    // Auto-resize columns
+    tableView->horizontalHeader()->setSectionResizeMode(QHeaderView::Interactive);
+    tableView->resizeColumnsToContents();
+
+    // Optional: Enable sorting
+    tableView->setSortingEnabled(true);
+
+    // 2. Create button layout
+    QHBoxLayout *buttonLayout = new QHBoxLayout();
+
+    // Add Button
+    QPushButton *addButton = new QPushButton("Add New Project");
+    addButton->setStyleSheet(
+        "QPushButton {"
+        "   background-color: #4CAF50;"
+        "   color: white;"
+        "   padding: 8px 16px;"
+        "   border: none;"
+        "   border-radius: 4px;"
+        "}"
+        "QPushButton:hover { background-color: #45a049; }"
+    );
+    connect(addButton, &QPushButton::clicked, this, &MainWindow::showResearchFormAdd);
+
+    // Refresh Button
+    QPushButton *refreshButton = new QPushButton("Refresh");
+    refreshButton->setStyleSheet(
+        "QPushButton {"
+        "   background-color: #2196F3;"
+        "   color: white;"
+        "   padding: 8px 16px;"
+        "   border: none;"
+        "   border-radius: 4px;"
+        "}"
+        "QPushButton:hover { background-color: #0b7dda; }"
+    );
+    connect(refreshButton, &QPushButton::clicked, this, [this]() {
+        tableView->setModel(ProjetDeRecherche::Post()); // Refresh model
+        tableView->setStyleSheet(
+            "QTableView { color: black; }"              // All text in table
+            "QTableView::item { color: black; }"        // Individual cells
+            "QHeaderView::section { color: black; }"    // Column headers
             );
+    });
 
-        connect(addButton, &QPushButton::clicked, this, &MainWindow::showResearchFormAdd);
-        researchesTableLayout->addWidget(addButton);
-    }
+    buttonLayout->addWidget(addButton);
+    buttonLayout->addWidget(refreshButton);
+    buttonLayout->addStretch();
 
+    // 3. Add widgets to main layout
+    mainLayout->addLayout(buttonLayout);
+    mainLayout->addWidget(tableView);
+
+    // Optional: Set stretch factors
+    mainLayout->setStretch(0, 0); // Buttons don't stretch
+    mainLayout->setStretch(1, 1); // Table takes all remaining space
+}
+
+void MainWindow::setupResearchesFormAddPage()
+{
     // Vérification et configuration de la page researchesFormAddPage
     if (!researchesFormAddPage) return;
     QVBoxLayout *formLayout = qobject_cast<QVBoxLayout*>(researchesFormAddPage->layout());
@@ -410,7 +474,6 @@ void MainWindow::setupFormAddPage()
         input->setStyleSheet("background-color: #f8f8ff;");
         inputFields[labelText] = input;
     }
-
 
     cardLayout->addLayout(gridLayout);
 
@@ -456,6 +519,10 @@ void MainWindow::setupFormAddPage()
         }
     });
 }
+
+
+
+
 
 
 

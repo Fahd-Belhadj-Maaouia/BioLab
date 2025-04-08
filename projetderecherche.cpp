@@ -1,5 +1,9 @@
 #include "projetderecherche.h"
 
+ProjetDeRecherche::ProjetDeRecherche(){
+
+}
+
 ProjetDeRecherche::ProjetDeRecherche(QString TITRE,QString SPONSOR,QString PARTICIPANTS,QString OBJECTIF,QString LOCALISATION,QString DESCRIPTION,int COUT,QDate DATE_DEBUT,QDate DATE_FIN) {
     this->TITRE=TITRE;
     this->SPONSOR=SPONSOR;
@@ -32,12 +36,27 @@ bool ProjetDeRecherche::Add()
     return query.exec();
 }
 
-/*QSqlQueryModel * ProjetDeRecherche::Post()
+QSqlQueryModel * ProjetDeRecherche::Post()
 {
-    //ToDo
+    QSqlQueryModel *model = new QSqlQueryModel();
+
+    model->setQuery("SELECT titre, sponsor, participants, objectif, localisation, description, DateDEBUT, DATEFIN, COUT FROM PROJETDERECHERCHES");
+
+    model->setHeaderData(0, Qt::Horizontal, QObject::tr("TITRE"));
+    model->setHeaderData(1, Qt::Horizontal, QObject::tr("SPONSOR"));
+    model->setHeaderData(2, Qt::Horizontal, QObject::tr("PARTICIPANTS"));
+    model->setHeaderData(3, Qt::Horizontal, QObject::tr("OBJECTIF"));
+    model->setHeaderData(4, Qt::Horizontal, QObject::tr("LOCALISATION"));
+    model->setHeaderData(5, Qt::Horizontal, QObject::tr("DESCRIPTION"));
+    model->setHeaderData(6, Qt::Horizontal, QObject::tr("DateDEBUT"));
+    model->setHeaderData(7, Qt::Horizontal, QObject::tr("DATEFIN"));
+    model->setHeaderData(8, Qt::Horizontal, QObject::tr("COUT"));
+
+    return model;
 }
 
-bool ProjetDeRecherche::Delete(int ID)
+
+/*bool ProjetDeRecherche::Delete(int ID)
 {
     //ToDo
 }
