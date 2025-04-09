@@ -4,12 +4,14 @@ QT       += core gui widgets charts
 CONFIG   += c++17
 CONFIG += console
 SOURCES += \
+    buttondelegate.cpp \
     connection.cpp \
     main.cpp \
     mainwindow.cpp \
     projetderecherche.cpp
 
 HEADERS += \
+    buttondelegate.h \
     connection.h \
     mainwindow.h \
     projetderecherche.h

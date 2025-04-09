@@ -12,6 +12,7 @@
 #include <QLabel>
 #include <QButtonGroup>
 #include "projetderecherche.h"
+#include "buttondelegate.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -39,6 +40,7 @@ private slots:
     void setupResearchesFormAddPage();
     void showResearchFormAdd();
     void setupResearchesTablePage();
+    void handleDeleteRow(const QModelIndex &index);
 
 
 private:
@@ -47,6 +49,13 @@ private:
     QWidget *centralWidget;
     QWidget *contentWrapper;
     QVBoxLayout *mainLayout;
+    class ResearchForm : public QWidget {
+    public:
+        explicit ResearchForm(int projectId, QWidget *parent = nullptr);
+    private:
+        int m_projectId;
+    };
+    void refreshResearchTable();
 
     // Sidebar
     QVBoxLayout *sidebarLayout;
@@ -59,6 +68,8 @@ private:
     QPushButton *btnTools;
     QPushButton *btnPersonel;
     QButtonGroup *sidebarButtonGroup;  // Ensure only one selection at a time
+    ButtonDelegate *buttonDelegate;
+
 
 
     // Main Content

@@ -39,7 +39,8 @@ public:
     //Functions
     bool Add();
     static QSqlQueryModel * Post();
-    bool Delete(int);
+    static bool Delete(int);
+    bool Update(int IDPRO);
 
 
 };

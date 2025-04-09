@@ -10,6 +10,7 @@
 #include<QTextEdit>
 #include "projetderecherche.h"
 #include <QSqlError>
+#include "buttondelegate.h"  // Add this line with your other includes
 
 
 
@@ -53,6 +54,26 @@ void MainWindow::setupUI()
 
     mainLayout->addLayout(contentLayout);
 }
+
+void MainWindow::handleDeleteRow(const QModelIndex &index) {
+    qDebug() << "Delete requested for row:" << index.row();
+    // TODO: Add your delete confirmation + delete logic here
+}
+
+// mainwindow.cpp
+
+void MainWindow::refreshResearchTable() {
+    QSqlQueryModel *newModel = ProjetDeRecherche::Post();
+    tableView->setModel(newModel);
+    tableView->hideColumn(0);
+
+    int actionsColumn = newModel->columnCount();
+    newModel->insertColumn(actionsColumn);
+    newModel->setHeaderData(actionsColumn, Qt::Horizontal, "Actions");
+
+    tableView->setItemDelegateForColumn(actionsColumn, buttonDelegate); // reuse the same one
+}
+
 
 
 void MainWindow::setupSidebar()
@@ -343,11 +364,10 @@ void MainWindow::updateSidebarIcons(QPushButton *selectedButton)
         btnSettings->setIcon(QIcon(":/icons/svg/settings-selected.svg"));
 }
 
-void MainWindow::setupResearchesTablePage()
-{
+void MainWindow::setupResearchesTablePage() {
     if (!researchesTablePage) return;
 
-    // Clear existing layout if any
+    // Clear existing layout
     QLayout *existingLayout = researchesTablePage->layout();
     if (existingLayout) {
         QLayoutItem *item;
@@ -362,73 +382,114 @@ void MainWindow::setupResearchesTablePage()
     QVBoxLayout *mainLayout = new QVBoxLayout(researchesTablePage);
     researchesTablePage->setLayout(mainLayout);
 
-    // 1. Create and configure the table view
-    tableView = new QTableView();  // Use the member variable
-    tableView->setModel(ProjetDeRecherche::Post());  // Use your Post() method
+    // Create table view with minimal styling
+    tableView = new QTableView();
+    tableView->setStyleSheet("QTableView { color: black; }");
+
+    // Set model and configure columns
+    QSqlQueryModel *model = ProjetDeRecherche::Post();
+    tableView->setModel(model);
+    tableView->hideColumn(0); // Hide ID column
+
+    // Add actions column
+    model->insertColumn(model->columnCount());
+    model->setHeaderData(model->columnCount() - 1, Qt::Horizontal, "Actions");
 
     // Table configuration
     tableView->setSelectionMode(QAbstractItemView::SingleSelection);
     tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
-    tableView->setEditTriggers(QAbstractItemView::NoEditTriggers); // Read-only
-    tableView->verticalHeader()->setVisible(false); // Hide row numbers
-
-    // Auto-resize columns
+    tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    tableView->verticalHeader()->setVisible(false);
     tableView->horizontalHeader()->setSectionResizeMode(QHeaderView::Interactive);
     tableView->resizeColumnsToContents();
-
-    // Optional: Enable sorting
     tableView->setSortingEnabled(true);
+    tableView->horizontalHeader()->setStretchLastSection(true);
 
-    // 2. Create button layout
+    // Create and set button delegate
+    buttonDelegate = new ButtonDelegate(tableView); // only once
+
+    connect(buttonDelegate, &ButtonDelegate::deleteClicked, this, [this](const QModelIndex &index) {
+        int row = index.row();
+        int id = tableView->model()->data(tableView->model()->index(row, 0)).toInt();
+
+        qDebug() << "💥 Delete triggered, ID:" << id;
+
+        if (ProjetDeRecherche::Delete(id)) {
+            qDebug() << "Deleted successfully";
+            refreshResearchTable(); // reload model with same delegate
+        } else {
+            qDebug() << "Delete FAILED for ID:" << id;
+            QMessageBox::warning(this, "Error", "Delete failed");
+        }
+    });
+
+
+
+    connect(buttonDelegate, &ButtonDelegate::updateClicked, this, [this](const QModelIndex &index) {
+        int row = index.row();
+        int id = tableView->model()->data(tableView->model()->index(row, 0)).toInt();
+
+        QDialog editDialog(this);
+        editDialog.setWindowTitle("Edit Project");
+        editDialog.setMinimumSize(400, 300);
+
+        QVBoxLayout layout(&editDialog);
+        QLabel idLabel("Editing Project ID: " + QString::number(id), &editDialog);
+        QLineEdit titleEdit(&editDialog);
+        QTextEdit descriptionEdit(&editDialog);
+        QPushButton saveButton("Save Changes", &editDialog);
+
+        connect(&saveButton, &QPushButton::clicked, &editDialog, [&]() {
+            QMessageBox::information(this, "Success",
+                                     QString("Saved project %1").arg(id));
+            editDialog.accept();
+        });
+
+        layout.addWidget(&idLabel);
+        layout.addWidget(new QLabel("Title:", &editDialog));
+        layout.addWidget(&titleEdit);
+        layout.addWidget(new QLabel("Description:", &editDialog));
+        layout.addWidget(&descriptionEdit);
+        layout.addWidget(&saveButton);
+
+        editDialog.exec();
+    });
+
+    // Add control buttons
     QHBoxLayout *buttonLayout = new QHBoxLayout();
 
-    // Add Button
     QPushButton *addButton = new QPushButton("Add New Project");
     addButton->setStyleSheet(
-        "QPushButton {"
-        "   background-color: #4CAF50;"
-        "   color: white;"
-        "   padding: 8px 16px;"
-        "   border: none;"
-        "   border-radius: 4px;"
-        "}"
+        "QPushButton { background-color: #4CAF50; color: white; padding: 8px 16px; "
+        "border: none; border-radius: 4px; }"
         "QPushButton:hover { background-color: #45a049; }"
-    );
+        );
     connect(addButton, &QPushButton::clicked, this, &MainWindow::showResearchFormAdd);
 
-    // Refresh Button
     QPushButton *refreshButton = new QPushButton("Refresh");
     refreshButton->setStyleSheet(
-        "QPushButton {"
-        "   background-color: #2196F3;"
-        "   color: white;"
-        "   padding: 8px 16px;"
-        "   border: none;"
-        "   border-radius: 4px;"
-        "}"
+        "QPushButton { background-color: #2196F3; color: white; padding: 8px 16px; "
+        "border: none; border-radius: 4px; }"
         "QPushButton:hover { background-color: #0b7dda; }"
-    );
+        );
     connect(refreshButton, &QPushButton::clicked, this, [this]() {
-        tableView->setModel(ProjetDeRecherche::Post()); // Refresh model
-        tableView->setStyleSheet(
-            "QTableView { color: black; }"              // All text in table
-            "QTableView::item { color: black; }"        // Individual cells
-            "QHeaderView::section { color: black; }"    // Column headers
-            );
+        refreshResearchTable();
     });
+
 
     buttonLayout->addWidget(addButton);
     buttonLayout->addWidget(refreshButton);
     buttonLayout->addStretch();
 
-    // 3. Add widgets to main layout
     mainLayout->addLayout(buttonLayout);
     mainLayout->addWidget(tableView);
-
-    // Optional: Set stretch factors
-    mainLayout->setStretch(0, 0); // Buttons don't stretch
-    mainLayout->setStretch(1, 1); // Table takes all remaining space
+    mainLayout->setStretch(0, 0);
+    mainLayout->setStretch(1, 1);
 }
+
+
+
+
 
 void MainWindow::setupResearchesFormAddPage()
 {
@@ -471,7 +532,7 @@ void MainWindow::setupResearchesFormAddPage()
             row++;
         }
 
-        input->setStyleSheet("background-color: #f8f8ff;");
+        input->setStyleSheet("background-color: #f8f8ff; color: black;");
         inputFields[labelText] = input;
     }
 
@@ -519,16 +580,6 @@ void MainWindow::setupResearchesFormAddPage()
         }
     });
 }
-
-
-
-
-
-
-
-
-
-
 
 
 
