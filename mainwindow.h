@@ -1,22 +1,50 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
-
+// Qt Core
 #include <QMainWindow>
-#include <QVBoxLayout>
-#include <QHBoxLayout>
-#include <QPushButton>
-#include <QFrame>
-#include <QTableWidget>
-#include <QStackedWidget>
-#include <QLabel>
-#include <QButtonGroup>
-#include <QLineEdit>
-#include <QSpinBox>
-#include <QFormLayout>
 #include <QFileDialog>
+#include <QPainter>
+#include <QPrinter>
+#include <QPdfWriter>
+#include <QTextDocument>
+
+#include <QButtonGroup>
+#include <QComboBox>
 #include <QDateEdit>
+#include <QFileDialog>
+#include <QFormLayout>
+#include <QFrame>
+#include <QGroupBox>
+#include <QHeaderView>
 #include <QInputDialog>
+#include <QLabel>
+#include <QLineEdit>
 #include <QProgressBar>
+#include <QPushButton>
+#include <QSpinBox>
+#include <QSplitter>
+#include <QStackedWidget>
+#include <QStyle>
+#include <QTableWidget>
+#include <QTableWidgetItem>
+
+#include <QHBoxLayout>
+#include <QVBoxLayout>
+
+#include <QFile>
+#include <QChartView>
+#include <QPieSeries>
+#include <QBarSeries>
+#include <QBarSet>
+#include <QValueAxis>
+#include <QHBoxLayout>
+#include <QtCharts/QBarCategoryAxis>
+#include <QtCharts/QValueAxis>
+
+// Forward declarations
+class QChart;
+class QPieSeries;
+class QBarSeries;
 
 // Forward declarations
 class ToolsManager;
@@ -32,6 +60,8 @@ class MainWindow : public QMainWindow {
 public:
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
+protected:
+    void showEvent(QShowEvent *event) override;
 
 private slots:
     // Navigation slots
@@ -46,17 +76,37 @@ private slots:
     void updateSidebarIcons(QPushButton *selectedButton);
 
     // Tools-related slots
-    void onAddToolClicked();
-    void onEditToolClicked();
-    void onDeleteToolClicked();
+
+    void onDeleteToolClicked(int);
+
 
     // Vaccin-related slots
     void showVaccinsTablePage();
     void onAddVaccinClicked();
     void onEditVaccinClicked();
     void onDeleteVaccinClicked();
+    // New slots for pagination
+    void updatePaginationControls(int currentPage, int totalPages);
+    void exportToolsToPDF();
 
 private:
+    // Statistics widgets
+    QWidget *statsContainer;
+    QChartView *pieChartView;
+    QChartView *barChartView;
+    QChart *pieChart;
+    QChart *barChart;
+
+    // For data tracking
+    QMap<QString, int> categoryCounts;
+    QMap<QString, int> categoryStockTotals;
+    QMap<QString, int> categoryMaxQuantities;
+
+    // Methods
+    void setupStatisticsSection();
+    void updateStatistics();
+    void calculateStatistics();
+
     // UI Components
     QWidget *centralWidget;
     QWidget *contentWrapper;
@@ -72,7 +122,9 @@ private:
     QPushButton *btnTools;
     QPushButton *btnVaccins;
     QPushButton *btnSettings;
+    QPushButton *uploadImageButton;
     QButtonGroup *sidebarButtonGroup;
+
 
     // Main Content
     QStackedWidget *stackedWidget;
@@ -87,8 +139,17 @@ private:
     QWidget *researchesPage;
 
     // Tools Pages
+
     QWidget *toolsTablePage;
-    QWidget *addToolFormPage;
+    QPushButton *firstPageBtn;
+    QPushButton *prevPageBtn;
+    QLabel *pageInfoLabel;
+    QPushButton *nextPageBtn;
+    QPushButton *lastPageBtn;
+    QComboBox *itemsPerPageCombo;
+
+    // PDF Export button
+    QPushButton *exportPdfBtn;
 
     // Vaccin Pages
     QWidget *vaccinsTablePage;
@@ -105,9 +166,9 @@ private:
     void setupPages();
 
     // Tools-related methods
+    void clearToolsForm();
     void setupToolsPage();
     void setupToolsTablePage();
-    void setupAddToolFormPage();
 
     // Vaccin-related methods
     void setupVaccinsPage();

@@ -1,6 +1,11 @@
 #ifndef TOOLSMANAGER_H
 #define TOOLSMANAGER_H
-
+#include <QPainter>
+#include <QPrinter>
+#include <QPdfWriter>
+#include <QTextDocument>
+#include <QPdfWriter>
+#include <QTextDocument>
 #include <QObject>
 #include <QTableWidget>
 #include <QSqlQuery>
@@ -8,15 +13,23 @@
 #include <QDate>
 #include <QMap>
 #include <QVariant>
+#include <QHBoxLayout>
+#include <QPushButton>
+#include <QLabel>
+#include <QLineEdit>
+#include <QPixmap>
+#include <QIcon>
+#include <QFileInfo>
 #include "connection.h"
 
 class ToolsManager : public QObject {
     Q_OBJECT
 
 public:
-    explicit ToolsManager(QTableWidget *table, QObject *parent = nullptr);
+    explicit ToolsManager(QTableWidget *table = nullptr, QObject *parent = nullptr);
     ~ToolsManager();
 
+    QSqlQuery getAllToolsQuery() const;
     // Setters for tool properties
     void setId(int id) { this->id = id; }
     void setNomMateriel(const QString &nom) { nomMateriel = nom; }
@@ -26,7 +39,6 @@ public:
     void setQuantiteMaximale(int quantiteMax) { quantiteMaximale = quantiteMax; }
     void setUploadImage(const QString &imagePath) { uploadImage = imagePath; }
     void setFournisseur(const QString &fournisseur) { this->fournisseur = fournisseur; }
-    void setIdPro(int idPro) { this->idPro = idPro; }
 
     // Database operations
     int getNextId();
@@ -36,16 +48,34 @@ public:
     bool deleteTool();
     QMap<QString, QVariant> getToolById(int id);
     bool idProExists(int idPro);
+    QStringList getCategories() const;
 
+    void searchTools(const QString &text, const QString &field);
+    void sortTools(const QString &field, Qt::SortOrder order);
+    
+    // methods for pagination
+    void setItemsPerPage(int count);
+    void goToPage(int page);
+    int getTotalPages() const;
+    int getCurrentPage() const;
+
+    // PDF export method
+    bool exportToPDF(const QString &filePath);
+
+    
 signals:
     void editToolRequested(int id);
     void deleteToolRequested(int id);
+    void paginationChanged(int currentPage, int totalPages);
+    void dataChanged();
+    
 
 private:
+    mutable DatabaseConnection dbConnection;
     bool validateToolData() const;
     void setupTable();
     QTableWidget *toolsTable;
-    DatabaseConnection dbConnection;
+
 
     // Tool properties
     int id = 0;
@@ -57,6 +87,13 @@ private:
     QString uploadImage;
     QString fournisseur;
     int idPro = 0;
+    // Pagination members
+    int itemsPerPage;
+    int currentPage;
+    int totalTools;
+
+    void updatePagination();
+    void countTotalTools();
 };
 
 #endif // TOOLSMANAGER_H

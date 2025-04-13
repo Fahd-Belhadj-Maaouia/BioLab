@@ -8,14 +8,23 @@
 #include <QComboBox>
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent) {
+    qDebug() << "MainWindow constructor start";
+    pieChartView = new QChartView(this);
+    barChartView = new QChartView(this);
+    qDebug() << "Chart views created";
+    // Initialize toolsManager first
+    qDebug() << "ToolsManager created";
     setupUI();
+     qDebug() << "MainWindow constructor complete";
 }
 
 MainWindow::~MainWindow() {}
 
 void MainWindow::setupUI() {
     // Central Widget and Main Layout
+     qDebug() << "1. Starting setupUI";
     centralWidget = new QWidget(this);
+     qDebug() << "2. Created central widget";
     setCentralWidget(centralWidget);
     mainLayout = new QVBoxLayout(centralWidget);
 
@@ -137,7 +146,7 @@ void MainWindow::setupPages() {
 
     // Tools Pages
     toolsTablePage = new QWidget();
-    addToolFormPage = new QWidget();
+
 
     // Vaccin Pages
     vaccinsTablePage = new QWidget();
@@ -147,7 +156,7 @@ void MainWindow::setupPages() {
     // Setup Pages
     setupToolsPage();
     setupToolsTablePage();
-    setupAddToolFormPage();
+
     setupVaccinsPage();
     setupVaccinsTablePage();
     setupAddVaccinFormPage();
@@ -162,7 +171,7 @@ void MainWindow::setupPages() {
     stackedWidget->addWidget(toolsPage);
     stackedWidget->addWidget(settingsPage);
     stackedWidget->addWidget(toolsTablePage);
-    stackedWidget->addWidget(addToolFormPage);
+
     stackedWidget->addWidget(vaccinsTablePage);
     stackedWidget->addWidget(addVaccinFormPage);
     stackedWidget->addWidget(editVaccinFormPage);
@@ -173,8 +182,38 @@ void MainWindow::setupPages() {
 
 void MainWindow::setupToolsPage() {
     QVBoxLayout *toolsLayout = new QVBoxLayout(toolsPage);
+    toolsLayout->setSpacing(20);
 
-    // Add "Voir Matériels" Button
+    // Add statistics section at the top
+    statsContainer = new QWidget();
+    statsContainer->setStyleSheet(R"(
+    QWidget {
+        background: white;
+        border-radius: 10px;
+        padding: 15px;
+        border: 1px solid #e0e0e0;
+    }
+    QChartView {
+        background: transparent;
+        border: none;
+    }
+    QLabel {
+        font-family: 'Segoe UI', Arial, sans-serif;
+        color: #333;
+    }
+    )");
+
+    QHBoxLayout *statsLayout = new QHBoxLayout(statsContainer);
+    statsLayout->setContentsMargins(0, 0, 0, 0);
+    statsLayout->setSpacing(10);
+
+    // Setup the statistics charts
+    setupStatisticsSection();
+    statsLayout->addWidget(pieChartView, 1);  // Now using statsLayout
+    statsLayout->addWidget(barChartView, 1);  // Now using statsLayout
+
+
+    // Add "Voir Matériels" Button below statistics
     QPushButton *goToToolsTableButton = new QPushButton("Voir Matériels", this);
     goToToolsTableButton->setStyleSheet(
         "QPushButton {"
@@ -188,61 +227,160 @@ void MainWindow::setupToolsPage() {
         "    background-color: #157347;"
         "}"
         );
+
+    // Add widgets to layout
+    toolsLayout->addWidget(statsContainer);
     toolsLayout->addWidget(goToToolsTableButton, 0, Qt::AlignCenter);
 
     // Connect Button to Slot
     connect(goToToolsTableButton, &QPushButton::clicked, this, &MainWindow::showToolsTablePage);
+
+
+}
+void MainWindow::showEvent(QShowEvent *event) {
+    QMainWindow::showEvent(event);
+
+    // Refresh statistics when tools page is shown
+    if (stackedWidget->currentWidget() == toolsPage) {
+        calculateStatistics();
+        updateStatistics();
+    }
+}
+void MainWindow::setupStatisticsSection() {
+    // Create pie chart (left side)
+    pieChart = new QChart();
+    pieChart->setTitle("Distribution du stock par Category");
+    pieChart->setTitleFont(QFont("Arial", 10, QFont::Bold));
+    pieChart->setAnimationOptions(QChart::AllAnimations);
+    pieChart->legend()->setVisible(true);
+    pieChart->legend()->setAlignment(Qt::AlignRight);
+
+    pieChartView->setChart(pieChart);
+    pieChartView->setRenderHint(QPainter::Antialiasing);
+    pieChartView->setMinimumHeight(300);
+
+    // Create bar chart (right side)
+    barChart = new QChart();
+    barChart->setTitle("Stock vs Quantitée Maximale");
+    barChart->setTitleFont(QFont("Arial", 10, QFont::Bold));
+    barChart->setAnimationOptions(QChart::AllAnimations);
+
+    barChartView->setChart(barChart);
+    barChartView->setRenderHint(QPainter::Antialiasing);
+    barChartView->setMinimumHeight(300);
+}
+
+void MainWindow::calculateStatistics() {
+    categoryCounts.clear();
+    categoryStockTotals.clear();
+    categoryMaxQuantities.clear();
+
+    // Get data from ToolsManager
+    QSqlQuery query = toolsManager->getAllToolsQuery();
+
+    while (query.next()) {
+        QString category = query.value("categorie").toString();
+        int stock = query.value("stock").toInt();
+        int maxQuantity = query.value("quantiteMaximale").toInt();
+
+        // Update counts
+        categoryCounts[category]++;
+
+        // Update stock totals
+        if (categoryStockTotals.contains(category)) {
+            categoryStockTotals[category] += stock;
+        } else {
+            categoryStockTotals[category] = stock;
+        }
+
+        // Update max quantities
+        if (categoryMaxQuantities.contains(category)) {
+            categoryMaxQuantities[category] += maxQuantity;
+        } else {
+            categoryMaxQuantities[category] = maxQuantity;
+        }
+    }
+}
+void MainWindow::updateStatistics() {
+    // Clear previous data
+    if (pieChart->series().count() > 0) {
+        pieChart->removeAllSeries();
+    }
+    if (barChart->series().count() > 0) {
+        barChart->removeAllSeries();
+    }
+    // Clear bar chart data and axes
+    if (barChart->series().count() > 0) {
+        barChart->removeAllSeries();
+    }
+
+    // Remove all axes from bar chart
+    QList<QAbstractAxis*> oldAxes = barChart->axes();
+    for (QAbstractAxis* axis : oldAxes) {
+        barChart->removeAxis(axis);
+        delete axis;  // Important to prevent memory leaks
+    }
+    // Update pie chart
+    QPieSeries *pieSeries = new QPieSeries();
+    int totalTools = 0;
+    for (int count : categoryCounts) {
+        totalTools += count;
+    }
+
+    if (totalTools > 0) {  // Only update if we have data
+        for (const QString &category : categoryCounts.keys()) {
+            double percentage = (categoryCounts[category] * 100.0) / totalTools;
+            QPieSlice *slice = pieSeries->append(category, percentage);
+            slice->setLabel(QString("%1 (%2%)").arg(category).arg(QString::number(percentage, 'f', 1)));
+        }
+        pieChart->addSeries(pieSeries);
+    }
+
+    // Update bar chart
+    if (!categoryStockTotals.isEmpty()) {  // Only update if we have data
+        QBarSeries *barSeries = new QBarSeries();
+        QBarSet *stockSet = new QBarSet("Current Stock");
+        QBarSet *maxSet = new QBarSet("Max Capacity");
+
+        for (const QString &category : categoryStockTotals.keys()) {
+            *stockSet << categoryStockTotals[category];
+            *maxSet << categoryMaxQuantities[category];
+        }
+
+        barSeries->append(stockSet);
+        barSeries->append(maxSet);
+        barChart->addSeries(barSeries);
+
+        // Set up axes
+        QStringList categories = categoryStockTotals.keys();
+        QBarCategoryAxis *axisX = new QBarCategoryAxis();
+        axisX->append(categories);
+        barChart->addAxis(axisX, Qt::AlignBottom);
+        barSeries->attachAxis(axisX);
+
+        QValueAxis *axisY = new QValueAxis();
+        axisY->setLabelFormat("%d");
+        axisY->setTitleText("Quantity");
+        barChart->addAxis(axisY, Qt::AlignLeft);
+        barSeries->attachAxis(axisY);
+    }
+
+    // Style the charts
+    pieChart->setTheme(QChart::ChartThemeLight);
+    barChart->setTheme(QChart::ChartThemeLight);
 }
 
 void MainWindow::setupToolsTablePage() {
-    QVBoxLayout *toolsTableLayout = new QVBoxLayout(toolsTablePage);
+    // Create a horizontal layout for the entire page
+    QHBoxLayout *mainLayout = new QHBoxLayout(toolsTablePage);
 
-    // Add "Ajouter Materiels" Button
-    QPushButton *addMaterialButton = new QPushButton("Ajouter Materiels", this);
-    addMaterialButton->setStyleSheet(
-        "QPushButton {"
-        "    background-color: #198754;"
-        "    color: white;"
-        "    padding: 10px 20px;"
-        "    border-radius: 8px;"
-        "    font-size: 14px;"
-        "}"
-        "QPushButton:hover {"
-        "    background-color: #157347;"
-        "}"
-        );
+    // Left side - Tools Table
+    QWidget *tableWidget = new QWidget();
+    QVBoxLayout *tableLayout = new QVBoxLayout(tableWidget);
+    tableLayout->setContentsMargins(15, 15, 15, 15);
+    tableLayout->setSpacing(12);
 
-    // Add "Modifier Materiels" Button
-    QPushButton *editMaterialButton = new QPushButton("Modifier Materiels", this);
-    editMaterialButton->setStyleSheet(
-        "QPushButton {"
-        "    background-color: #198754;"
-        "    color: white;"
-        "    padding: 10px 20px;"
-        "    border-radius: 8px;"
-        "    font-size: 14px;"
-        "}"
-        "QPushButton:hover {"
-        "    background-color: #157347;"
-        "}"
-        );
-
-    // Add "Supprimer Materiels" Button
-    QPushButton *deleteMaterialButton = new QPushButton("Supprimer Materiels", this);
-    deleteMaterialButton->setStyleSheet(
-        "QPushButton {"
-        "    background-color: #198754;"
-        "    color: white;"
-        "    padding: 10px 20px;"
-        "    border-radius: 8px;"
-        "    font-size: 14px;"
-        "}"
-        "QPushButton:hover {"
-        "    background-color: #157347;"
-        "}"
-        );
-
-    // Add Back Button
+    // Back button at the top of the table section
     QPushButton *backButton = new QPushButton(this);
     backButton->setIcon(QIcon(":/icons/svg/back.svg"));
     backButton->setIconSize(QSize(24, 24));
@@ -250,43 +388,301 @@ void MainWindow::setupToolsTablePage() {
         "QPushButton {"
         "    background-color: transparent;"
         "    border: none;"
-        "    padding: 5px;"
+        "    padding: 8px;"
+        "    border-radius: 4px;"
         "}"
         "QPushButton:hover {"
         "    background-color: rgba(0, 0, 0, 0.1);"
+        "}"
+        );
+    tableLayout->addWidget(backButton, 0, Qt::AlignLeft);
+
+    // Modern filter bar - streamlined and professional
+    QHBoxLayout *filterLayout = new QHBoxLayout();
+    filterLayout->setSpacing(12);
+
+    // Search input with dropdown
+    QComboBox *searchFieldCombo = new QComboBox();
+    searchFieldCombo->addItem("Nom Matériel");
+    searchFieldCombo->addItem("Catégorie");
+    searchFieldCombo->addItem("Fournisseur");
+    searchFieldCombo->setFixedWidth(140);
+    searchFieldCombo->setStyleSheet(
+        "QComboBox {"
+        "    padding: 8px 12px;"
+        "    border: 1px solid #d4d4d4;"
         "    border-radius: 4px;"
+        "    background-color: #ffffff;"
+        "}"
+        "QComboBox::drop-down {"
+        "    border: 0px;"
+        "    width: 20px;"
+        "}"
+        "QComboBox::down-arrow {"
+        "    image: url(:/icons/svg/down-arrow.svg);"
+        "    width: 12px;"
+        "    height: 12px;"
+        "}"
+        "QComboBox QAbstractItemView {"
+        "    border: 1px solid #d4d4d4;"
+        "    selection-background-color: #f5f5f5;"
         "}"
         );
 
-    // Top Button Layout
-    QHBoxLayout *topButtonLayout = new QHBoxLayout();
-    topButtonLayout->addWidget(backButton);
-    topButtonLayout->addStretch();
-    topButtonLayout->addWidget(addMaterialButton);
-    topButtonLayout->addWidget(editMaterialButton);
-    topButtonLayout->addWidget(deleteMaterialButton);
-    toolsTableLayout->addLayout(topButtonLayout);
+    QLineEdit *searchInput = new QLineEdit();
+    searchInput->setPlaceholderText("Rechercher...");
+    searchInput->setStyleSheet(
+        "QLineEdit {"
+        "    padding: 8px 12px;"
+        "    border: 1px solid #d4d4d4;"
+        "    border-radius: 4px;"
+        "    background-color: #ffffff;"
+        "}"
+        );
 
-    // Create Tools Table
+    QPushButton *searchButton = new QPushButton("Rechercher");
+    searchButton->setStyleSheet(
+        "QPushButton {"
+        "    background-color: #198754;"
+        "    color: white;"
+        "    padding: 8px 16px;"
+        "    border-radius: 4px;"
+        "    border: none;"
+        "}"
+        "QPushButton:hover {"
+        "    background-color: #157347;"
+        "}"
+        );
+
+    // Sort controls - clean and horizontal
+    QLabel *sortLabel = new QLabel("Trier:");
+    sortLabel->setStyleSheet("color: #333;");
+
+    QComboBox *sortFieldCombo = new QComboBox();
+    sortFieldCombo->addItem("Catégorie");
+    sortFieldCombo->addItem("Nom Matériel");
+    sortFieldCombo->addItem("Stock");
+    sortFieldCombo->setFixedWidth(120);
+    sortFieldCombo->setStyleSheet(searchFieldCombo->styleSheet());
+
+    QPushButton *sortAscButton = new QPushButton("↑");
+    QPushButton *sortDescButton = new QPushButton("↓");
+
+    QString sortButtonStyle =
+        "QPushButton {"
+        "    background-color: #f8f9fa;"
+        "    color: #333;"
+        "    padding: 8px 12px;"
+        "    border: 1px solid #d4d4d4;"
+        "    min-width: 40px;"
+        "}"
+        "QPushButton:hover {"
+        "    background-color: #e9ecef;"
+        "}";
+
+    sortAscButton->setStyleSheet(sortButtonStyle + "border-radius: 4px 0 0 4px; border-right: none;");
+    sortDescButton->setStyleSheet(sortButtonStyle + "border-radius: 0 4px 4px 0;");
+
+    // Add all to filter layout
+    filterLayout->addWidget(searchFieldCombo);
+    filterLayout->addWidget(searchInput, 1);  // Give search box more space
+    filterLayout->addWidget(searchButton);
+    filterLayout->addSpacing(20);  // Space between search and sort
+    filterLayout->addWidget(sortLabel);
+    filterLayout->addWidget(sortFieldCombo);
+    filterLayout->addWidget(sortAscButton);
+    filterLayout->addWidget(sortDescButton);
+
+    tableLayout->addLayout(filterLayout);
+
+    // Table with header
+    QVBoxLayout *tableContainerLayout = new QVBoxLayout();
+    tableContainerLayout->setSpacing(0);
+    tableContainerLayout->setContentsMargins(0, 0, 0, 0);
+
+    // Custom header for the table - clean and professional
+    QWidget *tableHeader = new QWidget();
+    tableHeader->setStyleSheet(
+
+        "border: 1px solid #d4d4d4;"
+        "border-bottom: none;"
+        );
+    QHBoxLayout *headerLayout = new QHBoxLayout(tableHeader);
+    headerLayout->setContentsMargins(8, 6, 8, 6);
+    headerLayout->setSpacing(4);
+
+    // Define column headers and their widths - adjust these to match your actual data columns
+    QStringList headers = {"Nom Matériel", "Catégorie","Description", "Stock", "Stock Max","Image","Fournisseur", "Nom Projet", "Actions"};
+    int columnWidths[] = {12, 13, 12,8, 8,10,12 , 15, 25}; // percentages
+
+    for (int i = 0; i < headers.size(); i++) {
+        QLabel *headerLabel = new QLabel(headers[i]);
+        headerLabel->setStyleSheet("font-weight: 500; color: #333;");
+        headerLayout->addWidget(headerLabel, columnWidths[i]);
+    }
+
+    tableContainerLayout->addWidget(tableHeader);
+    QWidget *spacer = new QWidget();
+    spacer->setFixedHeight(8); // Adjust this value to control the amount of space
+    spacer->setStyleSheet("border-left: 1px; border-right: 1px;");
+    tableContainerLayout->addWidget(spacer);
+
+    // Create Tools Table - modern and clean
     QTableWidget *toolstable = new QTableWidget(this);
-    toolsTableLayout->addWidget(toolstable);
+    toolstable->setStyleSheet(
+        "QTableWidget {"
+        "    border: 1px solid #d4d4d4;"
+        "    gridline-color: #e6e6e6;"
+        "    background-color: #ffffff;"
+        "    selection-background-color: #e6f2ff;"
+        "    padding-top: 18px;"
+        "}"
+        "QTableWidget::item {"
+        "    padding: 6px 4px;"
+        "    border-bottom: 1px solid #e6e6e6;"
+        "}"
+        "QTableWidget::item:selected {"
+        "    background-color: #e6f2ff;"
+        "    color: #333;"
+        "}"
+        // Alternating row colors
+        "QTableWidget::item:alternate {"
+        "    background-color: #f9f9f9;"
+        "}"
+        );
+    toolstable->verticalHeader()->setDefaultSectionSize(38);
+    toolstable->setShowGrid(false); // Hide grid for cleaner look
+    toolstable->setAlternatingRowColors(true);
+    toolstable->setSelectionBehavior(QAbstractItemView::SelectRows);
+    toolstable->verticalHeader()->setVisible(false);
+    toolstable->setEditTriggers(QAbstractItemView::NoEditTriggers);
+
+    // Hide the default header since we're using our custom one
+    toolstable->horizontalHeader()->setVisible(false);
+
+    tableContainerLayout->addWidget(toolstable);
+    tableLayout->addLayout(tableContainerLayout, 1); // Give table most of the space
+
+    // Modern pagination bar - sleek and minimal
+    QHBoxLayout *paginationLayout = new QHBoxLayout();
+    paginationLayout->setContentsMargins(0, 10, 0, 0);
+
+    // Pagination controls
+    QString paginationButtonStyle =
+        "QPushButton {"
+        "    border: 1px solid #d4d4d4;"
+        "    background-color: #ffffff;"
+        "    color: #198754;"
+        "    padding: 6px 12px;"
+        "    min-width: 36px;"
+        "}"
+        "QPushButton:hover {"
+        "    background-color: #f5f5f5;"
+        "}"
+        "QPushButton:disabled {"
+        "    color: #aaa;"
+        "}";
+
+    firstPageBtn = new QPushButton("«", this);
+    firstPageBtn->setToolTip("Première page");
+    firstPageBtn->setStyleSheet(paginationButtonStyle + "border-radius: 4px 0 0 4px; border-right: none;");
+
+    prevPageBtn = new QPushButton("‹", this);
+    prevPageBtn->setToolTip("Page précédente");
+    prevPageBtn->setStyleSheet(paginationButtonStyle + "border-right: none; border-radius: 0;");
+
+    pageInfoLabel = new QLabel("Page 1 / 1");
+    pageInfoLabel->setAlignment(Qt::AlignCenter);
+    pageInfoLabel->setStyleSheet(
+        "padding: 6px 12px; border-top: 1px solid #d4d4d4; border-bottom: 1px solid #d4d4d4; background-color: #ffffff;"
+        );
+    pageInfoLabel->setMinimumWidth(100);
+
+    nextPageBtn = new QPushButton("›", this);
+    nextPageBtn->setToolTip("Page suivante");
+    nextPageBtn->setStyleSheet(paginationButtonStyle + "border-radius: 0; border-left: none; border-right: none;");
+
+    lastPageBtn = new QPushButton("»", this);
+    lastPageBtn->setToolTip("Dernière page");
+    lastPageBtn->setStyleSheet(paginationButtonStyle + "border-radius: 0 4px 4px 0; border-left: none;");
+
+    // Items per page dropdown - clean and compact
+    QLabel *itemsPerPageLabel = new QLabel("Afficher:");
+    itemsPerPageLabel->setStyleSheet("color: #333;");
+
+    itemsPerPageCombo = new QComboBox(this);
+    itemsPerPageCombo->addItem("10", 10);
+    itemsPerPageCombo->addItem("20", 20);
+    itemsPerPageCombo->addItem("50", 50);
+    itemsPerPageCombo->setFixedWidth(60);
+    itemsPerPageCombo->setStyleSheet(
+        "QComboBox {"
+        "    padding: 6px 8px;"
+        "    border: 1px solid #d4d4d4;"
+        "    border-radius: 4px;"
+        "    background-color: #ffffff;"
+        "}"
+        "QComboBox::drop-down {"
+        "    border: 0px;"
+        "    width: 20px;"
+        "}"
+        );
+
+    // Export button - professional style
+    exportPdfBtn = new QPushButton("Liste des ressources", this);
+    exportPdfBtn->setIcon(QIcon(":/icons/svg/pdf.svg"));
+    exportPdfBtn->setIconSize(QSize(16, 16));
+    exportPdfBtn->setStyleSheet(
+        "QPushButton {"
+        "    background-color: #198754;"
+        "    color: white;"
+        "    padding: 6px 12px;"
+        "    border-radius: 4px;"
+        "    border: none;"
+        "}"
+        "QPushButton:hover {"
+        "    background-color: #157347;"
+        "}"
+        );
+
+    // Add pagination controls to layout
+    paginationLayout->addWidget(firstPageBtn);
+    paginationLayout->addWidget(prevPageBtn);
+    paginationLayout->addWidget(pageInfoLabel);
+    paginationLayout->addWidget(nextPageBtn);
+    paginationLayout->addWidget(lastPageBtn);
+    paginationLayout->addSpacing(15);
+    paginationLayout->addWidget(itemsPerPageLabel);
+    paginationLayout->addWidget(itemsPerPageCombo);
+    paginationLayout->addStretch();
+    paginationLayout->addWidget(exportPdfBtn);
+
+    tableLayout->addLayout(paginationLayout);
 
     // Initialize ToolsManager
     toolsManager = new ToolsManager(toolstable, this);
 
-    // Connect Buttons to Slots
-    connect(addMaterialButton, &QPushButton::clicked, this, &MainWindow::onAddToolClicked);
-    connect(editMaterialButton, &QPushButton::clicked, this, &MainWindow::onEditToolClicked);
-    connect(deleteMaterialButton, &QPushButton::clicked, this, &MainWindow::onDeleteToolClicked);
-    connect(backButton, &QPushButton::clicked, this, &MainWindow::showToolsPage);
-}
+    connect(toolsManager, &ToolsManager::dataChanged, this, &MainWindow::calculateStatistics);
+    connect(toolsManager, &ToolsManager::dataChanged, this, &MainWindow::updateStatistics);
 
-void MainWindow::setupAddToolFormPage() {
-    QVBoxLayout *formLayout = new QVBoxLayout(addToolFormPage);
+    // Initial data load
+    calculateStatistics();
+    updateStatistics();
+    // Right side - Form Widget
+    QWidget *formWidget = new QWidget();
+    QVBoxLayout *formLayout = new QVBoxLayout(formWidget);
+
+    // Section title
+    QLabel *formTitle = new QLabel("Ajouter/Modifier Matériel");
+    formTitle->setStyleSheet("font-size: 16px; font-weight: bold; margin-bottom: 10px;");
+    formLayout->addWidget(formTitle);
 
     // Input fields
     QLineEdit *nomMaterielInput = new QLineEdit();
-    QLineEdit *categorieInput = new QLineEdit();
+    QComboBox *categorieCombo = new QComboBox();
+    categorieCombo->addItem(""); // Optional empty item
+    categorieCombo->addItems(toolsManager->getCategories());
+    categorieCombo->setEditable(false); // Allows custom categories if needed
     QLineEdit *descriptionInput = new QLineEdit();
     QSpinBox *stockInput = new QSpinBox();
     stockInput->setMinimum(0);
@@ -295,33 +691,50 @@ void MainWindow::setupAddToolFormPage() {
     QPushButton *uploadImageButton = new QPushButton("Upload Image");
     QLineEdit *fournisseurInput = new QLineEdit();
 
+    categorieCombo->setStyleSheet(
+        "QComboBox {"
+        "    padding: 8px;"
+        "    border: 1px solid #ddd;"
+        "    border-radius: 4px;"
+        "}"
+        "QComboBox::drop-down {"
+        "    border: 0px;"
+        "}"
+        "QComboBox::down-arrow {"
+        "    image: url(:/icons/svg/down-arrow.svg);" // Add your arrow icon
+        "    width: 12px;"
+        "    height: 12px;"
+        "}"
+        "QComboBox QAbstractItemView {"
+        "    border: 1px solid #ddd;"
+        "    selection-background-color: #f0f0f0;"
+        "}"
+        );
     // Add fields to the form
     QFormLayout *inputLayout = new QFormLayout();
     inputLayout->addRow("Nom Materiel:", nomMaterielInput);
-    inputLayout->addRow("Catégorie:", categorieInput);
+    inputLayout->addRow("Catégorie:", categorieCombo);
     inputLayout->addRow("Description:", descriptionInput);
     inputLayout->addRow("Stock:", stockInput);
     inputLayout->addRow("Quantité Maximale:", quantiteMaximaleInput);
     inputLayout->addRow("Image:", uploadImageButton);
     inputLayout->addRow("Fournisseur:", fournisseurInput);
+    formLayout->addLayout(inputLayout);
 
-
-    // Add a submit/edit button
+    // Add a submit button
     QPushButton *submitButton = new QPushButton("Ajouter");
-    QPushButton *backButton = new QPushButton("Retour");
+    QPushButton *clearButton = new QPushButton("Effacer");
 
     // Add buttons to a horizontal layout
     QHBoxLayout *buttonLayout = new QHBoxLayout();
-    buttonLayout->addWidget(backButton);
+    buttonLayout->addWidget(clearButton);
     buttonLayout->addWidget(submitButton);
-
-    // Add input layout and buttons to the main layout
-    formLayout->addLayout(inputLayout);
     formLayout->addLayout(buttonLayout);
+    formLayout->addStretch();
 
     // Style the form
-    addToolFormPage->setStyleSheet(
-        "QLineEdit, QSpinBox, QComboBox {"
+    formWidget->setStyleSheet(
+        "QLineEdit, QSpinBox {"
         "    padding: 8px;"
         "    border: 1px solid #ddd;"
         "    border-radius: 4px;"
@@ -338,130 +751,231 @@ void MainWindow::setupAddToolFormPage() {
         "}"
         );
 
+    // Set a maximum width for the form widget to ensure it doesn't take too much space
+    formWidget->setMaximumWidth(400);
+
+    // Set sizes for the two sections
+    tableWidget->setMinimumWidth(600);
+
+    // Add both sections to the main layout with a splitter
+    QSplitter *splitter = new QSplitter(Qt::Horizontal);
+    splitter->addWidget(tableWidget);
+    splitter->addWidget(formWidget);
+    splitter->setStretchFactor(0, 2);  // Table gets more space
+    splitter->setStretchFactor(1, 1);  // Form gets less space
+    mainLayout->addWidget(splitter);
+
+    // Connect search and sort buttons to ToolsManager methods
+    connect(searchButton, &QPushButton::clicked, this, [this, searchInput, searchFieldCombo]() {
+        toolsManager->searchTools(searchInput->text().trimmed(),
+                                  searchFieldCombo->currentText());
+    });
+
+    connect(sortAscButton, &QPushButton::clicked, this, [this, sortFieldCombo]() {
+        toolsManager->sortTools(sortFieldCombo->currentText(), Qt::AscendingOrder);
+    });
+
+    connect(sortDescButton, &QPushButton::clicked, this, [this, sortFieldCombo]() {
+        toolsManager->sortTools(sortFieldCombo->currentText(), Qt::DescendingOrder);
+    });
+
     // Connect the upload button
-    QString imagePath;
-    connect(uploadImageButton, &QPushButton::clicked, this, [&imagePath]() {
-        imagePath = QFileDialog::getOpenFileName(nullptr, "Upload Image", "", "Images (*.png *.jpg *.jpeg)");
-        if (!imagePath.isEmpty()) {
+    auto imagePath = std::make_shared<QString>();  // Shared pointer to QString
+
+    connect(uploadImageButton, &QPushButton::clicked, this, [imagePath, uploadImageButton]() {
+        *imagePath = QFileDialog::getOpenFileName(nullptr,
+                                                  "Upload Image",
+                                                  "",
+                                                  "Images (*.png *.jpg *.jpeg)");
+
+        if (!imagePath->isEmpty()) {
+            uploadImageButton->setText("Image Selected");
             QMessageBox::information(nullptr, "Success", "Image uploaded successfully.");
         }
     });
 
-    // Connect the submit/edit button
-    connect(submitButton, &QPushButton::clicked, this, [this, nomMaterielInput, categorieInput, descriptionInput, stockInput, quantiteMaximaleInput, fournisseurInput, &imagePath, submitButton]() {
-        // Get input values
-        QString nomMateriel = nomMaterielInput->text();
-        QString categorie = categorieInput->text();
-        QString description = descriptionInput->text();
-        int stock = stockInput->value();
-        int quantiteMaximale = quantiteMaximaleInput->value();
-        QString fournisseur = fournisseurInput->text();
+    // Connect the submit button
+    connect(submitButton, &QPushButton::clicked, this, [this, nomMaterielInput, categorieCombo, descriptionInput, stockInput, quantiteMaximaleInput, fournisseurInput, imagePath, submitButton, uploadImageButton]
+            () {
+                // Get input values
+                QString nomMateriel = nomMaterielInput->text();
+                QString categorie = categorieCombo->currentText();
+                QString description = descriptionInput->text();
+                int stock = stockInput->value();
+                int quantiteMaximale = quantiteMaximaleInput->value();
+                QString fournisseur = fournisseurInput->text();
 
+                // Set values in ToolsManager
+                toolsManager->setNomMateriel(nomMateriel);
+                toolsManager->setCategorie(categorie);
+                toolsManager->setDescription(description);
+                toolsManager->setStock(stock);
+                toolsManager->setQuantiteMaximale(quantiteMaximale);
+                toolsManager->setUploadImage(*imagePath);
+                toolsManager->setFournisseur(fournisseur);
 
-        // Set values in ToolsManager
-        toolsManager->setNomMateriel(nomMateriel);
-        toolsManager->setCategorie(categorie);
-        toolsManager->setDescription(description);
-        toolsManager->setStock(stock);
-        toolsManager->setQuantiteMaximale(quantiteMaximale);
-        toolsManager->setUploadImage(imagePath);
-        toolsManager->setFournisseur(fournisseur);
+                // Check if we're in edit mode
+                if (submitButton->text() == "Modifier") {
+                    // Update the tool
+                    if (toolsManager->editTool()) {
+                        // Reset form
+                        submitButton->setText("Ajouter");
+                        toolsManager->setId(-1);
+                        nomMaterielInput->clear();
+                        categorieCombo->setCurrentIndex(0);
+                        descriptionInput->clear();
+                        stockInput->setValue(0);
+                        quantiteMaximaleInput->setValue(0);
+                        uploadImageButton->setText("Upload Image");
+                        fournisseurInput->clear();
+                    }
+                } else {
+                    // Add the tool to the database
+                    if (toolsManager->addTool()) {
+                        // Reset form
+                        nomMaterielInput->clear();
+                        categorieCombo->setCurrentIndex(0);
+                        descriptionInput->clear();
+                        stockInput->setValue(0);
+                        quantiteMaximaleInput->setValue(0);
+                        uploadImageButton->setText("Upload Image");
+                        fournisseurInput->clear();
+                    }
+                }
+            });
 
+    // Connect the clear button
+    connect(clearButton, &QPushButton::clicked, this, [nomMaterielInput, categorieCombo, descriptionInput, stockInput, quantiteMaximaleInput, uploadImageButton, fournisseurInput, submitButton, this]() {
+        nomMaterielInput->clear();
+        categorieCombo->setCurrentIndex(-1);
+        descriptionInput->clear();
+        stockInput->setValue(0);
+        quantiteMaximaleInput->setValue(0);
+        uploadImageButton->setText("Upload Image");
+        fournisseurInput->clear();
+        submitButton->setText("Ajouter");
+        toolsManager->setId(-1);
+    });
 
-        // Check if we're in edit mode
-        if (submitButton->text() == "Editer") {
-            // Update the tool
-            if (toolsManager->editTool()) {
-                // Switch back to the table page
-                stackedWidget->setCurrentWidget(toolsTablePage);
-            }
-        } else {
-            // Add the tool to the database
-            if (toolsManager->addTool()) {
-                // Switch back to the table page
-                stackedWidget->setCurrentWidget(toolsTablePage);
-            }
+    // Connect back button to slot
+    connect(backButton, &QPushButton::clicked, this, &MainWindow::showToolsPage);
+
+    // Connect edit and delete signals from ToolsManager
+    connect(toolsManager, &ToolsManager::editToolRequested,
+            this, [=](int id) {
+                // Fetch the tool data by ID
+                QMap<QString, QVariant> toolData = toolsManager->getToolById(id);
+                if (toolData.isEmpty()) {
+                    QMessageBox::warning(this, "Erreur", "ID de matériel non trouvé.");
+                    return;
+                }
+
+                // Pre-fill the form fields
+                nomMaterielInput->setText(toolData["nomMateriel"].toString());
+                QString currentCategory = toolData["categorie"].toString();
+                int index = categorieCombo->findText(currentCategory);
+                if (index >= 0) {
+                    categorieCombo->setCurrentIndex(index);
+                } else {
+                    // If category doesn't exist in predefined list, add it
+                    categorieCombo->addItem(currentCategory);
+                    categorieCombo->setCurrentIndex(categorieCombo->count()-1);
+                }
+                descriptionInput->setText(toolData["description"].toString());
+                stockInput->setValue(toolData["stock"].toInt());
+                quantiteMaximaleInput->setValue(toolData["quantiteMaximale"].toInt());
+                fournisseurInput->setText(toolData["fournisseur"].toString());
+
+                // Set the image path (if any)
+                QString imagePath = toolData["uploadImage"].toString();
+                if (!imagePath.isEmpty()) {
+                    uploadImageButton->setText("Image sélectionnée");
+                }
+
+                // Change the submit button text to "Modifier"
+                submitButton->setText("Modifier");
+
+                // Set the ID of the tool being edited
+                toolsManager->setId(id);
+            });
+    // Connect pagination buttons to slots
+    connect(toolsManager, &ToolsManager::deleteToolRequested,
+            this, &MainWindow::onDeleteToolClicked);
+
+    connect(firstPageBtn, &QPushButton::clicked, this, [this]() {
+        toolsManager->goToPage(1);
+    });
+
+    connect(prevPageBtn, &QPushButton::clicked, this, [this]() {
+        toolsManager->goToPage(toolsManager->getCurrentPage() - 1);
+    });
+
+    connect(nextPageBtn, &QPushButton::clicked, this, [this]() {
+        toolsManager->goToPage(toolsManager->getCurrentPage() + 1);
+    });
+
+    connect(lastPageBtn, &QPushButton::clicked, this, [this]() {
+        toolsManager->goToPage(toolsManager->getTotalPages());
+    });
+
+    connect(itemsPerPageCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this](int index) {
+        int count = itemsPerPageCombo->itemData(index).toInt();
+        toolsManager->setItemsPerPage(count);
+    });
+
+    // Connect PDF export button
+    connect(exportPdfBtn, &QPushButton::clicked, this, &MainWindow::exportToolsToPDF);
+
+    // Connect pagination change signal from ToolsManager
+    connect(toolsManager, &ToolsManager::paginationChanged, this, &MainWindow::updatePaginationControls);
+
+}
+
+void MainWindow::updatePaginationControls(int currentPage, int totalPages) {
+    // Update the page info label
+    pageInfoLabel->setText(QString("Page %1 / %2").arg(currentPage).arg(totalPages));
+
+    // Enable/disable navigation buttons based on current position
+    firstPageBtn->setEnabled(currentPage > 1);
+    prevPageBtn->setEnabled(currentPage > 1);
+    nextPageBtn->setEnabled(currentPage < totalPages);
+    lastPageBtn->setEnabled(currentPage < totalPages);
+}
+
+void MainWindow::exportToolsToPDF() {
+    QString filePath = QFileDialog::getSaveFileName(this,
+                                                    "Enregistrer la liste des ressources",
+                                                    QString(),
+                                                    "Fichiers PDF (*.pdf)");
+
+    if (!filePath.isEmpty()) {
+        // Ensure the file has a .pdf extension
+        if (!filePath.endsWith(".pdf", Qt::CaseInsensitive)) {
+            filePath += ".pdf";
         }
-    });
 
-    // Connect the back button
-    connect(backButton, &QPushButton::clicked, this, [this]() {
-        stackedWidget->setCurrentWidget(toolsTablePage);
-    });
-
-    // Store pointers to the form widgets for later use
-    addToolFormPage->setProperty("nomMaterielInput", QVariant::fromValue(nomMaterielInput));
-    addToolFormPage->setProperty("categorieInput", QVariant::fromValue(categorieInput));
-    addToolFormPage->setProperty("descriptionInput", QVariant::fromValue(descriptionInput));
-    addToolFormPage->setProperty("stockInput", QVariant::fromValue(stockInput));
-    addToolFormPage->setProperty("quantiteMaximaleInput", QVariant::fromValue(quantiteMaximaleInput));
-    addToolFormPage->setProperty("uploadImageButton", QVariant::fromValue(uploadImageButton));
-    addToolFormPage->setProperty("fournisseurInput", QVariant::fromValue(fournisseurInput));
-    addToolFormPage->setProperty("submitButton", QVariant::fromValue(submitButton));
+        if (toolsManager->exportToPDF(filePath)) {
+            QMessageBox::information(this, "Succès", "La liste des ressources a été exportée avec succès.");
+        } else {
+            QMessageBox::warning(this, "Erreur", "Une erreur s'est produite lors de l'exportation de la liste.");
+        }
+    }
 }
-
 // Tools-related slots
-void MainWindow::onAddToolClicked() {
-    stackedWidget->setCurrentWidget(addToolFormPage);
-}
 
-void MainWindow::onEditToolClicked() {
-    bool ok;
-    int id = QInputDialog::getInt(this, "Modifier Materiel", "Entrez l'ID du matériel à modifier:", 1, 1, 100, 1, &ok);
-    if (!ok) {
-        return; // User canceled the input dialog
-    }
+void MainWindow::onDeleteToolClicked(int id) {
+    QMessageBox::StandardButton confirm;
+    confirm = QMessageBox::question(this, "Confirmer suppression",
+                                    "Voulez-vous vraiment supprimer ce matériel?",
+                                    QMessageBox::Yes|QMessageBox::No);
 
-    // Fetch the tool data by ID
-    QMap<QString, QVariant> toolData = toolsManager->getToolById(id);
-    if (toolData.isEmpty()) {
-        QMessageBox::warning(this, "Erreur", "ID de matériel non trouvé.");
-        return;
-    }
-
-    // Get pointers to the form widgets
-    QLineEdit *nomMaterielInput = addToolFormPage->property("nomMaterielInput").value<QLineEdit*>();
-    QLineEdit *categorieInput = addToolFormPage->property("categorieInput").value<QLineEdit*>();
-    QLineEdit *descriptionInput = addToolFormPage->property("descriptionInput").value<QLineEdit*>();
-    QSpinBox *stockInput = addToolFormPage->property("stockInput").value<QSpinBox*>();
-    QSpinBox *quantiteMaximaleInput = addToolFormPage->property("quantiteMaximaleInput").value<QSpinBox*>();
-    QPushButton *uploadImageButton = addToolFormPage->property("uploadImageButton").value<QPushButton*>();
-    QLineEdit *fournisseurInput = addToolFormPage->property("fournisseurInput").value<QLineEdit*>();
-    QComboBox *idProComboBox = addToolFormPage->property("idProComboBox").value<QComboBox*>();
-    QPushButton *submitButton = addToolFormPage->property("submitButton").value<QPushButton*>();
-
-    // Pre-fill the form fields
-    nomMaterielInput->setText(toolData["nomMateriel"].toString());
-    categorieInput->setText(toolData["categorie"].toString());
-    descriptionInput->setText(toolData["description"].toString());
-    stockInput->setValue(toolData["stock"].toInt());
-    quantiteMaximaleInput->setValue(toolData["quantiteMaximale"].toInt());
-    fournisseurInput->setText(toolData["fournisseur"].toString());
-    idProComboBox->setCurrentText(toolData["idPro"].toString());
-
-    // Set the image path (if any)
-    QString imagePath = toolData["uploadImage"].toString();
-    if (!imagePath.isEmpty()) {
-        uploadImageButton->setText("Image sélectionnée");
-    }
-
-    // Change the submit button text to "Editer"
-    submitButton->setText("Editer");
-
-    // Set the ID of the tool being edited
-    toolsManager->setId(id);
-
-    // Switch to the form page
-    stackedWidget->setCurrentWidget(addToolFormPage);
-}
-
-void MainWindow::onDeleteToolClicked() {
-    // Example: Delete a tool
-    bool ok;
-    int id = QInputDialog::getInt(this, "Supprimer Materiel", "Entrez l'ID du matériel à supprimer:", 1, 1, 100, 1, &ok);
-    if (ok) {
+    if (confirm == QMessageBox::Yes) {
         toolsManager->setId(id);
-        toolsManager->deleteTool();
+        if (toolsManager->deleteTool()) {
+            QMessageBox::information(this, "Succès", "Matériel supprimé avec succès");
+        } else {
+            QMessageBox::warning(this, "Erreur", "Échec de la suppression du matériel");
+        }
     }
 }
 
@@ -489,6 +1003,8 @@ void MainWindow::showResearchersPage() {
 void MainWindow::showToolsPage() {
     stackedWidget->setCurrentWidget(toolsPage);
     updateSidebarIcons(btnTools);
+    calculateStatistics();  // Refresh data when coming back
+    updateStatistics();
 }
 
 void MainWindow::showVaccinsPage() {

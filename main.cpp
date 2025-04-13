@@ -5,6 +5,9 @@
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
+#ifndef QT_CHARTS_LIB
+    qFatal("Qt Charts not available!");
+#endif
 
     DatabaseConnection dbConnection;
     bool connectionResult = dbConnection.createConnection();

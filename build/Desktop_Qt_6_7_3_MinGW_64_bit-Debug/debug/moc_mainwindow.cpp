@@ -49,13 +49,15 @@ constexpr auto qt_meta_stringdata_CLASSMainWindowENDCLASS = QtMocHelpers::string
     "updateSidebarIcons",
     "QPushButton*",
     "selectedButton",
-    "onAddToolClicked",
-    "onEditToolClicked",
     "onDeleteToolClicked",
     "showVaccinsTablePage",
     "onAddVaccinClicked",
     "onEditVaccinClicked",
-    "onDeleteVaccinClicked"
+    "onDeleteVaccinClicked",
+    "updatePaginationControls",
+    "currentPage",
+    "totalPages",
+    "exportToolsToPDF"
 );
 #else  // !QT_MOC_HAS_STRINGDATA
 #error "qtmochelpers.h not found or too old."
@@ -85,13 +87,13 @@ Q_CONSTINIT static const uint qt_meta_data_CLASSMainWindowENDCLASS[] = {
        8,    0,  116,    2, 0x08,    7 /* Private */,
        9,    0,  117,    2, 0x08,    8 /* Private */,
       10,    1,  118,    2, 0x08,    9 /* Private */,
-      13,    0,  121,    2, 0x08,   11 /* Private */,
-      14,    0,  122,    2, 0x08,   12 /* Private */,
-      15,    0,  123,    2, 0x08,   13 /* Private */,
-      16,    0,  124,    2, 0x08,   14 /* Private */,
-      17,    0,  125,    2, 0x08,   15 /* Private */,
-      18,    0,  126,    2, 0x08,   16 /* Private */,
-      19,    0,  127,    2, 0x08,   17 /* Private */,
+      13,    1,  121,    2, 0x08,   11 /* Private */,
+      14,    0,  124,    2, 0x08,   13 /* Private */,
+      15,    0,  125,    2, 0x08,   14 /* Private */,
+      16,    0,  126,    2, 0x08,   15 /* Private */,
+      17,    0,  127,    2, 0x08,   16 /* Private */,
+      18,    2,  128,    2, 0x08,   17 /* Private */,
+      21,    0,  133,    2, 0x08,   20 /* Private */,
 
  // slots: parameters
     QMetaType::Void,
@@ -103,12 +105,12 @@ Q_CONSTINIT static const uint qt_meta_data_CLASSMainWindowENDCLASS[] = {
     QMetaType::Void,
     QMetaType::Void,
     QMetaType::Void, 0x80000000 | 11,   12,
+    QMetaType::Void, QMetaType::Int,    2,
     QMetaType::Void,
     QMetaType::Void,
     QMetaType::Void,
     QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
+    QMetaType::Void, QMetaType::Int, QMetaType::Int,   19,   20,
     QMetaType::Void,
 
        0        // eod
@@ -142,12 +144,9 @@ Q_CONSTINIT const QMetaObject MainWindow::staticMetaObject = { {
         // method 'updateSidebarIcons'
         QtPrivate::TypeAndForceComplete<void, std::false_type>,
         QtPrivate::TypeAndForceComplete<QPushButton *, std::false_type>,
-        // method 'onAddToolClicked'
-        QtPrivate::TypeAndForceComplete<void, std::false_type>,
-        // method 'onEditToolClicked'
-        QtPrivate::TypeAndForceComplete<void, std::false_type>,
         // method 'onDeleteToolClicked'
         QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        QtPrivate::TypeAndForceComplete<int, std::false_type>,
         // method 'showVaccinsTablePage'
         QtPrivate::TypeAndForceComplete<void, std::false_type>,
         // method 'onAddVaccinClicked'
@@ -155,6 +154,12 @@ Q_CONSTINIT const QMetaObject MainWindow::staticMetaObject = { {
         // method 'onEditVaccinClicked'
         QtPrivate::TypeAndForceComplete<void, std::false_type>,
         // method 'onDeleteVaccinClicked'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'updatePaginationControls'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        QtPrivate::TypeAndForceComplete<int, std::false_type>,
+        QtPrivate::TypeAndForceComplete<int, std::false_type>,
+        // method 'exportToolsToPDF'
         QtPrivate::TypeAndForceComplete<void, std::false_type>
     >,
     nullptr
@@ -175,13 +180,13 @@ void MainWindow::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, 
         case 6: _t->showSettingsPage(); break;
         case 7: _t->showToolsTablePage(); break;
         case 8: _t->updateSidebarIcons((*reinterpret_cast< std::add_pointer_t<QPushButton*>>(_a[1]))); break;
-        case 9: _t->onAddToolClicked(); break;
-        case 10: _t->onEditToolClicked(); break;
-        case 11: _t->onDeleteToolClicked(); break;
-        case 12: _t->showVaccinsTablePage(); break;
-        case 13: _t->onAddVaccinClicked(); break;
-        case 14: _t->onEditVaccinClicked(); break;
-        case 15: _t->onDeleteVaccinClicked(); break;
+        case 9: _t->onDeleteToolClicked((*reinterpret_cast< std::add_pointer_t<int>>(_a[1]))); break;
+        case 10: _t->showVaccinsTablePage(); break;
+        case 11: _t->onAddVaccinClicked(); break;
+        case 12: _t->onEditVaccinClicked(); break;
+        case 13: _t->onDeleteVaccinClicked(); break;
+        case 14: _t->updatePaginationControls((*reinterpret_cast< std::add_pointer_t<int>>(_a[1])),(*reinterpret_cast< std::add_pointer_t<int>>(_a[2]))); break;
+        case 15: _t->exportToolsToPDF(); break;
         default: ;
         }
     } else if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
