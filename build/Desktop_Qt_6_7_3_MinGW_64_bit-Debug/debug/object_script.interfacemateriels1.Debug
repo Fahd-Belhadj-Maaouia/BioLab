@@ -1,0 +1,10 @@
+debug/connection.o
+debug/main.o
+debug/mainwindow.o
+debug/toolsmanager.o
+debug/vaccinmanager.o
+debug/qrcodegen.o
+debug/qrc_Resources.o
+debug/moc_mainwindow.o
+debug/moc_toolsmanager.o
+debug/moc_vaccinmanager.o

@@ -21,6 +21,9 @@
 #include <QIcon>
 #include <QFileInfo>
 #include "connection.h"
+#include "qrcodegen.hpp"
+using qrcodegen::QrCode;
+using qrcodegen::QrSegment;
 
 class ToolsManager : public QObject {
     Q_OBJECT
@@ -68,6 +71,8 @@ signals:
     void deleteToolRequested(int id);
     void paginationChanged(int currentPage, int totalPages);
     void dataChanged();
+    void qrCodeRequested(int toolId);
+
     
 
 private:

@@ -2,44 +2,66 @@
 #define MAINWINDOW_H
 // Qt Core
 #include <QMainWindow>
+
+// File handling & JSON
+#include <QFile>
 #include <QFileDialog>
-#include <QPainter>
+#include <QJsonObject>
+#include <QJsonDocument>
+#include <QDate>
+
+// QR Code library
+#include "qrcodegen.hpp"
+using qrcodegen::QrCode;
+using qrcodegen::QrSegment;
+#include <QRandomGenerator>
+
+// PDF and printing
 #include <QPrinter>
 #include <QPdfWriter>
 #include <QTextDocument>
+#include <QPainter>
 
-#include <QButtonGroup>
-#include <QComboBox>
-#include <QDateEdit>
-#include <QFileDialog>
-#include <QFormLayout>
-#include <QFrame>
-#include <QGroupBox>
-#include <QHeaderView>
-#include <QInputDialog>
+// UI elements
 #include <QLabel>
 #include <QLineEdit>
-#include <QProgressBar>
 #include <QPushButton>
 #include <QSpinBox>
-#include <QSplitter>
-#include <QStackedWidget>
-#include <QStyle>
+#include <QComboBox>
+#include <QDateEdit>
+#include <QProgressBar>
+#include <QInputDialog>
+#include <QMessageBox>
 #include <QTableWidget>
 #include <QTableWidgetItem>
 
+// Layouts and containers
 #include <QHBoxLayout>
 #include <QVBoxLayout>
+#include <QFormLayout>
+#include <QSplitter>
+#include <QStackedWidget>
+#include <QFrame>
+#include <QGroupBox>
+#include <QHeaderView>
+#include <QStyle>
+#include <QButtonGroup>
 
-#include <QFile>
+// Charts (QtCharts)
 #include <QChartView>
 #include <QPieSeries>
 #include <QBarSeries>
 #include <QBarSet>
-#include <QValueAxis>
-#include <QHBoxLayout>
 #include <QtCharts/QBarCategoryAxis>
 #include <QtCharts/QValueAxis>
+#include <QValueAxis>
+
+// Miscellaneous
+#include <QPixmap>
+#include <QImage>
+#include <QString>
+#include <QByteArray>
+#include <QUrl>
 
 // Forward declarations
 class QChart;
@@ -90,6 +112,13 @@ private slots:
     void exportToolsToPDF();
 
 private:
+    //qrcode
+    QString generateRandomString(int length);
+    void showToolQRCode(int toolId);
+    QImage generateQRCode(const QString &text, int scale = 10, int border = 4);
+    QWidget *qrCodePage = nullptr;
+    QLabel *qrCodeLabel = nullptr;
+
     // Statistics widgets
     QWidget *statsContainer;
     QChartView *pieChartView;

@@ -6,14 +6,29 @@
 #include <QInputDialog>
 #include <QSqlError>
 #include <QComboBox>
+#include <QFile>
+#include <QTextStream>
+#include <QStandardPaths>
+#include <QDir>
+#include <QUrl>
+#include <QDate>
+#include <QFile>
+#include <QStandardPaths>
+#include <QDir>
+#include <QUrl>
+#include <QDate>
+#include <QPrinter>
+#include <QPainter>
+#include <QTextDocument>
+#include <QPageSize>
+#include <QMarginsF>
+#include <QPageLayout>
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent) {
     qDebug() << "MainWindow constructor start";
     pieChartView = new QChartView(this);
     barChartView = new QChartView(this);
     qDebug() << "Chart views created";
-    // Initialize toolsManager first
-    qDebug() << "ToolsManager created";
     setupUI();
      qDebug() << "MainWindow constructor complete";
 }
@@ -922,6 +937,8 @@ void MainWindow::setupToolsTablePage() {
         int count = itemsPerPageCombo->itemData(index).toInt();
         toolsManager->setItemsPerPage(count);
     });
+    connect(toolsManager, &ToolsManager::qrCodeRequested,
+            this, &MainWindow::showToolQRCode);
 
     // Connect PDF export button
     connect(exportPdfBtn, &QPushButton::clicked, this, &MainWindow::exportToolsToPDF);
@@ -978,6 +995,97 @@ void MainWindow::onDeleteToolClicked(int id) {
         }
     }
 }
+
+QImage MainWindow::generateQRCode(const QString &text, int scale, int border) {
+    using namespace qrcodegen;
+
+    QrCode qr = QrCode::encodeText(text.toUtf8().constData(), QrCode::Ecc::MEDIUM);
+
+    QImage image(qr.getSize() * scale + border * 2,
+                 qr.getSize() * scale + border * 2,
+                 QImage::Format_RGB32);
+    image.fill(Qt::white);
+
+    for (int y = 0; y < qr.getSize(); y++) {
+        for (int x = 0; x < qr.getSize(); x++) {
+            if (qr.getModule(x, y)) {
+                for (int sy = 0; sy < scale; sy++) {
+                    for (int sx = 0; sx < scale; sx++) {
+                        image.setPixel(border + x * scale + sx,
+                                       border + y * scale + sy,
+                                       qRgb(0, 0, 0));
+                    }
+                }
+            }
+        }
+    }
+    return image;
+}
+
+void MainWindow::showToolQRCode(int toolId) {
+    if (!qrCodePage) {
+        qrCodePage = new QWidget();
+        stackedWidget->addWidget(qrCodePage);
+
+        // Main layout: horizontal
+        QHBoxLayout *mainLayout = new QHBoxLayout(qrCodePage);
+
+        // === Left side: just the back button ===
+        QVBoxLayout *leftLayout = new QVBoxLayout();
+        QPushButton *backButton = new QPushButton;
+        backButton->setIcon(QIcon(":/icons/svg/back.svg"));
+        backButton->setStyleSheet("text-align: left;");
+        connect(backButton, &QPushButton::clicked, this, &MainWindow::showToolsTablePage);
+        leftLayout->addWidget(backButton, 0, Qt::AlignTop | Qt::AlignLeft);
+        leftLayout->addStretch(); // Push it to the top
+        mainLayout->addLayout(leftLayout);
+        mainLayout->setStretch(0, 0); // Back button section: no horizontal stretch
+
+        // === Center area: QR code and label centered vertically and horizontally ===
+        QWidget *centerWidget = new QWidget();
+        QVBoxLayout *centerLayout = new QVBoxLayout(centerWidget);
+        centerLayout->setAlignment(Qt::AlignCenter); // Center contents
+
+        qrCodeLabel = new QLabel();
+        qrCodeLabel->setAlignment(Qt::AlignCenter);
+        centerLayout->addWidget(qrCodeLabel);
+
+        QLabel *instructionLabel = new QLabel("Scannez ce QR code pour voir les détails");
+        instructionLabel->setAlignment(Qt::AlignCenter);
+        QFont font = instructionLabel->font();
+        font.setPointSize(12);
+        instructionLabel->setFont(font);
+        centerLayout->addWidget(instructionLabel);
+
+        mainLayout->addWidget(centerWidget);
+        mainLayout->setStretch(1, 1); // Center section: take all the remaining space
+    }
+
+    // Get tool data
+    QMap<QString, QVariant> toolData = toolsManager->getToolById(toolId);
+    if (toolData.isEmpty()) {
+        QMessageBox::warning(this, "Erreur", "Outil non trouvé");
+        return;
+    }
+
+    // Create JSON string with tool info
+    QJsonObject toolJson;
+    toolJson["id"] = toolData["id"].toInt();
+    toolJson["nom"] = toolData["nomMateriel"].toString();
+    toolJson["categorie"] = toolData["categorie"].toString();
+    toolJson["stock"] = toolData["stock"].toInt();
+    toolJson["stock max"] = toolData["quantiteMaximale"].toInt();
+    toolJson["fournisseur"] = toolData["fournisseur"].toString();
+    toolJson["description"] = toolData["description"].toString();
+    QJsonDocument doc(toolJson);
+    QString jsonString = doc.toJson(QJsonDocument::Compact);
+
+    // Generate and display QR code
+    QImage qrImage = generateQRCode(jsonString, 15, 4);
+    qrCodeLabel->setPixmap(QPixmap::fromImage(qrImage).scaled(300, 300, Qt::KeepAspectRatio));
+    stackedWidget->setCurrentWidget(qrCodePage);
+}
+
 
 // Navigation Functions
 void MainWindow::showPatientsPage() {

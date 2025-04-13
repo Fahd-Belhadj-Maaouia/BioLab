@@ -17,13 +17,15 @@ SOURCES += \
     main.cpp \
     mainwindow.cpp \
     toolsmanager.cpp \
-    vaccinmanager.cpp
+    vaccinmanager.cpp \
+    qrcodegen.cpp
 
 HEADERS += \
     connection.h \
     mainwindow.h \
     toolsmanager.h \
-    vaccinmanager.h
+    vaccinmanager.h \
+    qrcodegen.hpp
 
 FORMS += \
     mainwindow.ui

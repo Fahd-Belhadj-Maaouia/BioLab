@@ -227,6 +227,7 @@ void ToolsManager::loadTools() {
 
             toolsTable->setItem(row, 6, new QTableWidgetItem(query.value("fournisseur").toString()));
             toolsTable->setItem(row, 7, new QTableWidgetItem(query.value("idPro").toString()));
+
             QWidget *actionWidget = new QWidget();
             QHBoxLayout *layout = new QHBoxLayout(actionWidget);
             layout->setContentsMargins(3, 3, 3, 3);
@@ -234,13 +235,16 @@ void ToolsManager::loadTools() {
 
             QPushButton *editBtn = new QPushButton("Modifier");
             QPushButton *deleteBtn = new QPushButton("Supprimer");
+            QPushButton *qrCodeBtn = new QPushButton("QR Code");
 
             // Style the buttons
             editBtn->setStyleSheet("padding: 2px 5px; font-size: 11px;");
             deleteBtn->setStyleSheet("padding: 2px 5px; font-size: 11px;");
+            qrCodeBtn->setStyleSheet("padding: 2px 5px; font-size: 11px;");
 
             layout->addWidget(editBtn);
             layout->addWidget(deleteBtn);
+            layout->addWidget(qrCodeBtn);
             actionWidget->setLayout(layout);
 
             int toolId = query.value("idR").toInt();
@@ -249,6 +253,10 @@ void ToolsManager::loadTools() {
             });
             connect(deleteBtn, &QPushButton::clicked, [this, toolId]() {
                 emit deleteToolRequested(toolId);
+            });
+            // In the while(query.next()) loop where you create action buttons:
+            connect(qrCodeBtn, &QPushButton::clicked, [this, toolId]() {
+                emit qrCodeRequested(toolId);
             });
 
             toolsTable->setCellWidget(row, 8, actionWidget);
