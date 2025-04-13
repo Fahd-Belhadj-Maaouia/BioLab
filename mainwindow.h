@@ -39,6 +39,7 @@ private slots:
     void setupResearchCards();
     void setupResearchesFormAddPage();
     void showResearchFormAdd();
+     void setupResearchesFormUpdatePage(int id);
     void setupResearchesTablePage();
     void handleDeleteRow(const QModelIndex &index);
 
@@ -46,6 +47,7 @@ private slots:
 private:
     QTableView *tableView;
     ProjetDeRecherche Etmp;
+    QWidget *researchesFormUpdatePage;
     QWidget *centralWidget;
     QWidget *contentWrapper;
     QVBoxLayout *mainLayout;

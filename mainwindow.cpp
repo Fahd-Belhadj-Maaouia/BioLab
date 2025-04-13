@@ -202,6 +202,7 @@ void MainWindow::setupPages()
     researchesPage = new QWidget();
     researchesTablePage = new QWidget();
     researchesFormAddPage = new QWidget();
+    researchesFormUpdatePage = new QWidget();
 
     QVBoxLayout *patientsLayout = new QVBoxLayout(patientsPage);
     QVBoxLayout *researchersLayout = new QVBoxLayout(researchersPage);
@@ -245,6 +246,7 @@ void MainWindow::setupPages()
     setupResearchCards();
     setupResearchesTablePage();
     setupResearchesFormAddPage();
+
     researchersLayout->addWidget(dataTable);
 
     stackedWidget->addWidget(patientsPage);
@@ -256,6 +258,7 @@ void MainWindow::setupPages()
     stackedWidget->addWidget(settingsPage);
     stackedWidget->addWidget(researchesTablePage);
     stackedWidget->addWidget(researchesFormAddPage);
+    stackedWidget->addWidget(researchesFormUpdatePage);
 }
 
 
@@ -412,7 +415,7 @@ void MainWindow::setupResearchesTablePage() {
         int row = index.row();
         int id = tableView->model()->data(tableView->model()->index(row, 0)).toInt();
 
-        qDebug() << "💥 Delete triggered, ID:" << id;
+        qDebug() << " Delete triggered, ID:" << id;
 
         if (ProjetDeRecherche::Delete(id)) {
             qDebug() << "Deleted successfully";
@@ -429,31 +432,25 @@ void MainWindow::setupResearchesTablePage() {
         int row = index.row();
         int id = tableView->model()->data(tableView->model()->index(row, 0)).toInt();
 
-        QDialog editDialog(this);
-        editDialog.setWindowTitle("Edit Project");
-        editDialog.setMinimumSize(400, 300);
+        // Clear any existing content from the update page
+        QLayout* oldLayout = researchesFormUpdatePage->layout();
+        if (oldLayout) {
+            QLayoutItem* item;
+            while ((item = oldLayout->takeAt(0))) {
+                delete item->widget();
+                delete item;
+            }
+            delete oldLayout;
+        }
 
-        QVBoxLayout layout(&editDialog);
-        QLabel idLabel("Editing Project ID: " + QString::number(id), &editDialog);
-        QLineEdit titleEdit(&editDialog);
-        QTextEdit descriptionEdit(&editDialog);
-        QPushButton saveButton("Save Changes", &editDialog);
+        // Setup the form with the project data
+        this->setupResearchesFormUpdatePage(id);
 
-        connect(&saveButton, &QPushButton::clicked, &editDialog, [&]() {
-            QMessageBox::information(this, "Success",
-                                     QString("Saved project %1").arg(id));
-            editDialog.accept();
-        });
-
-        layout.addWidget(&idLabel);
-        layout.addWidget(new QLabel("Title:", &editDialog));
-        layout.addWidget(&titleEdit);
-        layout.addWidget(new QLabel("Description:", &editDialog));
-        layout.addWidget(&descriptionEdit);
-        layout.addWidget(&saveButton);
-
-        editDialog.exec();
+        // Explicitly navigate to the update page
+        stackedWidget->setCurrentWidget(researchesFormUpdatePage);
+        qDebug() << "Navigated to update page for project ID:" << id;
     });
+
 
     // Add control buttons
     QHBoxLayout *buttonLayout = new QHBoxLayout();
@@ -580,7 +577,115 @@ void MainWindow::setupResearchesFormAddPage()
         }
     });
 }
+void MainWindow::setupResearchesFormUpdatePage(int projectId)
+{
+    // Vérification et configuration de la page researchesFormUpdatePage
+    if (!researchesFormUpdatePage) return;
+    QVBoxLayout *formLayout = qobject_cast<QVBoxLayout*>(researchesFormUpdatePage->layout());
+    if (!formLayout) {
+        formLayout = new QVBoxLayout(researchesFormUpdatePage);
+        researchesFormUpdatePage->setLayout(formLayout);
+    }
 
+    // Ajouter une carte blanche derrière le formulaire
+    QFrame *card = new QFrame();
+    card->setStyleSheet("background-color: #FFFFFF; border-radius: 10px; padding: 15px;");
+    card->setMinimumHeight(300); // Adjust this value as needed
+    QVBoxLayout *cardLayout = new QVBoxLayout(card);
+
+    QLabel *titleLabel = new QLabel("Mettre à jour une Recherche");
+    titleLabel->setStyleSheet("font-size: 18px; font-weight: bold; color: black;");
+    cardLayout->addWidget(titleLabel);
+
+    QStringList labels = {"TITRE", "SPONSOR", "PARTICIPANTS", "OBJECTIF", "LOCALISATION", "DESCRIPTION", "DATE_DEBUT", "DATE_FIN", "COUT"};
+    QMap<QString, QWidget*> inputFields;
+
+    QGridLayout *gridLayout = new QGridLayout();
+    int row = 0, col = 0;
+
+    // Fetch the project data from the database
+    ProjetDeRecherche projet = ProjetDeRecherche::getById(projectId);  // Assuming you have a method getById to retrieve the project by ID
+
+    // Fill the fields with the current project data
+    for (const QString &labelText : labels) {
+        QLabel *label = new QLabel(labelText + ":");
+        label->setStyleSheet("color: black;");
+        QWidget *input = new QLineEdit();  // All fields are QLineEdit now
+
+        // Set the placeholder text and current value from the project
+        static_cast<QLineEdit*>(input)->setPlaceholderText("Entrez " + labelText.toLower());
+
+        if (labelText == "TITRE") {
+            static_cast<QLineEdit*>(input)->setText(projet.getTITRE());
+        } else if (labelText == "SPONSOR") {
+            static_cast<QLineEdit*>(input)->setText(projet.getSPONSOR());
+        } else if (labelText == "PARTICIPANTS") {
+            static_cast<QLineEdit*>(input)->setText(projet.getPARTICIPANTS());
+        } else if (labelText == "OBJECTIF") {
+            static_cast<QLineEdit*>(input)->setText(projet.getOBJECTIF());
+        } else if (labelText == "LOCALISATION") {
+            static_cast<QLineEdit*>(input)->setText(projet.getLOCALISATION());
+        } else if (labelText == "DESCRIPTION") {
+            static_cast<QLineEdit*>(input)->setText(projet.getDESCRIPTION());
+        } else if (labelText == "DATE_DEBUT") {
+            static_cast<QLineEdit*>(input)->setText(projet.getDATE_DEBUT().toString("yyyy-MM-dd"));
+        } else if (labelText == "DATE_FIN") {
+            static_cast<QLineEdit*>(input)->setText(projet.getDATE_FIN().toString("yyyy-MM-dd"));
+        } else if (labelText == "COUT") {
+            static_cast<QLineEdit*>(input)->setText(QString::number(projet.getCOUT()));
+        }
+
+        gridLayout->addWidget(label, row, col);
+        gridLayout->addWidget(input, row, col + 1);
+
+        col += 2;
+        if (col >= 4) { // Move to the next row after 2 columns
+            col = 0;
+            row++;
+        }
+
+        input->setStyleSheet("background-color: #f8f8ff; color: black;");
+        inputFields[labelText] = input;
+    }
+
+    cardLayout->addLayout(gridLayout);
+
+    QPushButton *submitButton = new QPushButton("Mettre à jour");
+    submitButton->setStyleSheet("background-color: #007BFF; color: white; padding: 10px; border-radius: 5px;");
+    cardLayout->addWidget(submitButton);
+
+    formLayout->addWidget(card);
+
+    connect(submitButton, &QPushButton::clicked, this, [=]() {
+        QString titre = qobject_cast<QLineEdit*>(inputFields["TITRE"])->text();
+        QString sponsor = qobject_cast<QLineEdit*>(inputFields["SPONSOR"])->text();
+        QString participants = qobject_cast<QLineEdit*>(inputFields["PARTICIPANTS"])->text();
+        QString objectif = qobject_cast<QLineEdit*>(inputFields["OBJECTIF"])->text();
+        QString localisation = qobject_cast<QLineEdit*>(inputFields["LOCALISATION"])->text();
+        QString description = qobject_cast<QLineEdit*>(inputFields["DESCRIPTION"])->text();
+        QString date_debut = qobject_cast<QLineEdit*>(inputFields["DATE_DEBUT"])->text();
+        QString date_fin = qobject_cast<QLineEdit*>(inputFields["DATE_FIN"])->text();
+        int cout = qobject_cast<QLineEdit*>(inputFields["COUT"])->text().toInt();
+
+        // Validate fields
+        if (titre.isEmpty() || sponsor.isEmpty() || participants.isEmpty() || objectif.isEmpty() ||
+            localisation.isEmpty() || description.isEmpty() || date_debut.isEmpty() || date_fin.isEmpty()) {
+            QMessageBox::warning(this, "Erreur", "Veuillez remplir tous les champs !");
+            return;
+        }
+
+        // Create an object and update it in the database
+        ProjetDeRecherche projet(titre, sponsor, participants, objectif, localisation, description, cout, QDate::fromString(date_debut, "yyyy-MM-dd"), QDate::fromString(date_fin, "yyyy-MM-dd"));
+
+        if (projet.Update(projectId)) {
+            QMessageBox::information(this, "Succès", "Recherche mise à jour avec succès !");
+
+            // Optionally: Clear the fields or navigate back to the main page
+        } else {
+            QMessageBox::critical(this, "Erreur", "Échec de la mise à jour de la recherche !");
+        }
+    });
+}
 
 
 
@@ -725,3 +830,4 @@ void MainWindow::showResearchFormAdd()
 {
     stackedWidget->setCurrentWidget(researchesFormAddPage);
 }
+

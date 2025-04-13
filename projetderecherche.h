@@ -41,6 +41,7 @@ public:
     static QSqlQueryModel * Post();
     static bool Delete(int);
     bool Update(int IDPRO);
+    static ProjetDeRecherche getById(int IDPRO);
 
 
 };

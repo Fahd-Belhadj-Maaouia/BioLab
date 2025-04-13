@@ -102,3 +102,34 @@ bool ProjetDeRecherche::Update(int IDPRO)
 
     return query.exec();
 }
+
+ProjetDeRecherche ProjetDeRecherche::getById(int IDPRO)
+{
+    QSqlQuery query;
+    query.prepare("SELECT TITRE, SPONSOR, PARTICIPANTS, OBJECTIF, LOCALISATION, DESCRIPTION, DATEDEBUT, DATEFIN, COUT "
+                  "FROM PROJETDERECHERCHES WHERE IDPRO = :IDPRO");
+    query.bindValue(":IDPRO", IDPRO);
+
+    if (!query.exec()) {
+        qDebug() << "Error fetching project by ID:" << query.lastError().text();
+        return ProjetDeRecherche();  // Return an invalid object if something goes wrong
+    }
+
+    if (query.next()) {
+        // Assuming the database columns are in the same order as the constructor parameters
+        QString TITRE = query.value(0).toString();
+        QString SPONSOR = query.value(1).toString();
+        QString PARTICIPANTS = query.value(2).toString();
+        QString OBJECTIF = query.value(3).toString();
+        QString LOCALISATION = query.value(4).toString();
+        QString DESCRIPTION = query.value(5).toString();
+        QDate DATE_DEBUT = query.value(6).toDate();
+        QDate DATE_FIN = query.value(7).toDate();
+        int COUT = query.value(8).toInt();
+
+        // Return the populated ProjetDeRecherche object
+        return ProjetDeRecherche(TITRE, SPONSOR, PARTICIPANTS, OBJECTIF, LOCALISATION, DESCRIPTION, COUT, DATE_DEBUT, DATE_FIN);
+    }
+
+    return ProjetDeRecherche();  // Return an invalid object if no data is found
+}
