@@ -13,6 +13,12 @@
 #include <QButtonGroup>
 #include "projetderecherche.h"
 #include "buttondelegate.h"
+#include <QMainWindow>
+#include <QListWidget>
+#include<QSqlQuery>
+#include"todolist.h"
+
+
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -58,6 +64,12 @@ private:
         int m_projectId;
     };
     void refreshResearchTable();
+    QWidget* createTaskCard(const QString &title, QListWidget *taskList);
+    void loadTasksFromDB(QListWidget *todoList, QListWidget *completedList);
+    void addTaskToDB(const QString &task, bool completed);
+    void moveTaskInDB(const QString &task, bool fromTodoToCompleted);
+    void deleteTaskFromDB(const QString &task, bool fromCompleted);
+
 
     // Sidebar
     QVBoxLayout *sidebarLayout;
@@ -71,6 +83,7 @@ private:
     QPushButton *btnPersonel;
     QButtonGroup *sidebarButtonGroup;  // Ensure only one selection at a time
     ButtonDelegate *buttonDelegate;
+    ToDoList *todoManager;
 
 
 
@@ -94,10 +107,17 @@ private:
     // Table
     QTableWidget *dataTable;
 
+    QListWidget *todoList;
+    QListWidget *completedList;
+
     void setupUI();
     void setupSidebar();
     void setupPages();
     void setupTable();
+
+signals:
+    void taskMovedToCompleted(const QString &task);
+    void taskMovedToTodo(const QString &task);
 };
 
 #endif // MAINWINDOW_H

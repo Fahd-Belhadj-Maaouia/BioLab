@@ -1,0 +1,10 @@
+release/buttondelegate.o
+release/connection.o
+release/main.o
+release/mainwindow.o
+release/projetderecherche.o
+release/todolist.o
+release/qrc_Resouces.o
+release/moc_buttondelegate.o
+release/moc_mainwindow.o
+release/moc_todolist.o

@@ -1,0 +1,10 @@
+debug/buttondelegate.o
+debug/connection.o
+debug/main.o
+debug/mainwindow.o
+debug/projetderecherche.o
+debug/todolist.o
+debug/qrc_Resouces.o
+debug/moc_buttondelegate.o
+debug/moc_mainwindow.o
+debug/moc_todolist.o

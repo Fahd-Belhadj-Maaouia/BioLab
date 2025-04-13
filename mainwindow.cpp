@@ -11,13 +11,17 @@
 #include "projetderecherche.h"
 #include <QSqlError>
 #include "buttondelegate.h"  // Add this line with your other includes
+#include<QCheckBox>
+#include<QListWidgetItem>
+#include <QInputDialog>
 
 
 
 
 
 MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent)
+    : QMainWindow(parent),
+todoManager(new ToDoList(this))
 {
     stackedWidget = new QStackedWidget(this);
     setupUI();
@@ -242,12 +246,10 @@ void MainWindow::setupPages()
     researchesTableLayout->addWidget(researchesTableLabel);
 
 
-    setupTable();
     setupResearchCards();
     setupResearchesTablePage();
     setupResearchesFormAddPage();
 
-    researchersLayout->addWidget(dataTable);
 
     stackedWidget->addWidget(patientsPage);
     stackedWidget->addWidget(researchersPage);
@@ -265,79 +267,250 @@ void MainWindow::setupPages()
 void MainWindow::setupResearchCards()
 {
     QVBoxLayout *researchLayout = qobject_cast<QVBoxLayout*>(researchesPage->layout());
+    if (!researchLayout) return;
 
-    if (!researchLayout) return; // Ensure layout exists
+    // Clear existing widgets
+    QLayoutItem* item;
+    while ((item = researchLayout->takeAt(0)) != nullptr) {
+        delete item->widget();
+        delete item;
+    }
 
-    // Example card data
-    struct ResearchCardData {
-        QString title;
-        QString description;
-        QString iconPath;
-    };
+    // ========== TOP SECTION - 3 STAT CARDS ==========
+    QWidget *topCardsContainer = new QWidget();
+    QHBoxLayout *topCardsLayout = new QHBoxLayout(topCardsContainer);
+    topCardsLayout->setSpacing(20);
+    topCardsLayout->setContentsMargins(0, 0, 0, 0);
 
-    QVector<ResearchCardData> researchData = {
-        {"Vaccin COVID-19", "Recherche avancée sur les variants et la réponse immunitaire.", ":/icons/svg/vaccine.svg"},
-        {"Thérapie Génique", "Nouvelles approches pour traiter les maladies génétiques.", ":/icons/svg/dna.svg"},
-        {"Biotechnologie", "Développement de techniques innovantes pour la santé.", ":/icons/svg/microscope.svg"}
-    };
+    // Create 3 statistic cards
+    QStringList statTitles = {"Ongoing Projects", "Completed Tasks", "Team Members"};
+    QStringList statValues = {"12", "24", "8"};
+    QStringList statIcons = {":/icons/projects.svg", ":/icons/completed.svg", ":/icons/team.svg"};
 
-    for (const auto &data : researchData) {
+    for (int i = 0; i < 3; i++) {
         QWidget *card = new QWidget();
-        QHBoxLayout *cardLayout = new QHBoxLayout(card);
-
-        QLabel *iconLabel = new QLabel();
-        QPixmap iconPixmap(data.iconPath);
-        iconLabel->setPixmap(iconPixmap.scaled(40, 40, Qt::KeepAspectRatio));
-        iconLabel->setFixedSize(50, 50);
-
-        QLabel *titleLabel = new QLabel("<b>" + data.title + "</b>");
-        QLabel *descLabel = new QLabel(data.description);
-        descLabel->setWordWrap(true);
-
-        QVBoxLayout *textLayout = new QVBoxLayout();
-        textLayout->addWidget(titleLabel);
-        textLayout->addWidget(descLabel);
-
-        cardLayout->addWidget(iconLabel);
-        cardLayout->addLayout(textLayout);
-
-        // Styling for the card
+        card->setMinimumSize(200, 200);
         card->setStyleSheet(
             "QWidget {"
             "   background-color: #ffffff;"
-            "   border-radius: 20px;"
-            "   padding: 12px;"
-            "   border: 1px solid #ddd;"
-            "} "
-            "QLabel { font-size: 14px; }"
+            "   border-radius: 15px;"
+            "   padding: 15px;"
+            "   border: 1px solid #e0e0e0;"
+            "}"
             );
 
-        researchLayout->addWidget(card);
-    }
+        QVBoxLayout *cardLayout = new QVBoxLayout(card);
+        cardLayout->setAlignment(Qt::AlignCenter);
 
-    // Create and add the "Afficher plus" button
+        // Icon
+        QLabel *icon = new QLabel();
+        icon->setPixmap(QPixmap(statIcons[i]).scaled(40, 40, Qt::KeepAspectRatio));
+        icon->setAlignment(Qt::AlignCenter);
+
+        // Value
+        QLabel *value = new QLabel(statValues[i]);
+        value->setStyleSheet(
+            "QLabel {"
+            "   font-size: 32px;"
+            "   font-weight: bold;"
+            "   color: #2c3e50;"
+            "}"
+            );
+        value->setAlignment(Qt::AlignCenter);
+
+        // Title
+        QLabel *title = new QLabel(statTitles[i]);
+        title->setStyleSheet(
+            "QLabel {"
+            "   font-size: 14px;"
+            "   color: #7f8c8d;"
+            "}"
+            );
+        title->setAlignment(Qt::AlignCenter);
+
+        cardLayout->addWidget(icon);
+        cardLayout->addWidget(value);
+        cardLayout->addWidget(title);
+        cardLayout->addStretch();
+
+        topCardsLayout->addWidget(card);
+    }
+    topCardsLayout->addStretch();
+
+    // ========== BOTTOM SECTION - TO-DO LISTS ==========
+    QWidget *bottomCardsContainer = new QWidget();
+    QHBoxLayout *bottomCardsLayout = new QHBoxLayout(bottomCardsContainer);
+    bottomCardsLayout->setSpacing(20);
+    bottomCardsLayout->setContentsMargins(0, 0, 0, 0);
+
+    // Create the task lists
+    QListWidget *todoList = new QListWidget();
+    QListWidget *completedList = new QListWidget();
+
+    // Style the lists with black text
+    QString listStyle =
+        "QListWidget {"
+        "   border: none;"
+        "   background: transparent;"
+        "}"
+        "QListWidget::item {"
+        "   color: black;"  // Changed to black
+        "   padding: 5px;"
+        "}"
+        "QListWidget::item:selected {"
+        "   background-color: #e0e0e0;"
+        "   border-radius: 5px;"
+        "}";
+
+    todoList->setStyleSheet(listStyle);
+    completedList->setStyleSheet(listStyle);
+
+    // Create and add the cards
+    bottomCardsLayout->addWidget(createTaskCard("To-Do List", todoList));
+    bottomCardsLayout->addWidget(createTaskCard("Completed", completedList));
+    bottomCardsLayout->addStretch();
+
+    // ========== MAIN LAYOUT ==========
+    researchLayout->addWidget(topCardsContainer);
+    researchLayout->addSpacing(30);
+    researchLayout->addWidget(bottomCardsContainer);
+    researchLayout->addStretch();
+
+    // Add the "Afficher plus" button
     QPushButton *afficherPlusButton = new QPushButton("Afficher plus");
-    afficherPlusButton->setFlat(true);  // Makes the button text-only
+    afficherPlusButton->setFlat(true);
     afficherPlusButton->setStyleSheet(
         "QPushButton {"
-        "   color: #007BFF;"  // Text color (blue)
+        "   color: #007BFF;"
         "   font-size: 16px;"
-        "   padding: 5px;"
+        "   padding: 8px 16px;"
+        "   margin-top: 10px;"
         "   text-align: center;"
         "}"
         "QPushButton:hover {"
-        "   color: #0056b3;"  // Darker blue on hover
+        "   color: #0056b3;"
+        "}"
+        );
+    connect(afficherPlusButton, &QPushButton::clicked, this, &MainWindow::showResearchTablePage);
+    researchLayout->addWidget(afficherPlusButton, 0, Qt::AlignCenter);
+}
+
+QWidget* MainWindow::createTaskCard(const QString &title, QListWidget *taskList)
+{
+    QWidget *card = new QWidget();
+    card->setMinimumSize(250, 250);
+    card->setStyleSheet("QWidget { background-color: #ffffff; border-radius: 15px; padding: 10px; border: 1px solid #e0e0e0; }");
+
+    QLabel *titleLabel = new QLabel(title);
+    titleLabel->setStyleSheet("font-size: 16px; font-weight: bold; color: #333; padding-bottom: 5px;");
+
+    taskList->setStyleSheet(
+        "QListWidget {"
+        "   border: none;"
+        "   background: transparent;"
+        "}"
+        "QListWidget::item {"
+        "   color: black;"  // Ensured text is black
+        "   padding: 5px;"
+        "}"
+        "QListWidget::item:selected {"
+        "   background-color: #e0e0e0;"
+        "   border-radius: 5px;"
         "}"
         );
 
-    // Optionally, connect the button to a slot if you want to show more content or perform an action
-    connect(afficherPlusButton, &QPushButton::clicked, this, &MainWindow::showResearchTablePage);
+    // Button container
+    QWidget *buttonContainer = new QWidget();
+    QHBoxLayout *buttonLayout = new QHBoxLayout(buttonContainer);
+    buttonLayout->setContentsMargins(0, 0, 0, 0);
 
-    // Add the button to the layout
-    researchLayout->addWidget(afficherPlusButton);
+    // Add button
+    QPushButton *addButton = new QPushButton("+");
+    addButton->setFixedSize(30, 30);
+    addButton->setStyleSheet(
+        "QPushButton {"
+        "   background-color: #4CAF50;"
+        "   color: white;"
+        "   border-radius: 15px;"
+        "   font-weight: bold;"
+        "}"
+        "QPushButton:hover {"
+        "   background-color: #45a049;"
+        "}"
+        );
+
+    // Delete button
+    QPushButton *deleteButton = new QPushButton("×");
+    deleteButton->setFixedSize(30, 30);
+    deleteButton->setStyleSheet(
+        "QPushButton {"
+        "   background-color: #f44336;"
+        "   color: white;"
+        "   border-radius: 15px;"
+        "   font-weight: bold;"
+        "}"
+        "QPushButton:hover {"
+        "   background-color: #d32f2f;"
+        "}"
+        );
+    deleteButton->setEnabled(false);
+
+    buttonLayout->addWidget(addButton);
+    buttonLayout->addWidget(deleteButton);
+    buttonLayout->addStretch();
+
+    // Card layout
+    QVBoxLayout *cardLayout = new QVBoxLayout(card);
+    cardLayout->addWidget(titleLabel);
+    cardLayout->addWidget(taskList);
+    cardLayout->addWidget(buttonContainer);
+
+    // Connect signals - now using todoManager
+    connect(taskList, &QListWidget::itemSelectionChanged, [=](){
+        deleteButton->setEnabled(taskList->currentItem() != nullptr);
+    });
+
+    connect(addButton, &QPushButton::clicked, [=](){
+        bool ok;
+        QString text = QInputDialog::getText(this,
+                                             "Add Task",
+                                             "Task name:",
+                                             QLineEdit::Normal,
+                                             "",
+                                             &ok);
+        if (ok && !text.isEmpty()) {
+            bool isCompleted = (title == "Completed");
+            todoManager->addTaskToDB(text, isCompleted);  // Using todoManager
+            taskList->addItem(new QListWidgetItem(text));
+        }
+    });
+
+    connect(deleteButton, &QPushButton::clicked, [=](){
+        QListWidgetItem *item = taskList->currentItem();
+        if (item) {
+            bool isCompleted = (title == "Completed");
+            todoManager->deleteTaskFromDB(item->text(), isCompleted);  // Using todoManager
+            delete taskList->takeItem(taskList->row(item));
+        }
+    });
+
+    // Double-click to move between lists
+    if (title == "To-Do List") {
+        connect(taskList, &QListWidget::itemDoubleClicked, [=](QListWidgetItem *item){
+            todoManager->moveTaskInDB(item->text(), true);  // Move to completed
+            emit taskMovedToCompleted(item->text());  // Signal to update other list
+            delete item;
+        });
+    } else if (title == "Completed") {
+        connect(taskList, &QListWidget::itemDoubleClicked, [=](QListWidgetItem *item){
+            todoManager->moveTaskInDB(item->text(), false);  // Move back to todo
+            emit taskMovedToTodo(item->text());  // Signal to update other list
+            delete item;
+        });
+    }
+
+    return card;
 }
-
-
 
 void MainWindow::updateSidebarIcons(QPushButton *selectedButton)
 {
@@ -687,94 +860,6 @@ void MainWindow::setupResearchesFormUpdatePage(int projectId)
     });
 }
 
-
-
-void MainWindow::setupTable()
-{
-    // Create a QTableWidget with 4 rows & 7 columns
-    dataTable = new QTableWidget(4, 7, this);
-
-    // Lowercase headers to match the screenshot
-    dataTable->setHorizontalHeaderLabels(
-        {"nom", "prénom", "cin", "sexe", "date de naissance", "spécialité", "numtel"}
-        );
-
-    // ─────────────────────────────────────────────
-    // Header Styling (Soft Gray, Bold Text, Single Bottom Border)
-    // ─────────────────────────────────────────────
-    dataTable->horizontalHeader()->setStyleSheet(
-        "QHeaderView::section {"
-        "    background-color: #F5F5F7;"
-        "    color: #555;"
-        "    font-weight: bold;"
-        "    font-size: 12px;"
-        "    padding: 8px;"
-        "    border: none;"
-        "    border-bottom: 1px solid #ddd;"
-        "}"
-        );
-
-    // ─────────────────────────────────────────────
-    // Table Styling (Rounded Corners, No Grid Lines)
-    // ─────────────────────────────────────────────
-    dataTable->setStyleSheet(
-        "QTableWidget {"
-        "    background-color: #FFFFFF;"
-        "    border: 1px solid #ddd;"
-        "    border-radius: 8px;"
-        "}"
-        /* Each cell has a bottom divider */
-        "QTableWidget::item {"
-        "    border-bottom: 1px solid #ddd;"
-        "    padding: 8px;"
-        "    color: #333;"
-        "}"
-        /* Subtle highlight on selection */
-        "QTableWidget::item:selected {"
-        "    background: #EDEDED;"
-        "}"
-        );
-
-    // Hide the default grid lines (for a cleaner look)
-    dataTable->setShowGrid(false);
-
-    // Hide the vertical header (row numbers)
-    dataTable->verticalHeader()->setVisible(false);
-
-    // Stretch columns to fill the table width
-    dataTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
-
-    // Set row height
-    dataTable->verticalHeader()->setDefaultSectionSize(40);
-
-    // Disable text wrapping for each cell
-    dataTable->setWordWrap(false);
-
-    // ─────────────────────────────────────────────
-    // Sample Data
-    // ─────────────────────────────────────────────
-    QStringList row1 = {"Dr.Fahd", "Belhadj", "45865879", "Male", "JJ/MM/YYYY", "EXP", "99999999"};
-    QStringList row2 = {"Dr.Houssem", "Chelbi", "49886111", "Male", "JJ/MM/YYYY", "EXP", "99999999"};
-    QStringList row3 = {"Dr.Layth", "Lihidheb", "98745632", "Male", "JJ/MM/YYYY", "EXP", "99999999"};
-    QStringList row4 = {"Dr.Mouheb", "Amdouni", "96968735", "Male", "JJ/MM/YYYY", "EXP", "99999999"};
-    QStringList rows[] = {row1, row2, row3, row4};
-
-    // Populate the table
-    for (int i = 0; i < 4; ++i) {
-        for (int j = 0; j < 7; ++j) {
-            QTableWidgetItem *item = new QTableWidgetItem(rows[i][j]);
-
-            // Make the "sexe" column bold
-            if (j == 3) {
-                QFont boldFont;
-                boldFont.setBold(true);
-                item->setFont(boldFont);
-            }
-
-            dataTable->setItem(i, j, item);
-        }
-    }
-}
 
 
 

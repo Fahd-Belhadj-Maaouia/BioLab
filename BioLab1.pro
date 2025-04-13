@@ -8,13 +8,15 @@ SOURCES += \
     connection.cpp \
     main.cpp \
     mainwindow.cpp \
-    projetderecherche.cpp
+    projetderecherche.cpp \
+    todolist.cpp
 
 HEADERS += \
     buttondelegate.h \
     connection.h \
     mainwindow.h \
-    projetderecherche.h
+    projetderecherche.h \
+    todolist.h
 
 FORMS += \
     mainwindow.ui
