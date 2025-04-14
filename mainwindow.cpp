@@ -14,19 +14,26 @@
 #include<QCheckBox>
 #include<QListWidgetItem>
 #include <QInputDialog>
+#include <QSqlDatabase>
+#include <QSqlError>
+#include <QMessageBox>
+#include<QListWidget>
 
 
 
 
 
+// mainwindow.cpp (constructor)
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent),
-todoManager(new ToDoList(this))
+    todoManager(new ToDoList(this))
 {
+
     stackedWidget = new QStackedWidget(this);
     setupUI();
-
 }
+
+// mainwindow.cpp
 
 MainWindow::~MainWindow() {}
 
@@ -262,7 +269,7 @@ void MainWindow::setupPages()
     stackedWidget->addWidget(researchesFormAddPage);
     stackedWidget->addWidget(researchesFormUpdatePage);
 }
-
+//-------------------------------SETUP RESEARCH CARDS-----------------------------
 
 void MainWindow::setupResearchCards()
 {
@@ -347,6 +354,9 @@ void MainWindow::setupResearchCards()
     QListWidget *todoList = new QListWidget();
     QListWidget *completedList = new QListWidget();
 
+
+    todoManager->loadTasksFromDB(todoList, completedList);
+
     // Style the lists with black text
     QString listStyle =
         "QListWidget {"
@@ -364,6 +374,9 @@ void MainWindow::setupResearchCards()
 
     todoList->setStyleSheet(listStyle);
     completedList->setStyleSheet(listStyle);
+
+    todoManager->loadTasksFromDB(todoList, completedList);  // <-- ADD THIS LINE
+
 
     // Create and add the cards
     bottomCardsLayout->addWidget(createTaskCard("To-Do List", todoList));
@@ -394,6 +407,11 @@ void MainWindow::setupResearchCards()
     connect(afficherPlusButton, &QPushButton::clicked, this, &MainWindow::showResearchTablePage);
     researchLayout->addWidget(afficherPlusButton, 0, Qt::AlignCenter);
 }
+
+
+
+
+//-------------------------------CREATE TASK CARD------------------------------------------------------------
 
 QWidget* MainWindow::createTaskCard(const QString &title, QListWidget *taskList)
 {
@@ -481,7 +499,8 @@ QWidget* MainWindow::createTaskCard(const QString &title, QListWidget *taskList)
         if (ok && !text.isEmpty()) {
             bool isCompleted = (title == "Completed");
             todoManager->addTaskToDB(text, isCompleted);  // Using todoManager
-            taskList->addItem(new QListWidgetItem(text));
+            todoManager->addTaskToDB(text, isCompleted);
+            todoManager->loadTasksFromDB(todoList, completedList);  // Refresh the lists
         }
     });
 
@@ -489,8 +508,8 @@ QWidget* MainWindow::createTaskCard(const QString &title, QListWidget *taskList)
         QListWidgetItem *item = taskList->currentItem();
         if (item) {
             bool isCompleted = (title == "Completed");
-            todoManager->deleteTaskFromDB(item->text(), isCompleted);  // Using todoManager
-            delete taskList->takeItem(taskList->row(item));
+            todoManager->deleteTaskFromDB(item->text(), isCompleted);
+            todoManager->loadTasksFromDB(todoList, completedList);  // Refresh the lists
         }
     });
 
@@ -511,6 +530,9 @@ QWidget* MainWindow::createTaskCard(const QString &title, QListWidget *taskList)
 
     return card;
 }
+
+
+//---------------------------------------------------------------------------------------------------------------------------
 
 void MainWindow::updateSidebarIcons(QPushButton *selectedButton)
 {

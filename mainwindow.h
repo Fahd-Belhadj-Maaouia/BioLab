@@ -29,6 +29,7 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
+    bool initDatabase();
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 

@@ -3,7 +3,6 @@
 
 #include <QObject>
 #include <QListWidget>
-#include <QSqlQuery>
 
 class ToDoList : public QObject
 {
@@ -18,8 +17,12 @@ public:
     void moveTaskInDB(const QString &task, bool fromTodoToCompleted);
     void deleteTaskFromDB(const QString &task, bool fromCompleted);
 
+signals:
+    void taskMovedToCompleted(const QString &task);
+    void taskMovedToTodo(const QString &task);
+
 private:
-         // You can add private members here if needed
+         // Add any private members if needed
 };
 
 #endif // TODOLIST_H

@@ -1,25 +1,28 @@
 #include "projetderecherche.h"
-#include <qsqlerror.h>
+#include <QSqlQuery>
+#include <QSqlError>
+#include <QSqlDatabase>
+#include <QDebug>
 
-ProjetDeRecherche::ProjetDeRecherche(){
+ProjetDeRecherche::ProjetDeRecherche() {}
 
-}
-
-ProjetDeRecherche::ProjetDeRecherche(QString TITRE,QString SPONSOR,QString PARTICIPANTS,QString OBJECTIF,QString LOCALISATION,QString DESCRIPTION,int COUT,QDate DATE_DEBUT,QDate DATE_FIN) {
-    this->TITRE=TITRE;
-    this->SPONSOR=SPONSOR;
-    this->PARTICIPANTS=PARTICIPANTS;
-    this->OBJECTIF=OBJECTIF;
-    this->LOCALISATION=LOCALISATION;
-    this->DESCRIPTION=DESCRIPTION;
-    this->COUT=COUT;
-    this->DATE_DEBUT=DATE_DEBUT;
-    this->DATE_FIN=DATE_FIN;
+ProjetDeRecherche::ProjetDeRecherche(QString TITRE, QString SPONSOR, QString PARTICIPANTS, QString OBJECTIF,
+                                     QString LOCALISATION, QString DESCRIPTION, int COUT, QDate DATE_DEBUT, QDate DATE_FIN)
+{
+    this->TITRE = TITRE;
+    this->SPONSOR = SPONSOR;
+    this->PARTICIPANTS = PARTICIPANTS;
+    this->OBJECTIF = OBJECTIF;
+    this->LOCALISATION = LOCALISATION;
+    this->DESCRIPTION = DESCRIPTION;
+    this->COUT = COUT;
+    this->DATE_DEBUT = DATE_DEBUT;
+    this->DATE_FIN = DATE_FIN;
 }
 
 bool ProjetDeRecherche::Add()
 {
-    QSqlQuery query;
+    QSqlQuery query(QSqlDatabase::database("main_connection"));
     query.prepare("INSERT INTO PROJETDERECHERCHES (TITRE, SPONSOR, PARTICIPANTS, OBJECTIF, LOCALISATION, DESCRIPTION, DATEDEBUT, DATEFIN, COUT) "
                   "VALUES (:TITRE, :SPONSOR, :PARTICIPANTS, :OBJECTIF, :LOCALISATION, :DESCRIPTION, :DATEDEBUT, :DATEFIN, :COUT)");
 
@@ -33,15 +36,25 @@ bool ProjetDeRecherche::Add()
     query.bindValue(":DATEFIN", DATE_FIN);
     query.bindValue(":COUT", COUT);
 
+    if (!query.exec()) {
+        qDebug() << "Add Error:" << query.lastError().text();
+        return false;
+    }
 
-    return query.exec();
+    return true;
 }
 
-QSqlQueryModel * ProjetDeRecherche::Post()
+QSqlQueryModel *ProjetDeRecherche::Post()
 {
     QSqlQueryModel *model = new QSqlQueryModel();
+    QSqlDatabase db = QSqlDatabase::database("main_connection");
 
-    model->setQuery("SELECT IDpro, titre, sponsor, participants, objectif, localisation, description, DateDEBUT, DATEFIN, COUT FROM PROJETDERECHERCHES");
+    if (!db.isOpen()) {
+        qDebug() << "Database not open in Post().";
+        return model;
+    }
+
+    model->setQuery("SELECT IDpro, titre, sponsor, participants, objectif, localisation, description, DateDEBUT, DATEFIN, COUT FROM PROJETDERECHERCHES", db);
 
     model->setHeaderData(0, Qt::Horizontal, QObject::tr("IDPRO"));
     model->setHeaderData(1, Qt::Horizontal, QObject::tr("TITRE"));
@@ -54,29 +67,26 @@ QSqlQueryModel * ProjetDeRecherche::Post()
     model->setHeaderData(8, Qt::Horizontal, QObject::tr("DATEFIN"));
     model->setHeaderData(9, Qt::Horizontal, QObject::tr("COUT"));
 
-
     return model;
 }
 
-
 bool ProjetDeRecherche::Delete(int IDPRO)
 {
-    QSqlQuery query;
+    QSqlQuery query(QSqlDatabase::database("main_connection"));
     query.prepare("DELETE FROM PROJETDERECHERCHES WHERE IDPRO = :ID");
     query.bindValue(":ID", IDPRO);
 
     if (!query.exec()) {
-        qDebug() << "Error deleting project:" << query.lastError().text();
+        qDebug() << "Delete Error:" << query.lastError().text();
         return false;
     }
 
     return true;
 }
 
-
 bool ProjetDeRecherche::Update(int IDPRO)
 {
-    QSqlQuery query;
+    QSqlQuery query(QSqlDatabase::database("main_connection"));
     query.prepare("UPDATE PROJETDERECHERCHES SET "
                   "TITRE = :TITRE, "
                   "SPONSOR = :SPONSOR, "
@@ -100,36 +110,39 @@ bool ProjetDeRecherche::Update(int IDPRO)
     query.bindValue(":COUT", COUT);
     query.bindValue(":IDPRO", IDPRO);
 
-    return query.exec();
+    if (!query.exec()) {
+        qDebug() << "Update Error:" << query.lastError().text();
+        return false;
+    }
+
+    return true;
 }
 
 ProjetDeRecherche ProjetDeRecherche::getById(int IDPRO)
 {
-    QSqlQuery query;
+    QSqlQuery query(QSqlDatabase::database("main_connection"));
     query.prepare("SELECT TITRE, SPONSOR, PARTICIPANTS, OBJECTIF, LOCALISATION, DESCRIPTION, DATEDEBUT, DATEFIN, COUT "
                   "FROM PROJETDERECHERCHES WHERE IDPRO = :IDPRO");
     query.bindValue(":IDPRO", IDPRO);
 
     if (!query.exec()) {
-        qDebug() << "Error fetching project by ID:" << query.lastError().text();
-        return ProjetDeRecherche();  // Return an invalid object if something goes wrong
+        qDebug() << "GetById Error:" << query.lastError().text();
+        return ProjetDeRecherche();
     }
 
     if (query.next()) {
-        // Assuming the database columns are in the same order as the constructor parameters
-        QString TITRE = query.value(0).toString();
-        QString SPONSOR = query.value(1).toString();
-        QString PARTICIPANTS = query.value(2).toString();
-        QString OBJECTIF = query.value(3).toString();
-        QString LOCALISATION = query.value(4).toString();
-        QString DESCRIPTION = query.value(5).toString();
-        QDate DATE_DEBUT = query.value(6).toDate();
-        QDate DATE_FIN = query.value(7).toDate();
-        int COUT = query.value(8).toInt();
-
-        // Return the populated ProjetDeRecherche object
-        return ProjetDeRecherche(TITRE, SPONSOR, PARTICIPANTS, OBJECTIF, LOCALISATION, DESCRIPTION, COUT, DATE_DEBUT, DATE_FIN);
+        return ProjetDeRecherche(
+            query.value(0).toString(),
+            query.value(1).toString(),
+            query.value(2).toString(),
+            query.value(3).toString(),
+            query.value(4).toString(),
+            query.value(5).toString(),
+            query.value(8).toInt(), // COUT
+            query.value(6).toDate(),
+            query.value(7).toDate()
+            );
     }
 
-    return ProjetDeRecherche();  // Return an invalid object if no data is found
+    return ProjetDeRecherche();
 }
