@@ -17,6 +17,7 @@
 #include <QListWidget>
 #include<QSqlQuery>
 #include"todolist.h"
+#include <QLineEdit>
 
 
 
@@ -46,12 +47,15 @@ private slots:
     void setupResearchCards();
     void setupResearchesFormAddPage();
     void showResearchFormAdd();
-     void setupResearchesFormUpdatePage(int id);
+    void setupResearchesFormUpdatePage(int id);
     void setupResearchesTablePage();
     void handleDeleteRow(const QModelIndex &index);
+    void searchProjects();
 
 
 private:
+
+
     QTableView *tableView;
     ProjetDeRecherche Etmp;
     QWidget *researchesFormUpdatePage;
@@ -115,6 +119,9 @@ private:
     void setupSidebar();
     void setupPages();
     void setupTable();
+
+    // Ajoute cette ligne pour déclarer searchLineEdit
+    QLineEdit *searchLineEdit;
 
 signals:
     void taskMovedToCompleted(const QString &task);

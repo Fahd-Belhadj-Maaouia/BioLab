@@ -60,7 +60,8 @@ constexpr auto qt_meta_stringdata_CLASSMainWindowENDCLASS = QtMocHelpers::string
     "setupResearchesTablePage",
     "handleDeleteRow",
     "QModelIndex",
-    "index"
+    "index",
+    "searchProjects"
 );
 #else  // !QT_MOC_HAS_STRINGDATA
 #error "qtmochelpers.h not found or too old."
@@ -73,7 +74,7 @@ Q_CONSTINIT static const uint qt_meta_data_CLASSMainWindowENDCLASS[] = {
       12,       // revision
        0,       // classname
        0,    0, // classinfo
-      17,   14, // methods
+      18,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
@@ -81,25 +82,26 @@ Q_CONSTINIT static const uint qt_meta_data_CLASSMainWindowENDCLASS[] = {
        2,       // signalCount
 
  // signals: name, argc, parameters, tag, flags, initial metatype offsets
-       1,    1,  116,    2, 0x06,    1 /* Public */,
-       4,    1,  119,    2, 0x06,    3 /* Public */,
+       1,    1,  122,    2, 0x06,    1 /* Public */,
+       4,    1,  125,    2, 0x06,    3 /* Public */,
 
  // slots: name, argc, parameters, tag, flags, initial metatype offsets
-       5,    0,  122,    2, 0x08,    5 /* Private */,
-       6,    0,  123,    2, 0x08,    6 /* Private */,
-       7,    0,  124,    2, 0x08,    7 /* Private */,
-       8,    0,  125,    2, 0x08,    8 /* Private */,
-       9,    0,  126,    2, 0x08,    9 /* Private */,
-      10,    0,  127,    2, 0x08,   10 /* Private */,
-      11,    0,  128,    2, 0x08,   11 /* Private */,
-      12,    0,  129,    2, 0x08,   12 /* Private */,
-      13,    1,  130,    2, 0x08,   13 /* Private */,
-      16,    0,  133,    2, 0x08,   15 /* Private */,
-      17,    0,  134,    2, 0x08,   16 /* Private */,
-      18,    0,  135,    2, 0x08,   17 /* Private */,
-      19,    1,  136,    2, 0x08,   18 /* Private */,
-      21,    0,  139,    2, 0x08,   20 /* Private */,
-      22,    1,  140,    2, 0x08,   21 /* Private */,
+       5,    0,  128,    2, 0x08,    5 /* Private */,
+       6,    0,  129,    2, 0x08,    6 /* Private */,
+       7,    0,  130,    2, 0x08,    7 /* Private */,
+       8,    0,  131,    2, 0x08,    8 /* Private */,
+       9,    0,  132,    2, 0x08,    9 /* Private */,
+      10,    0,  133,    2, 0x08,   10 /* Private */,
+      11,    0,  134,    2, 0x08,   11 /* Private */,
+      12,    0,  135,    2, 0x08,   12 /* Private */,
+      13,    1,  136,    2, 0x08,   13 /* Private */,
+      16,    0,  139,    2, 0x08,   15 /* Private */,
+      17,    0,  140,    2, 0x08,   16 /* Private */,
+      18,    0,  141,    2, 0x08,   17 /* Private */,
+      19,    1,  142,    2, 0x08,   18 /* Private */,
+      21,    0,  145,    2, 0x08,   20 /* Private */,
+      22,    1,  146,    2, 0x08,   21 /* Private */,
+      25,    0,  149,    2, 0x08,   23 /* Private */,
 
  // signals: parameters
     QMetaType::Void, QMetaType::QString,    3,
@@ -121,6 +123,7 @@ Q_CONSTINIT static const uint qt_meta_data_CLASSMainWindowENDCLASS[] = {
     QMetaType::Void, QMetaType::Int,   20,
     QMetaType::Void,
     QMetaType::Void, 0x80000000 | 23,   24,
+    QMetaType::Void,
 
        0        // eod
 };
@@ -172,7 +175,9 @@ Q_CONSTINIT const QMetaObject MainWindow::staticMetaObject = { {
         QtPrivate::TypeAndForceComplete<void, std::false_type>,
         // method 'handleDeleteRow'
         QtPrivate::TypeAndForceComplete<void, std::false_type>,
-        QtPrivate::TypeAndForceComplete<const QModelIndex &, std::false_type>
+        QtPrivate::TypeAndForceComplete<const QModelIndex &, std::false_type>,
+        // method 'searchProjects'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>
     >,
     nullptr
 } };
@@ -200,6 +205,7 @@ void MainWindow::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, 
         case 14: _t->setupResearchesFormUpdatePage((*reinterpret_cast< std::add_pointer_t<int>>(_a[1]))); break;
         case 15: _t->setupResearchesTablePage(); break;
         case 16: _t->handleDeleteRow((*reinterpret_cast< std::add_pointer_t<QModelIndex>>(_a[1]))); break;
+        case 17: _t->searchProjects(); break;
         default: ;
         }
     } else if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
@@ -251,13 +257,13 @@ int MainWindow::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 17)
+        if (_id < 18)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 17;
+        _id -= 18;
     } else if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 17)
+        if (_id < 18)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 17;
+        _id -= 18;
     }
     return _id;
 }

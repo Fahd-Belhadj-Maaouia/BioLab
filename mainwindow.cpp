@@ -10,7 +10,7 @@
 #include<QTextEdit>
 #include "projetderecherche.h"
 #include <QSqlError>
-#include "buttondelegate.h"  // Add this line with your other includes
+#include "buttondelegate.h"
 #include<QCheckBox>
 #include<QListWidgetItem>
 #include <QInputDialog>
@@ -596,8 +596,8 @@ void MainWindow::setupResearchesTablePage() {
     tableView->verticalHeader()->setVisible(false);
     tableView->horizontalHeader()->setSectionResizeMode(QHeaderView::Interactive);
     tableView->resizeColumnsToContents();
-    tableView->setSortingEnabled(true);
-    tableView->horizontalHeader()->setStretchLastSection(true);
+    tableView->setSortingEnabled(true); // Enable sorting
+    tableView->horizontalHeader()->setSortIndicator(1, Qt::AscendingOrder); // Sort by "TITRE" column
 
     // Create and set button delegate
     buttonDelegate = new ButtonDelegate(tableView); // only once
@@ -616,8 +616,6 @@ void MainWindow::setupResearchesTablePage() {
             QMessageBox::warning(this, "Error", "Delete failed");
         }
     });
-
-
 
     connect(buttonDelegate, &ButtonDelegate::updateClicked, this, [this](const QModelIndex &index) {
         int row = index.row();
@@ -642,7 +640,6 @@ void MainWindow::setupResearchesTablePage() {
         qDebug() << "Navigated to update page for project ID:" << id;
     });
 
-
     // Add control buttons
     QHBoxLayout *buttonLayout = new QHBoxLayout();
 
@@ -664,9 +661,42 @@ void MainWindow::setupResearchesTablePage() {
         refreshResearchTable();
     });
 
+    // Search input and button
+    searchLineEdit = new QLineEdit();
+    searchLineEdit->setPlaceholderText("Search by Title...");
+    searchLineEdit->setStyleSheet(
+        "QLineEdit {"
+        " color: black;"
+        " border: 2px solid grey;"
+        " border-radius: 6px;"
+        " padding: 6px;"
+        "}"
+        );
+
+    QPushButton *searchButton = new QPushButton("Search");
+    searchButton->setStyleSheet(
+        "QPushButton { background-color: #2196F3; color: white; padding: 8px 16px; "
+        "border: none; border-radius: 4px; }"
+        "QPushButton:hover { background-color: #0b7dda; }"
+        );
+    connect(searchButton, &QPushButton::clicked, this, &MainWindow::searchProjects);
+
+    // Sort button
+    QPushButton *sortButton = new QPushButton("Sort by Title");
+    sortButton->setStyleSheet(
+        "QPushButton { background-color: #2196F3; color: white; padding: 8px 16px; "
+        "border: none; border-radius: 4px; }"
+        "QPushButton:hover { background-color: #0b7dda; }"
+        );
+    connect(sortButton, &QPushButton::clicked, this, [this]() {
+        tableView->sortByColumn(1, Qt::AscendingOrder); // Sort by "TITRE" column
+    });
 
     buttonLayout->addWidget(addButton);
     buttonLayout->addWidget(refreshButton);
+    buttonLayout->addWidget(searchLineEdit);
+    buttonLayout->addWidget(searchButton);
+    buttonLayout->addWidget(sortButton);
     buttonLayout->addStretch();
 
     mainLayout->addLayout(buttonLayout);
@@ -675,6 +705,48 @@ void MainWindow::setupResearchesTablePage() {
     mainLayout->setStretch(1, 1);
 }
 
+
+
+//-----------------------------------recherche(ramma)--------------------------
+void MainWindow::searchProjects() {
+    QString searchTitle = searchLineEdit->text();
+    if (searchTitle.isEmpty()) {
+        QMessageBox::warning(this, "Search", "Please enter a title to search.");
+        return;
+    }
+
+    QSqlQueryModel *model = new QSqlQueryModel();
+    QSqlDatabase db = QSqlDatabase::database("main_connection");
+
+    if (!db.isOpen()) {
+        qDebug() << "Database not open in searchProjects().";
+        return;
+    }
+
+    QString queryText = "SELECT IDpro, titre, sponsor, participants, objectif, localisation, description, DateDEBUT, DATEFIN, COUT "
+                        "FROM PROJETDERECHERCHES "
+                        "WHERE titre LIKE '%" + searchTitle + "%'";
+    model->setQuery(queryText, db);
+
+    if (model->lastError().isValid()) {
+        qDebug() << "Search query error:" << model->lastError().text();
+        QMessageBox::warning(this, "Search", "Error in search query.");
+        return;
+    }
+
+    model->setHeaderData(0, Qt::Horizontal, QObject::tr("IDPRO"));
+    model->setHeaderData(1, Qt::Horizontal, QObject::tr("TITRE"));
+    model->setHeaderData(2, Qt::Horizontal, QObject::tr("SPONSOR"));
+    model->setHeaderData(3, Qt::Horizontal, QObject::tr("PARTICIPANTS"));
+    model->setHeaderData(4, Qt::Horizontal, QObject::tr("OBJECTIF"));
+    model->setHeaderData(5, Qt::Horizontal, QObject::tr("LOCALISATION"));
+    model->setHeaderData(6, Qt::Horizontal, QObject::tr("DESCRIPTION"));
+    model->setHeaderData(7, Qt::Horizontal, QObject::tr("DateDEBUT"));
+    model->setHeaderData(8, Qt::Horizontal, QObject::tr("DATEFIN"));
+    model->setHeaderData(9, Qt::Horizontal, QObject::tr("COUT"));
+
+    tableView->setModel(model);
+}
 
 
 
@@ -933,4 +1005,3 @@ void MainWindow::showResearchFormAdd()
 {
     stackedWidget->setCurrentWidget(researchesFormAddPage);
 }
-
