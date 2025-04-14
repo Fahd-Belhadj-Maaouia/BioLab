@@ -351,11 +351,8 @@ void MainWindow::setupResearchCards()
     bottomCardsLayout->setContentsMargins(0, 0, 0, 0);
 
     // Create the task lists
-    QListWidget *todoList = new QListWidget();
-    QListWidget *completedList = new QListWidget();
-
-
-    todoManager->loadTasksFromDB(todoList, completedList);
+    todoList = new QListWidget();
+    completedList = new QListWidget();
 
     // Style the lists with black text
     QString listStyle =
@@ -376,7 +373,6 @@ void MainWindow::setupResearchCards()
     completedList->setStyleSheet(listStyle);
 
     todoManager->loadTasksFromDB(todoList, completedList);  // <-- ADD THIS LINE
-
 
     // Create and add the cards
     bottomCardsLayout->addWidget(createTaskCard("To-Do List", todoList));
@@ -407,6 +403,7 @@ void MainWindow::setupResearchCards()
     connect(afficherPlusButton, &QPushButton::clicked, this, &MainWindow::showResearchTablePage);
     researchLayout->addWidget(afficherPlusButton, 0, Qt::AlignCenter);
 }
+
 
 
 
@@ -499,7 +496,6 @@ QWidget* MainWindow::createTaskCard(const QString &title, QListWidget *taskList)
         if (ok && !text.isEmpty()) {
             bool isCompleted = (title == "Completed");
             todoManager->addTaskToDB(text, isCompleted);  // Using todoManager
-            todoManager->addTaskToDB(text, isCompleted);
             todoManager->loadTasksFromDB(todoList, completedList);  // Refresh the lists
         }
     });

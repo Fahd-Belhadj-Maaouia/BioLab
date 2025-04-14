@@ -13,6 +13,8 @@ ToDoList::ToDoList(QObject *parent) : QObject(parent) {}
 //---------------------------------------LOAD--------------------------------------------------------------------
 
 void ToDoList::loadTasksFromDB(QListWidget *todoList, QListWidget *completedList) {
+
+
     todoList->clear();
     completedList->clear();
 
@@ -49,9 +51,6 @@ void ToDoList::loadTasksFromDB(QListWidget *todoList, QListWidget *completedList
 
 //------------------------------------------ADD------------------------------------------
 
-
-
-
 void ToDoList::addTaskToDB(const QString &task, bool completed)
 {
     QSqlDatabase db = QSqlDatabase::database("main_connection");
@@ -75,6 +74,7 @@ void ToDoList::addTaskToDB(const QString &task, bool completed)
         qDebug() << "✅ Task inserted:" << task;
     }
 }
+
 
 //------------------Delete---------------------------------
 
