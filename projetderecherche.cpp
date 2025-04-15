@@ -54,7 +54,7 @@ QSqlQueryModel *ProjetDeRecherche::Post()
         return model;
     }
 
-    model->setQuery("SELECT IDpro, titre, sponsor, participants, objectif, localisation, description, DateDEBUT, DATEFIN, COUT FROM PROJETDERECHERCHES", db);
+    model->setQuery("SELECT IDpro, titre, sponsor, participants, objectif, localisation, description, DateDEBUT, DATEFIN, COUT, '' AS Actions FROM PROJETDERECHERCHES", db);
 
     model->setHeaderData(0, Qt::Horizontal, QObject::tr("IDPRO"));
     model->setHeaderData(1, Qt::Horizontal, QObject::tr("TITRE"));
@@ -66,6 +66,7 @@ QSqlQueryModel *ProjetDeRecherche::Post()
     model->setHeaderData(7, Qt::Horizontal, QObject::tr("DateDEBUT"));
     model->setHeaderData(8, Qt::Horizontal, QObject::tr("DATEFIN"));
     model->setHeaderData(9, Qt::Horizontal, QObject::tr("COUT"));
+    model->setHeaderData(10, Qt::Horizontal, QObject::tr("ACTIONS"));
 
     return model;
 }

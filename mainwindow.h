@@ -18,6 +18,7 @@
 #include<QSqlQuery>
 #include"todolist.h"
 #include <QLineEdit>
+#include <QSortFilterProxyModel>
 
 
 
@@ -87,7 +88,6 @@ private:
     QPushButton *btnTools;
     QPushButton *btnPersonel;
     QButtonGroup *sidebarButtonGroup;  // Ensure only one selection at a time
-    ButtonDelegate *buttonDelegate;
     ToDoList *todoManager;
 
 
@@ -114,6 +114,11 @@ private:
 
     QListWidget *todoList;
     QListWidget *completedList;
+
+    //searchTableVariables
+    QSqlQueryModel *sqlModel;
+    QSortFilterProxyModel *proxyModel;
+    ButtonDelegate *buttonDelegate;
 
     void setupUI();
     void setupSidebar();

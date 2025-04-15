@@ -26,7 +26,9 @@
 // mainwindow.cpp (constructor)
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent),
-    todoManager(new ToDoList(this))
+    todoManager(new ToDoList(this)),sqlModel(nullptr),
+    proxyModel(nullptr),
+    buttonDelegate(nullptr)
 {
 
     stackedWidget = new QStackedWidget(this);
@@ -74,16 +76,24 @@ void MainWindow::handleDeleteRow(const QModelIndex &index) {
 // mainwindow.cpp
 
 void MainWindow::refreshResearchTable() {
-    QSqlQueryModel *newModel = ProjetDeRecherche::Post();
-    tableView->setModel(newModel);
+    QSqlQueryModel *newSqlModel = ProjetDeRecherche::Post();
+    proxyModel->setSourceModel(newSqlModel); // Reconnect proxy to fresh data
+
+    // Re-assign model to table (optional safety)
+    tableView->setModel(proxyModel);
+
+    // Re-hide the ID column
     tableView->hideColumn(0);
 
-    int actionsColumn = newModel->columnCount();
-    newModel->insertColumn(actionsColumn);
-    newModel->setHeaderData(actionsColumn, Qt::Horizontal, "Actions");
+    // Sorting again (optional)
+    tableView->setSortingEnabled(true);
+    tableView->sortByColumn(1, Qt::AscendingOrder);
 
-    tableView->setItemDelegateForColumn(actionsColumn, buttonDelegate); // reuse the same one
+    // Re-set delegate (in case it got reset)
+    int actionsColumn = proxyModel->columnCount() - 1;
+    tableView->setItemDelegateForColumn(actionsColumn, buttonDelegate);
 }
+
 
 
 
@@ -583,26 +593,31 @@ void MainWindow::setupResearchesTablePage() {
     tableView->setStyleSheet("QTableView { color: black; }");
 
     // Set model and configure columns
-    QSqlQueryModel *model = ProjetDeRecherche::Post();
-    tableView->setModel(model);
+    //QSqlQueryModel *model = ProjetDeRecherche::Post();
+
+    QSqlQueryModel *sqlModel = ProjetDeRecherche::Post();
+
+    proxyModel = new QSortFilterProxyModel(this);
+    proxyModel->setSourceModel(sqlModel);
+    proxyModel->setSortCaseSensitivity(Qt::CaseInsensitive); // optional
+    proxyModel->setFilterCaseSensitivity(Qt::CaseInsensitive); // optional
+
+
+
+     // FIRST configure all columns and headers
+    ProjetDeRecherche::Post();
+
+
+    // NOW set the model
+    tableView->setModel(proxyModel);
     tableView->hideColumn(0); // Hide ID column
 
-    // Add actions column
-    model->insertColumn(model->columnCount());
-    model->setHeaderData(model->columnCount() - 1, Qt::Horizontal, "Actions");
-
-    // Table configuration
-    tableView->setSelectionMode(QAbstractItemView::SingleSelection);
-    tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
-    tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    tableView->verticalHeader()->setVisible(false);
-    tableView->horizontalHeader()->setSectionResizeMode(QHeaderView::Interactive);
-    tableView->resizeColumnsToContents();
-    tableView->setSortingEnabled(true); // Enable sorting
-    tableView->horizontalHeader()->setSortIndicator(1, Qt::AscendingOrder); // Sort by "TITRE" column
+    // Create and assign delegate
+    //buttonDelegate = new ButtonDelegate(this);
+    int actionsColumn = proxyModel->columnCount() - 1;
 
     // Create and set button delegate
-    buttonDelegate = new ButtonDelegate(tableView); // only once
+    buttonDelegate = new ButtonDelegate(this); // only once
 
     connect(buttonDelegate, &ButtonDelegate::deleteClicked, this, [this](const QModelIndex &index) {
         int row = index.row();
@@ -642,6 +657,25 @@ void MainWindow::setupResearchesTablePage() {
         qDebug() << "Navigated to update page for project ID:" << id;
     });
 
+    tableView->setItemDelegateForColumn(actionsColumn, buttonDelegate);
+
+
+
+    // Table configuration
+    tableView->setSelectionMode(QAbstractItemView::SingleSelection);
+    tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
+    tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    tableView->verticalHeader()->setVisible(false);
+    tableView->horizontalHeader()->setSectionResizeMode(QHeaderView::Interactive);
+    tableView->resizeColumnsToContents();
+
+
+    // Configure sorting AFTER model is fully set up
+    tableView->setSortingEnabled(true); // Enable sorting
+    tableView->horizontalHeader()->setSortIndicator(1, Qt::AscendingOrder); // Sort by "TITRE" column
+
+
+
     // Add control buttons
     QHBoxLayout *buttonLayout = new QHBoxLayout();
 
@@ -662,6 +696,8 @@ void MainWindow::setupResearchesTablePage() {
     connect(refreshButton, &QPushButton::clicked, this, [this]() {
         refreshResearchTable();
     });
+
+
 
     // Search input and button
     searchLineEdit = new QLineEdit();
@@ -691,7 +727,9 @@ void MainWindow::setupResearchesTablePage() {
         "QPushButton:hover { background-color: #0b7dda; }"
         );
     connect(sortButton, &QPushButton::clicked, this, [this]() {
-        tableView->sortByColumn(1, Qt::AscendingOrder); // Sort by "TITRE" column
+         qDebug() << "Sort button clicked! Sorting column 1 (TITRE).";
+        tableView->sortByColumn(2, Qt::DescendingOrder); // Sort by "TITRE" column
+
     });
 
     buttonLayout->addWidget(addButton);
@@ -717,37 +755,8 @@ void MainWindow::searchProjects() {
         return;
     }
 
-    QSqlQueryModel *model = new QSqlQueryModel();
-    QSqlDatabase db = QSqlDatabase::database("main_connection");
-
-    if (!db.isOpen()) {
-        qDebug() << "Database not open in searchProjects().";
-        return;
-    }
-
-    QString queryText = "SELECT IDpro, titre, sponsor, participants, objectif, localisation, description, DateDEBUT, DATEFIN, COUT "
-                        "FROM PROJETDERECHERCHES "
-                        "WHERE titre LIKE '%" + searchTitle + "%'";
-    model->setQuery(queryText, db);
-
-    if (model->lastError().isValid()) {
-        qDebug() << "Search query error:" << model->lastError().text();
-        QMessageBox::warning(this, "Search", "Error in search query.");
-        return;
-    }
-
-    model->setHeaderData(0, Qt::Horizontal, QObject::tr("IDPRO"));
-    model->setHeaderData(1, Qt::Horizontal, QObject::tr("TITRE"));
-    model->setHeaderData(2, Qt::Horizontal, QObject::tr("SPONSOR"));
-    model->setHeaderData(3, Qt::Horizontal, QObject::tr("PARTICIPANTS"));
-    model->setHeaderData(4, Qt::Horizontal, QObject::tr("OBJECTIF"));
-    model->setHeaderData(5, Qt::Horizontal, QObject::tr("LOCALISATION"));
-    model->setHeaderData(6, Qt::Horizontal, QObject::tr("DESCRIPTION"));
-    model->setHeaderData(7, Qt::Horizontal, QObject::tr("DateDEBUT"));
-    model->setHeaderData(8, Qt::Horizontal, QObject::tr("DATEFIN"));
-    model->setHeaderData(9, Qt::Horizontal, QObject::tr("COUT"));
-
-    tableView->setModel(model);
+    proxyModel->setFilterKeyColumn(1); // column 1 = "TITRE"
+    proxyModel->setFilterRegularExpression(QRegularExpression(searchTitle, QRegularExpression::CaseInsensitiveOption));
 }
 
 
