@@ -76,22 +76,27 @@ void MainWindow::handleDeleteRow(const QModelIndex &index) {
 // mainwindow.cpp
 
 void MainWindow::refreshResearchTable() {
+    // Clear any active search filter
+    searchLineEdit->clear();  // Clear the search input field
+    proxyModel->setFilterFixedString("");  // Clear the proxy model filter
+
+    // Refresh the model with all data
     QSqlQueryModel *newSqlModel = ProjetDeRecherche::Post();
-    proxyModel->setSourceModel(newSqlModel); // Reconnect proxy to fresh data
+    proxyModel->setSourceModel(newSqlModel);
 
-    // Re-assign model to table (optional safety)
-    tableView->setModel(proxyModel);
-
-    // Re-hide the ID column
-    tableView->hideColumn(0);
-
-    // Sorting again (optional)
-    tableView->setSortingEnabled(true);
-    tableView->sortByColumn(1, Qt::AscendingOrder);
-
-    // Re-set delegate (in case it got reset)
+    // Reconnect delegate
     int actionsColumn = proxyModel->columnCount() - 1;
     tableView->setItemDelegateForColumn(actionsColumn, buttonDelegate);
+
+    // Reset sorting to default
+    tableView->setSortingEnabled(true);
+    tableView->sortByColumn(2, Qt::AscendingOrder);  // Default sort by column 1 (TITRE)
+
+    // Optional: Reset column widths
+    tableView->resizeColumnsToContents();
+
+    // Hide ID column if needed
+    tableView->hideColumn(0);
 }
 
 
