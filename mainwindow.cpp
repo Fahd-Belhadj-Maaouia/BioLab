@@ -515,12 +515,14 @@ QWidget* MainWindow::createTaskCard(const QString &title, QListWidget *taskList)
             todoManager->moveTaskInDB(item->text(), true);  // Move to completed
             emit taskMovedToCompleted(item->text());  // Signal to update other list
             delete item;
+            todoManager->loadTasksFromDB(todoList, completedList);
         });
     } else if (title == "Completed") {
         connect(taskList, &QListWidget::itemDoubleClicked, [=](QListWidgetItem *item){
             todoManager->moveTaskInDB(item->text(), false);  // Move back to todo
             emit taskMovedToTodo(item->text());  // Signal to update other list
             delete item;
+            todoManager->loadTasksFromDB(todoList, completedList);
         });
     }
 
