@@ -26,6 +26,12 @@
 #include <QFileDialog>
 #include <QTextStream>
 #include <QHeaderView>
+#include <QNetworkAccessManager>
+#include <QNetworkRequest>
+#include <QNetworkReply>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
 
 
 
@@ -53,6 +59,10 @@ void MainWindow::setupUI()
 {
     centralWidget = new QWidget(this);
     setCentralWidget(centralWidget);
+
+
+
+
 
     mainLayout = new QVBoxLayout(centralWidget);
     QHBoxLayout *contentLayout = new QHBoxLayout();
@@ -317,9 +327,9 @@ void MainWindow::setupResearchCards()
     topCardsLayout->setContentsMargins(0, 0, 0, 0);
     topCardsContainer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
 
-    QStringList statTitles = {"Projects by Cost Range", "Completed Tasks", "Team Members"};
-    QStringList statValues = {"", "24", "8"};
-    QStringList statIcons = {"", ":/icons/completed.svg", ":/icons/team.svg"};
+    QStringList statTitles = {"Projects by Cost Range", "Chat Assistant", "Team Members"};
+    QStringList statValues = {"", "", "8"};
+    QStringList statIcons = {"", "", ":/icons/team.svg"};
 
     for (int i = 0; i < 3; i++) {
         QWidget *card = new QWidget();
@@ -332,7 +342,7 @@ void MainWindow::setupResearchCards()
             "   padding: 15px;"
             "   border: 1px solid #e0e0e0;"
             "}"
-        );
+            );
 
         QVBoxLayout *cardLayout = new QVBoxLayout(card);
         cardLayout->setAlignment(Qt::AlignCenter);
@@ -350,8 +360,87 @@ void MainWindow::setupResearchCards()
                 cardLayout->addStretch(1);
             }
         }
+        else if (i == 1) {
+            // Chatbot card
+            cardLayout->addStretch(1);
+
+            // Title
+            QLabel *title = new QLabel(statTitles[i]);
+            title->setStyleSheet("font-size: 18px; color: #7f8c8d;");
+            title->setAlignment(Qt::AlignCenter);
+            cardLayout->addWidget(title, 0, Qt::AlignCenter);
+
+            // Chat Text Edit (for conversation)
+            chatTextEdit = new QTextEdit();
+            chatTextEdit->setObjectName("chatTextEdit");
+            chatTextEdit->setReadOnly(true);
+            chatTextEdit->setStyleSheet(
+                "QTextEdit {"
+                "   background-color: #f8f9fa;"
+                "   border: 1px solid #e0e0e0;"
+                "   border-radius: 10px;"
+                "   padding: 10px;"
+                "   font-size: 14px;"
+                "   color: #333333;"
+                "}"
+                );
+            chatTextEdit->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+            cardLayout->addWidget(chatTextEdit, 5); // More space for chat area
+
+            // Input Layout (LineEdit + Button)
+            QHBoxLayout *inputLayout = new QHBoxLayout();
+            inputLayout->setSpacing(10);
+
+            // Input LineEdit
+            inputLineEdit = new QLineEdit();
+            inputLineEdit->setObjectName("inputLineEdit");
+            inputLineEdit->setPlaceholderText("Type your message...");
+            inputLineEdit->setStyleSheet(
+                "QLineEdit {"
+                " color : black;"
+                "   border: 1px solid #e0e0e0;"
+                "   border-radius: 15px;"
+                "   padding: 8px 15px;"
+                "   font-size: 14px;"
+                "}"
+                );
+            inputLineEdit->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+            inputLayout->addWidget(inputLineEdit);
+
+            // Send Button
+            sendButton = new QPushButton("send");
+            sendButton->setObjectName("sendButton");
+            sendButton->setIcon(QIcon(":/icons/send.svg"));
+            sendButton->setIconSize(QSize(20, 20));
+            sendButton->setStyleSheet(
+                "QPushButton {"
+                "   background-color: #007BFF;"
+                "   border: none;"
+                "   border-radius: 15px;"
+                "   padding: 8px 15px;"
+                "   min-width: 40px;"
+                "}"
+                "QPushButton:hover {"
+                "   background-color: #0069D9;"
+                "}"
+                );
+            inputLayout->addWidget(sendButton);
+
+            cardLayout->addLayout(inputLayout);
+
+            cardLayout->addStretch(1);
+            connect(sendButton, &QPushButton::clicked, this, [=]() {
+                QString userText = inputLineEdit->text().trimmed();
+                if (!userText.isEmpty()) {
+                    chatTextEdit->append("You: " + userText);
+                    sendMessageToChatbot(userText);
+                    inputLineEdit->clear();
+                }
+            });
+
+        }
         else {
-            // Other cards (icon + value + title)
+            // Team Members card (icon + value + title)
             cardLayout->addStretch(1);
 
             // Icon
@@ -415,10 +504,10 @@ void MainWindow::setupResearchCards()
     bottomCardsLayout->addStretch();
 
     // ========== MAIN LAYOUT ==========
-           researchLayout->addWidget(topCardsContainer);
-           researchLayout->addSpacing(30);
-           researchLayout->addWidget(bottomCardsContainer, 1);
-           researchLayout->addStretch();
+    researchLayout->addWidget(topCardsContainer);
+    researchLayout->addSpacing(30);
+    researchLayout->addWidget(bottomCardsContainer, 1);
+    researchLayout->addStretch();
 
     // Add the "Afficher plus" button
     QPushButton *afficherPlusButton = new QPushButton("Afficher plus");
@@ -438,6 +527,57 @@ void MainWindow::setupResearchCards()
     connect(afficherPlusButton, &QPushButton::clicked, this, &MainWindow::showResearchTablePage);
     researchLayout->addWidget(afficherPlusButton, 0, Qt::AlignCenter);
 }
+
+
+void MainWindow::sendMessageToChatbot(const QString &userMessage) {
+    QNetworkAccessManager *manager = new QNetworkAccessManager(this);
+    QUrl url("https://openrouter.ai/api/v1/chat/completions");
+
+
+    QNetworkRequest request(url);
+
+
+    QString apiKey = "YOUR API KEY HERE";
+    request.setRawHeader("Authorization", "Bearer " + apiKey.toUtf8());
+    request.setRawHeader("HTTP-Referer", "https://localhost");
+    request.setRawHeader("X-Title", "Qt Chat Assistant");
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+
+
+    QJsonObject message;
+    message["role"] = "user";
+    message["content"] = userMessage;
+
+    QJsonArray messages;
+    messages.append(message);
+
+    QJsonObject body;
+    body["model"] = "deepseek/deepseek-r1:free";
+    body["messages"] = messages;
+
+    QJsonDocument doc(body);
+    QByteArray data = doc.toJson();
+
+    QNetworkReply *reply = manager->post(request, data);
+
+    connect(reply, &QNetworkReply::finished, this, [=]() {
+        if (reply->error() == QNetworkReply::NoError) {
+            QByteArray responseData = reply->readAll();
+            QJsonDocument json = QJsonDocument::fromJson(responseData);
+            QString replyText = json["choices"]
+                                    .toArray()[0]
+                                    .toObject()["message"]
+                                    .toObject()["content"]
+                                    .toString();
+
+            chatTextEdit->append("Bot: " + replyText);
+        } else {
+            chatTextEdit->append("Error: " + reply->errorString());
+        }
+        reply->deleteLater();
+    });
+}
+
 
 
 

@@ -24,6 +24,7 @@
 #include <QtCharts/QBarSet>
 #include <QtCharts/QValueAxis>
 #include <QtCharts/QBarCategoryAxis>
+#include <QTextEdit>
 
 
 
@@ -60,6 +61,7 @@ private slots:
     void searchProjects();
     void refreshCostChart();
     void exportToExcel();
+    void sendMessageToChatbot(const QString &userMessage);
 
 
 private:
@@ -96,6 +98,9 @@ private:
     QPushButton *btnTools;
     QPushButton *btnPersonel;
     QButtonGroup *sidebarButtonGroup;  // Ensure only one selection at a time
+    QTextEdit *chatTextEdit = nullptr;
+    QLineEdit *inputLineEdit = nullptr;
+    QPushButton *sendButton = nullptr;
     ToDoList *todoManager;
     QChartView* createCostRangeChart(); // New function for chart creation
     QWidget* chartCard = nullptr;       // Pointer to the card containing the chart
