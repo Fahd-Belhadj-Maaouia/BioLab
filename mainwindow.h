@@ -17,10 +17,20 @@
 #include <QDateEdit>
 #include <QInputDialog>
 #include <QProgressBar>
+#include <QtCharts/QChartView>
+#include <QtCharts/QPieSeries>
+#include <QtCharts/QPieSlice>
+#include <QTimer>
+#include <QListWidget>
+#include <QTextEdit>
+#include <QSplitter>
+#include <QScrollArea>
+#include <QScrollBar>  // Ajout de l'inclusion pour QScrollBar
 
 // Forward declarations
 class ToolsManager;
 class VaccinManager;
+class MessagesManager;
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -43,6 +53,7 @@ private slots:
     void showVaccinsPage();
     void showSettingsPage();
     void showToolsTablePage();
+    void showMessagerieePage();
     void updateSidebarIcons(QPushButton *selectedButton);
 
     // Tools-related slots
@@ -55,6 +66,22 @@ private slots:
     void onAddVaccinClicked();
     void onEditVaccinClicked();
     void onDeleteVaccinClicked();
+    void showVaccinTypeStats();
+    void displayVaccinTypeStats(QWidget *parentWidget);
+    void exportVaccinStatsToPDF(const QMap<QString, int>& typeStats, int totalVaccins);
+    void showExpirationPopup(const QString &message);
+    void loadNotifications();
+    void styleNotificationsWidget(QWidget *notificationsWidget);
+    void exportVaccinsTableToPDF();
+
+    // Message-related slots
+    void onReadMessageButtonClicked();
+    void onNewMessageButtonClicked();
+    void onDeleteMessageButtonClicked();
+    void onContactSelected(int row);
+    void onSendMessageClicked();
+    void onRefreshMessagesButtonClicked();
+    void displayConversation(int contactId);
 
 private:
     // UI Components
@@ -72,6 +99,7 @@ private:
     QPushButton *btnTools;
     QPushButton *btnVaccins;
     QPushButton *btnSettings;
+    QPushButton *btnMessagerie;
     QButtonGroup *sidebarButtonGroup;
 
     // Main Content
@@ -82,6 +110,7 @@ private:
     QWidget *researchersPage;
     QWidget *settingsPage;
     QWidget *vaccinsPage;
+    QWidget *messagerieePage;
     QWidget *personelPage;
     QWidget *toolsPage;
     QWidget *researchesPage;
@@ -94,6 +123,25 @@ private:
     QWidget *vaccinsTablePage;
     QWidget *addVaccinFormPage;
     QWidget *editVaccinFormPage;
+    QWidget* createVaccinTypeStatsWidget();
+    QWidget* createExpiringVaccinsWidget();
+
+    // Messagerie components - Nouveaux composants pour une interface conversationnelle
+    QListWidget *contactsList;           // Liste des contacts/conversations
+    QWidget *conversationContainer;      // Conteneur pour la conversation actuelle
+    QScrollArea *messagesScrollArea;     // Zone de défilement pour les messages
+    QWidget *messagesWidget;             // Widget contenant les messages
+    QVBoxLayout *messagesLayout;         // Layout pour organiser les messages
+    QTextEdit *messageInputField;        // Champ pour saisir un nouveau message
+    QPushButton *sendMessageButton;      // Bouton pour envoyer un message
+    int currentContactId;                // ID du contact/conversation actuellement sélectionné
+
+    // Ancien composant de tableau (conservé pour compatibilité)
+    QTableWidget *messageTable;
+    MessagesManager *messagesManager;
+
+    QChartView *chartView;
+    QTimer *updateTimer;
 
     QLineEdit *m_idInput = nullptr;
     QLineEdit *m_nomVaccinInput = nullptr;
@@ -103,7 +151,6 @@ private:
     QSpinBox *m_nbDoseInput = nullptr;
     QSpinBox *m_quantiteInput = nullptr;
     QDateEdit *m_dateExpInput = nullptr;
-
 
     // Vaccin Summary Components
     QTableWidget *vaccinSummaryTable;
@@ -133,6 +180,13 @@ private:
     void setupAddVaccinFormPage();
     void setupEditVaccinFormPage();
 
+    // Messagerie
+    void setupMessagerieePage();
+    void addMessageBubble(const QString &message, const QString &sender, const QString &timestamp, bool isCurrentUser);
+    void loadContacts();
+    void clearConversation();
+
+
 
     // Vaccin page helper methods
     void addPageTitle(QVBoxLayout *vaccinsLayout);
@@ -144,6 +198,31 @@ private:
     QProgressBar* createVaccinationRateBar(double percentage);
     QWidget* createNotificationsWidget();
     void addMoreButton(QVBoxLayout *vaccinsLayout);
+    void updateVaccinTypeStats();
+    QChartView* createPieChart(const QMap<QString, int> &typeStats, int totalVaccins);
+    void applyAnimatedContainerStyle(QWidget *container);
+
+    // Message bubble styles
+    QString getIncomingMessageStyle();
+    QString getOutgoingMessageStyle();
+
+    // Classe utilitaire pour gérer le redimensionnement
+    class ResizeEventFilter : public QObject {
+    public:
+        ResizeEventFilter(QWidget *target, QObject *parent = nullptr) : QObject(parent), m_target(target) {}
+
+    protected:
+        bool eventFilter(QObject *obj, QEvent *event) override {
+            if (event->type() == QEvent::Resize) {
+                m_target->resize(static_cast<QWidget*>(obj)->size());
+                return true;
+            }
+            return QObject::eventFilter(obj, event);
+        }
+
+    private:
+        QWidget *m_target;
+    };
 
     // Utility method
     QPushButton* createSidebarButton(const QString &text, const QString &iconPath);

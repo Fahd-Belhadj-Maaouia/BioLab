@@ -3,6 +3,9 @@ QT       += sql
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 CONFIG += c++17
+QT += printsupport
+QT += charts
+
 
 # You can make your code fail to compile if it uses deprecated APIs.
 # In order to do so, uncomment the following line.
@@ -12,12 +15,14 @@ SOURCES += \
     connection.cpp \
     main.cpp \
     mainwindow.cpp \
+    messagesmanager.cpp \
     toolsmanager.cpp \
     vaccinmanager.cpp
 
 HEADERS += \
     connection.h \
     mainwindow.h \
+    messagesmanager.h \
     toolsmanager.h \
     vaccinmanager.h
 

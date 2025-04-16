@@ -407,7 +407,11 @@ Makefile: ../../interfacemateriels1.pro D:/qt/6.7.3/mingw_64/mkspecs/win32-g++/q
 		D:/qt/6.7.3/mingw_64/mkspecs/features/yacc.prf \
 		D:/qt/6.7.3/mingw_64/mkspecs/features/lex.prf \
 		../../interfacemateriels1.pro \
+		D:/qt/6.7.3/mingw_64/lib/Qt6PrintSupport.prl \
+		D:/qt/6.7.3/mingw_64/lib/Qt6Charts.prl \
+		D:/qt/6.7.3/mingw_64/lib/Qt6OpenGLWidgets.prl \
 		D:/qt/6.7.3/mingw_64/lib/Qt6Widgets.prl \
+		D:/qt/6.7.3/mingw_64/lib/Qt6OpenGL.prl \
 		D:/qt/6.7.3/mingw_64/lib/Qt6Gui.prl \
 		D:/qt/6.7.3/mingw_64/lib/Qt6Sql.prl \
 		D:/qt/6.7.3/mingw_64/lib/Qt6Core.prl \
@@ -752,7 +756,11 @@ D:/qt/6.7.3/mingw_64/mkspecs/features/exceptions.prf:
 D:/qt/6.7.3/mingw_64/mkspecs/features/yacc.prf:
 D:/qt/6.7.3/mingw_64/mkspecs/features/lex.prf:
 ../../interfacemateriels1.pro:
+D:/qt/6.7.3/mingw_64/lib/Qt6PrintSupport.prl:
+D:/qt/6.7.3/mingw_64/lib/Qt6Charts.prl:
+D:/qt/6.7.3/mingw_64/lib/Qt6OpenGLWidgets.prl:
 D:/qt/6.7.3/mingw_64/lib/Qt6Widgets.prl:
+D:/qt/6.7.3/mingw_64/lib/Qt6OpenGL.prl:
 D:/qt/6.7.3/mingw_64/lib/Qt6Gui.prl:
 D:/qt/6.7.3/mingw_64/lib/Qt6Sql.prl:
 D:/qt/6.7.3/mingw_64/lib/Qt6Core.prl:

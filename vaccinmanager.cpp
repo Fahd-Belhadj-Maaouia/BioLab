@@ -35,6 +35,36 @@ void VaccinManager::setupTable() {
     // Ajustement des colonnes
     vaccinTable->horizontalHeader()->setStretchLastSection(true);
     vaccinTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+
+    // Connecter le signal de clic sur l'en-tête pour le tri
+    connect(vaccinTable->horizontalHeader(), &QHeaderView::sectionClicked, this, [this](int logicalIndex) {
+        // Déterminer le type de tri basé sur la colonne cliquée
+        SortType newSortType;
+        switch (logicalIndex) {
+        case 1: // Nom Vaccin
+            newSortType = SORT_BY_NAME;
+            break;
+        case 2: // Référence
+            newSortType = SORT_BY_REFERENCE;
+            break;
+        case 7: // Date d'Expiration
+            newSortType = SORT_BY_EXPIRATION;
+            break;
+        default:
+            return; // Ne pas trier pour les autres colonnes
+        }
+
+        // Inverser l'ordre ou changer le type de tri
+        if (currentSortType == newSortType) {
+            sortAscending = !sortAscending;
+        } else {
+            currentSortType = newSortType;
+            sortAscending = true;
+        }
+
+        // Recharger avec le nouveau tri
+        loadVaccins(currentSortType, sortAscending);
+    });
 }
 
 bool VaccinManager::validateVaccinData() const {
@@ -93,7 +123,11 @@ int VaccinManager::getNextId() {
     }
 }
 
-void VaccinManager::loadVaccins() {
+void VaccinManager::loadVaccins(SortType sortType, bool ascending) {
+    // Sauvegarder les paramètres de tri courants
+    currentSortType = sortType;
+    sortAscending = ascending;
+
     // Réinitialiser le tableau
     vaccinTable->setRowCount(0);
 
@@ -104,10 +138,30 @@ void VaccinManager::loadVaccins() {
     }
 
     QSqlQuery query(dbConnection.getDatabase());
+
+    // Construire la clause ORDER BY en fonction du type de tri
+    QString orderByClause;
+    switch (sortType) {
+    case SORT_BY_NAME:
+        orderByClause = QString("ORDER BY NOMVACCIN %1").arg(ascending ? "ASC" : "DESC");
+        break;
+    case SORT_BY_REFERENCE:
+        orderByClause = QString("ORDER BY REFERENCE %1").arg(ascending ? "ASC" : "DESC");
+        break;
+    case SORT_BY_EXPIRATION:
+        orderByClause = QString("ORDER BY DATEEXP %1").arg(ascending ? "ASC" : "DESC");
+        break;
+    default:
+        orderByClause = "ORDER BY IDV";
+    }
+
     // Utiliser TO_CHAR pour formater la date directement dans la requête SQL
-    query.prepare("SELECT IDV, NOMVACCIN, REFERENCE, TYPE, MALADIECHRONIQUE, NBDOSE, QUANTITE, "
-                  "TO_CHAR(DATEEXP, 'DD/MM/YYYY') as DATEEXP_FORMATTED "
-                  "FROM vaccins ORDER BY IDV");
+    QString queryStr = QString(
+                           "SELECT IDV, NOMVACCIN, REFERENCE, TYPE, MALADIECHRONIQUE, NBDOSE, QUANTITE, "
+                           "TO_CHAR(DATEEXP, 'DD/MM/YYYY') as DATEEXP_FORMATTED "
+                           "FROM vaccins %1").arg(orderByClause);
+
+    query.prepare(queryStr);
 
     if (query.exec()) {
         int row = 0;
@@ -127,6 +181,32 @@ void VaccinManager::loadVaccins() {
             vaccinTable->setItem(row, 7, new QTableWidgetItem(query.value("DATEEXP_FORMATTED").toString()));
 
             row++;
+        }
+
+        // Ajouter des indicateurs visuels pour la colonne triée
+        QHeaderView* header = vaccinTable->horizontalHeader();
+        for (int i = 0; i < header->count(); ++i) {
+            QString headerText = vaccinTable->model()->headerData(i, Qt::Horizontal).toString();
+
+            // Supprimer les indicateurs précédents
+            if (headerText.contains(" ▲") || headerText.contains(" ▼")) {
+                headerText = headerText.left(headerText.length() - 2);
+            }
+
+            // Ajouter un indicateur à la colonne de tri actuelle
+            int columnIndex = -1;
+            switch (sortType) {
+            case SORT_BY_NAME: columnIndex = 1; break;
+            case SORT_BY_REFERENCE: columnIndex = 2; break;
+            case SORT_BY_EXPIRATION: columnIndex = 7; break;
+            default: break;
+            }
+
+            if (i == columnIndex) {
+                headerText += ascending ? " ▲" : " ▼";
+            }
+
+            vaccinTable->model()->setHeaderData(i, Qt::Horizontal, headerText);
         }
     } else {
         qDebug() << "Erreur lors du chargement des vaccins:"
@@ -188,6 +268,9 @@ bool VaccinManager::addVaccin() {
 
         // Recharger les données après insertion
         loadVaccins();
+
+        // Émettre le signal pour notifier que les données ont été modifiées
+        emit dataModified();
 
         QMessageBox::information(nullptr, "Succès", "Vaccin ajouté avec succès");
         return true;
@@ -264,6 +347,9 @@ bool VaccinManager::editVaccin() {
         // Recharger les données après modification
         loadVaccins();
 
+        // Émettre le signal pour notifier que les données ont été modifiées
+        emit dataModified();
+
         QMessageBox::information(nullptr, "Succès", "Vaccin modifié avec succès");
         return true;
 
@@ -318,6 +404,9 @@ bool VaccinManager::deleteVaccin() {
         // Recharger les données après suppression
         loadVaccins();
 
+        // Émettre le signal pour notifier que les données ont été modifiées
+        emit dataModified();
+
         QMessageBox::information(nullptr, "Succès", "Vaccin supprimé avec succès");
         return true;
 
@@ -371,6 +460,7 @@ bool VaccinManager::loadVaccinSummary(QTableWidget *summaryTable) {
         return false;
     }
 }
+
 QMap<QString, QVariant> VaccinManager::getVaccinById(int id) {
     QMap<QString, QVariant> vaccinData;
 
@@ -399,7 +489,7 @@ QMap<QString, QVariant> VaccinManager::getVaccinById(int id) {
 
     return vaccinData;
 }
-// Add this method to your VaccinManager class in vaccinmanager.h
+
 QMap<QString, int> VaccinManager::getVaccinTypeStats() {
     QMap<QString, int> typeStats;
 
@@ -426,7 +516,6 @@ QMap<QString, int> VaccinManager::getVaccinTypeStats() {
     return typeStats;
 }
 
-// Add this method to VaccinManager to get soon-to-expire vaccines
 QStringList VaccinManager::getSoonToExpireVaccins(int daysThreshold) {
     QStringList expiringVaccins;
 
@@ -456,4 +545,116 @@ QStringList VaccinManager::getSoonToExpireVaccins(int daysThreshold) {
     }
 
     return expiringVaccins;
+}
+
+bool VaccinManager::searchVaccins(const QString& searchText, const QString& searchType,
+                                  SortType sortType, bool ascending) {
+    // Sauvegarder les paramètres de tri courants
+    currentSortType = sortType;
+    sortAscending = ascending;
+
+    // Réinitialiser le tableau
+    vaccinTable->setRowCount(0);
+
+    if (!dbConnection.createConnection()) {
+        QMessageBox::critical(nullptr, "Erreur de base de données",
+                              "Impossible de se connecter à la base de données");
+        return false;
+    }
+
+    QSqlQuery query(dbConnection.getDatabase());
+
+    // Construire la clause ORDER BY en fonction du type de tri
+    QString orderByClause;
+    switch (sortType) {
+    case SORT_BY_NAME:
+        orderByClause = QString("ORDER BY NOMVACCIN %1").arg(ascending ? "ASC" : "DESC");
+        break;
+    case SORT_BY_REFERENCE:
+        orderByClause = QString("ORDER BY REFERENCE %1").arg(ascending ? "ASC" : "DESC");
+        break;
+    case SORT_BY_EXPIRATION:
+        orderByClause = QString("ORDER BY DATEEXP %1").arg(ascending ? "ASC" : "DESC");
+        break;
+    default:
+        orderByClause = "ORDER BY IDV";
+    }
+
+    // Construire la requête en fonction du type de recherche
+    QString whereClause;
+    if (searchType == "nom") {
+        whereClause = "WHERE UPPER(NOMVACCIN) LIKE UPPER(:searchText)";
+    } else if (searchType == "reference") {
+        whereClause = "WHERE UPPER(REFERENCE) LIKE UPPER(:searchText)";
+    } else if (searchType == "type") {
+        whereClause = "WHERE UPPER(TYPE) LIKE UPPER(:searchText)";
+    } else {
+        // Recherche globale si aucun type spécifié
+        whereClause = "WHERE UPPER(NOMVACCIN) LIKE UPPER(:searchText) "
+                      "OR UPPER(REFERENCE) LIKE UPPER(:searchText) "
+                      "OR UPPER(TYPE) LIKE UPPER(:searchText)";
+    }
+
+    QString queryStr = QString(
+                           "SELECT IDV, NOMVACCIN, REFERENCE, TYPE, MALADIECHRONIQUE, NBDOSE, QUANTITE, "
+                           "TO_CHAR(DATEEXP, 'DD/MM/YYYY') as DATEEXP_FORMATTED "
+                           "FROM vaccins %1 %2").arg(whereClause, orderByClause);
+
+    query.prepare(queryStr);
+    query.bindValue(":searchText", "%" + searchText + "%"); // Utilisation du caractère joker %
+
+    if (query.exec()) {
+        int row = 0;
+        while (query.next()) {
+            vaccinTable->insertRow(row);
+
+            // Ajout des éléments au tableau
+            vaccinTable->setItem(row, 0, new QTableWidgetItem(query.value("IDV").toString()));
+            vaccinTable->setItem(row, 1, new QTableWidgetItem(query.value("NOMVACCIN").toString()));
+            vaccinTable->setItem(row, 2, new QTableWidgetItem(query.value("REFERENCE").toString()));
+            vaccinTable->setItem(row, 3, new QTableWidgetItem(query.value("TYPE").toString()));
+            vaccinTable->setItem(row, 4, new QTableWidgetItem(query.value("MALADIECHRONIQUE").toString()));
+            vaccinTable->setItem(row, 5, new QTableWidgetItem(query.value("NBDOSE").toString()));
+            vaccinTable->setItem(row, 6, new QTableWidgetItem(query.value("QUANTITE").toString()));
+
+            // Utiliser directement la date formatée par Oracle
+            vaccinTable->setItem(row, 7, new QTableWidgetItem(query.value("DATEEXP_FORMATTED").toString()));
+
+            row++;
+        }
+
+        // Ajouter des indicateurs visuels pour la colonne triée
+        QHeaderView* header = vaccinTable->horizontalHeader();
+        for (int i = 0; i < header->count(); ++i) {
+            QString headerText = vaccinTable->model()->headerData(i, Qt::Horizontal).toString();
+
+            // Supprimer les indicateurs précédents
+            if (headerText.contains(" ▲") || headerText.contains(" ▼")) {
+                headerText = headerText.left(headerText.length() - 2);
+            }
+
+            // Ajouter un indicateur à la colonne de tri actuelle
+            int columnIndex = -1;
+            switch (sortType) {
+            case SORT_BY_NAME: columnIndex = 1; break;
+            case SORT_BY_REFERENCE: columnIndex = 2; break;
+            case SORT_BY_EXPIRATION: columnIndex = 7; break;
+            default: break;
+            }
+
+            if (i == columnIndex) {
+                headerText += ascending ? " ▲" : " ▼";
+            }
+
+            vaccinTable->model()->setHeaderData(i, Qt::Horizontal, headerText);
+        }
+
+        return true;
+    } else {
+        qDebug() << "Erreur lors de la recherche des vaccins:"
+                 << query.lastError().text();
+        QMessageBox::warning(nullptr, "Erreur",
+                             "Impossible de rechercher les vaccins");
+        return false;
+    }
 }
