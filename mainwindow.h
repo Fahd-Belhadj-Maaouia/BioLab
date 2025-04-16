@@ -59,6 +59,7 @@ private slots:
     void handleDeleteRow(const QModelIndex &index);
     void searchProjects();
     void refreshCostChart();
+    void exportToExcel();
 
 
 private:

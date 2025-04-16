@@ -23,6 +23,9 @@
 #include <QtCharts/QBarSet>
 #include <QtCharts/QValueAxis>
 #include <QtCharts/QBarCategoryAxis>
+#include <QFileDialog>
+#include <QTextStream>
+#include <QHeaderView>
 
 
 
@@ -445,56 +448,74 @@ void MainWindow::setupResearchCards()
 QWidget* MainWindow::createTaskCard(const QString &title, QListWidget *taskList)
 {
     QWidget *card = new QWidget();
-    card->setMinimumSize(250, 250);
-    card->setStyleSheet("QWidget { background-color: #ffffff; border-radius: 15px; padding: 10px; border: 1px solid #e0e0e0; }");
+    // Reduced card size from 250x250 to 200x200
+    card->setMinimumSize(200, 200);
+    card->setStyleSheet(
+        "QWidget {"
+        "   background-color: #ffffff;"
+        "   border-radius: 15px;"
+        "   padding: 8px;"  // Reduced from 10px
+        "   border: 1px solid #e0e0e0;"
+        "}"
+        );
 
+    // Smaller title with reduced padding
     QLabel *titleLabel = new QLabel(title);
-    titleLabel->setStyleSheet("font-size: 16px; font-weight: bold; color: #333; padding-bottom: 5px;");
+    titleLabel->setStyleSheet(
+        "font-size: 14px;"  // Reduced from 16px
+        "font-weight: bold;"
+        "color: #333;"
+        "padding-bottom: 3px;"  // Reduced from 5px
+        );
 
+    // More compact list styling
     taskList->setStyleSheet(
         "QListWidget {"
         "   border: none;"
         "   background: transparent;"
+        "   font-size: 12px;"  // Smaller font
         "}"
         "QListWidget::item {"
-        "   color: black;"  // Ensured text is black
-        "   padding: 5px;"
+        "   color: black;"
+        "   padding: 3px;"  // Reduced from 5px
         "}"
         "QListWidget::item:selected {"
         "   background-color: #e0e0e0;"
-        "   border-radius: 5px;"
+        "   border-radius: 3px;"  // Smaller radius
         "}"
         );
 
-    // Button container
+    // More compact button container
     QWidget *buttonContainer = new QWidget();
     QHBoxLayout *buttonLayout = new QHBoxLayout(buttonContainer);
     buttonLayout->setContentsMargins(0, 0, 0, 0);
+    buttonLayout->setSpacing(5);  // Reduced spacing between buttons
 
-    // Add button
+    // Smaller buttons
     QPushButton *addButton = new QPushButton("+");
-    addButton->setFixedSize(30, 30);
+    addButton->setFixedSize(24, 24);  // Reduced from 30x30
     addButton->setStyleSheet(
         "QPushButton {"
         "   background-color: #4CAF50;"
         "   color: white;"
-        "   border-radius: 15px;"
+        "   border-radius: 12px;"  // Half of height
         "   font-weight: bold;"
+        "   font-size: 12px;"  // Smaller text
         "}"
         "QPushButton:hover {"
         "   background-color: #45a049;"
         "}"
         );
 
-    // Delete button
     QPushButton *deleteButton = new QPushButton("×");
-    deleteButton->setFixedSize(30, 30);
+    deleteButton->setFixedSize(24, 24);  // Reduced from 30x30
     deleteButton->setStyleSheet(
         "QPushButton {"
         "   background-color: #f44336;"
         "   color: white;"
-        "   border-radius: 15px;"
+        "   border-radius: 12px;"  // Half of height
         "   font-weight: bold;"
+        "   font-size: 12px;"  // Smaller text
         "}"
         "QPushButton:hover {"
         "   background-color: #d32f2f;"
@@ -506,10 +527,12 @@ QWidget* MainWindow::createTaskCard(const QString &title, QListWidget *taskList)
     buttonLayout->addWidget(deleteButton);
     buttonLayout->addStretch();
 
-    // Card layout
+    // Card layout with reduced spacing
     QVBoxLayout *cardLayout = new QVBoxLayout(card);
+    cardLayout->setSpacing(5);  // Reduced from default
+    cardLayout->setContentsMargins(5, 5, 5, 5);  // Tighter margins
     cardLayout->addWidget(titleLabel);
-    cardLayout->addWidget(taskList);
+    cardLayout->addWidget(taskList, 1);  // List takes most space
     cardLayout->addWidget(buttonContainer);
 
     // Connect signals - now using todoManager
@@ -848,6 +871,17 @@ void MainWindow::setupResearchesTablePage() {
 
     buttonLayout->addWidget(addButton);
     buttonLayout->addWidget(refreshButton);
+
+    QPushButton *exportButton = new QPushButton("Export data sheet");
+    exportButton->setStyleSheet(
+        "QPushButton { background-color: #4CAF50; color: white; padding: 8px 16px; "
+        "border: none; border-radius: 4px; }"
+        "QPushButton:hover { background-color: #45a049; }"
+        );
+
+     connect(exportButton, &QPushButton::clicked, this, &MainWindow::exportToExcel);
+
+     buttonLayout->addWidget(exportButton);
     buttonLayout->addWidget(searchLineEdit);
     buttonLayout->addWidget(searchButton);
     buttonLayout->addWidget(sortButton);
@@ -857,6 +891,55 @@ void MainWindow::setupResearchesTablePage() {
     mainLayout->addWidget(tableView);
     mainLayout->setStretch(0, 0);
     mainLayout->setStretch(1, 1);
+}
+
+
+
+
+
+
+void MainWindow::exportToExcel() {
+    // Get file path to save
+    QString fileName = QFileDialog::getSaveFileName(this, "Save Excel File", "", "CSV Files (*.csv)");
+    if (fileName.isEmpty()) {
+        return;
+    }
+
+    // Ensure the file has .csv extension
+    if (!fileName.endsWith(".csv", Qt::CaseInsensitive)) {
+        fileName += ".csv";
+    }
+
+    QFile file(fileName);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        QMessageBox::warning(this, "Error", "Cannot save file");
+        return;
+    }
+
+    QTextStream stream(&file);
+
+    // Write headers
+    QAbstractItemModel *model = tableView->model();
+    for (int col = 0; col < model->columnCount(); ++col) {
+        if (col == 0) continue; // Skip ID column (hidden)
+        if (col > 1) stream << ",";
+        stream << "\"" << model->headerData(col, Qt::Horizontal).toString() << "\"";
+    }
+    stream << "\n";
+
+    // Write data
+    for (int row = 0; row < model->rowCount(); ++row) {
+        for (int col = 0; col < model->columnCount(); ++col) {
+            if (col == 0) continue; // Skip ID column (hidden)
+            if (col > 1) stream << ",";
+            QString data = model->data(model->index(row, col)).toString().replace("\"", "\"");
+            stream << "\"" << data << "\"";
+        }
+        stream << "\n";
+    }
+
+    file.close();
+    QMessageBox::information(this, "Success", "Data exported successfully");
 }
 
 

@@ -63,7 +63,8 @@ constexpr auto qt_meta_stringdata_CLASSMainWindowENDCLASS = QtMocHelpers::string
     "QModelIndex",
     "index",
     "searchProjects",
-    "refreshCostChart"
+    "refreshCostChart",
+    "exportToExcel"
 );
 #else  // !QT_MOC_HAS_STRINGDATA
 #error "qtmochelpers.h not found or too old."
@@ -76,7 +77,7 @@ Q_CONSTINIT static const uint qt_meta_data_CLASSMainWindowENDCLASS[] = {
       12,       // revision
        0,       // classname
        0,    0, // classinfo
-      20,   14, // methods
+      21,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
@@ -84,28 +85,29 @@ Q_CONSTINIT static const uint qt_meta_data_CLASSMainWindowENDCLASS[] = {
        3,       // signalCount
 
  // signals: name, argc, parameters, tag, flags, initial metatype offsets
-       1,    1,  134,    2, 0x06,    1 /* Public */,
-       4,    1,  137,    2, 0x06,    3 /* Public */,
-       5,    0,  140,    2, 0x06,    5 /* Public */,
+       1,    1,  140,    2, 0x06,    1 /* Public */,
+       4,    1,  143,    2, 0x06,    3 /* Public */,
+       5,    0,  146,    2, 0x06,    5 /* Public */,
 
  // slots: name, argc, parameters, tag, flags, initial metatype offsets
-       6,    0,  141,    2, 0x08,    6 /* Private */,
-       7,    0,  142,    2, 0x08,    7 /* Private */,
-       8,    0,  143,    2, 0x08,    8 /* Private */,
-       9,    0,  144,    2, 0x08,    9 /* Private */,
-      10,    0,  145,    2, 0x08,   10 /* Private */,
-      11,    0,  146,    2, 0x08,   11 /* Private */,
-      12,    0,  147,    2, 0x08,   12 /* Private */,
-      13,    0,  148,    2, 0x08,   13 /* Private */,
-      14,    1,  149,    2, 0x08,   14 /* Private */,
-      17,    0,  152,    2, 0x08,   16 /* Private */,
-      18,    0,  153,    2, 0x08,   17 /* Private */,
-      19,    0,  154,    2, 0x08,   18 /* Private */,
-      20,    1,  155,    2, 0x08,   19 /* Private */,
-      22,    0,  158,    2, 0x08,   21 /* Private */,
-      23,    1,  159,    2, 0x08,   22 /* Private */,
-      26,    0,  162,    2, 0x08,   24 /* Private */,
-      27,    0,  163,    2, 0x08,   25 /* Private */,
+       6,    0,  147,    2, 0x08,    6 /* Private */,
+       7,    0,  148,    2, 0x08,    7 /* Private */,
+       8,    0,  149,    2, 0x08,    8 /* Private */,
+       9,    0,  150,    2, 0x08,    9 /* Private */,
+      10,    0,  151,    2, 0x08,   10 /* Private */,
+      11,    0,  152,    2, 0x08,   11 /* Private */,
+      12,    0,  153,    2, 0x08,   12 /* Private */,
+      13,    0,  154,    2, 0x08,   13 /* Private */,
+      14,    1,  155,    2, 0x08,   14 /* Private */,
+      17,    0,  158,    2, 0x08,   16 /* Private */,
+      18,    0,  159,    2, 0x08,   17 /* Private */,
+      19,    0,  160,    2, 0x08,   18 /* Private */,
+      20,    1,  161,    2, 0x08,   19 /* Private */,
+      22,    0,  164,    2, 0x08,   21 /* Private */,
+      23,    1,  165,    2, 0x08,   22 /* Private */,
+      26,    0,  168,    2, 0x08,   24 /* Private */,
+      27,    0,  169,    2, 0x08,   25 /* Private */,
+      28,    0,  170,    2, 0x08,   26 /* Private */,
 
  // signals: parameters
     QMetaType::Void, QMetaType::QString,    3,
@@ -128,6 +130,7 @@ Q_CONSTINIT static const uint qt_meta_data_CLASSMainWindowENDCLASS[] = {
     QMetaType::Void, QMetaType::Int,   21,
     QMetaType::Void,
     QMetaType::Void, 0x80000000 | 24,   25,
+    QMetaType::Void,
     QMetaType::Void,
     QMetaType::Void,
 
@@ -187,6 +190,8 @@ Q_CONSTINIT const QMetaObject MainWindow::staticMetaObject = { {
         // method 'searchProjects'
         QtPrivate::TypeAndForceComplete<void, std::false_type>,
         // method 'refreshCostChart'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'exportToExcel'
         QtPrivate::TypeAndForceComplete<void, std::false_type>
     >,
     nullptr
@@ -218,6 +223,7 @@ void MainWindow::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, 
         case 17: _t->handleDeleteRow((*reinterpret_cast< std::add_pointer_t<QModelIndex>>(_a[1]))); break;
         case 18: _t->searchProjects(); break;
         case 19: _t->refreshCostChart(); break;
+        case 20: _t->exportToExcel(); break;
         default: ;
         }
     } else if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
@@ -276,13 +282,13 @@ int MainWindow::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 20)
+        if (_id < 21)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 20;
+        _id -= 21;
     } else if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 20)
+        if (_id < 21)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 20;
+        _id -= 21;
     }
     return _id;
 }
