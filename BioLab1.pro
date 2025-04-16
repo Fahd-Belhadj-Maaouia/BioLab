@@ -1,6 +1,7 @@
 QT       += sql
 QT += core gui sql
 QT       += core gui widgets charts
+QT += charts
 CONFIG   += c++17
 CONFIG += console
 SOURCES += \

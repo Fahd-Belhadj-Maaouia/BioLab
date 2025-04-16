@@ -18,6 +18,11 @@
 #include <QSqlError>
 #include <QMessageBox>
 #include<QListWidget>
+#include <QtCharts/QChartView>
+#include <QtCharts/QBarSeries>
+#include <QtCharts/QBarSet>
+#include <QtCharts/QValueAxis>
+#include <QtCharts/QBarCategoryAxis>
 
 
 
@@ -33,6 +38,8 @@ MainWindow::MainWindow(QWidget *parent)
 
     stackedWidget = new QStackedWidget(this);
     setupUI();
+    connect(this, &MainWindow::projectDataChanged, this, &MainWindow::refreshCostChart);
+
 }
 
 // mainwindow.cpp
@@ -291,27 +298,30 @@ void MainWindow::setupResearchCards()
     QVBoxLayout *researchLayout = qobject_cast<QVBoxLayout*>(researchesPage->layout());
     if (!researchLayout) return;
 
-    // Clear existing widgets
+    // Clear existing widgets and reset pointers
     QLayoutItem* item;
-    while ((item = researchLayout->takeAt(0)) != nullptr) {
+    while ((item = researchLayout->takeAt(0))) {
         delete item->widget();
         delete item;
     }
+    chartCard = nullptr;
+    costChartView = nullptr;
 
     // ========== TOP SECTION - 3 STAT CARDS ==========
     QWidget *topCardsContainer = new QWidget();
     QHBoxLayout *topCardsLayout = new QHBoxLayout(topCardsContainer);
     topCardsLayout->setSpacing(20);
     topCardsLayout->setContentsMargins(0, 0, 0, 0);
+    topCardsContainer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
 
-    // Create 3 statistic cards
-    QStringList statTitles = {"Ongoing Projects", "Completed Tasks", "Team Members"};
-    QStringList statValues = {"12", "24", "8"};
-    QStringList statIcons = {":/icons/projects.svg", ":/icons/completed.svg", ":/icons/team.svg"};
+    QStringList statTitles = {"Projects by Cost Range", "Completed Tasks", "Team Members"};
+    QStringList statValues = {"", "24", "8"};
+    QStringList statIcons = {"", ":/icons/completed.svg", ":/icons/team.svg"};
 
     for (int i = 0; i < 3; i++) {
         QWidget *card = new QWidget();
-        card->setMinimumSize(200, 200);
+        card->setMinimumSize(300, 400);
+        card->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
         card->setStyleSheet(
             "QWidget {"
             "   background-color: #ffffff;"
@@ -319,51 +329,58 @@ void MainWindow::setupResearchCards()
             "   padding: 15px;"
             "   border: 1px solid #e0e0e0;"
             "}"
-            );
+        );
 
         QVBoxLayout *cardLayout = new QVBoxLayout(card);
         cardLayout->setAlignment(Qt::AlignCenter);
+        cardLayout->setSpacing(15);
 
-        // Icon
-        QLabel *icon = new QLabel();
-        icon->setPixmap(QPixmap(statIcons[i]).scaled(40, 40, Qt::KeepAspectRatio));
-        icon->setAlignment(Qt::AlignCenter);
+        if (i == 0) {
+            // Store reference to the chart card
+            chartCard = card;
 
-        // Value
-        QLabel *value = new QLabel(statValues[i]);
-        value->setStyleSheet(
-            "QLabel {"
-            "   font-size: 32px;"
-            "   font-weight: bold;"
-            "   color: #2c3e50;"
-            "}"
-            );
-        value->setAlignment(Qt::AlignCenter);
+            // Create and add chart
+            costChartView = createCostRangeChart();
+            if (costChartView) {
+                cardLayout->addStretch(1);
+                cardLayout->addWidget(costChartView, 3); // 3 is stretch factor
+                cardLayout->addStretch(1);
+            }
+        }
+        else {
+            // Other cards (icon + value + title)
+            cardLayout->addStretch(1);
 
-        // Title
-        QLabel *title = new QLabel(statTitles[i]);
-        title->setStyleSheet(
-            "QLabel {"
-            "   font-size: 14px;"
-            "   color: #7f8c8d;"
-            "}"
-            );
-        title->setAlignment(Qt::AlignCenter);
+            // Icon
+            QLabel *icon = new QLabel();
+            icon->setPixmap(QPixmap(statIcons[i]).scaled(60, 60, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+            icon->setAlignment(Qt::AlignCenter);
+            cardLayout->addWidget(icon, 0, Qt::AlignCenter);
 
-        cardLayout->addWidget(icon);
-        cardLayout->addWidget(value);
-        cardLayout->addWidget(title);
-        cardLayout->addStretch();
+            // Value
+            QLabel *value = new QLabel(statValues[i]);
+            value->setStyleSheet("font-size: 48px; font-weight: bold; color: #2c3e50;");
+            value->setAlignment(Qt::AlignCenter);
+            cardLayout->addWidget(value, 0, Qt::AlignCenter);
 
-        topCardsLayout->addWidget(card);
+            // Title
+            QLabel *title = new QLabel(statTitles[i]);
+            title->setStyleSheet("font-size: 18px; color: #7f8c8d;");
+            title->setAlignment(Qt::AlignCenter);
+            cardLayout->addWidget(title, 0, Qt::AlignCenter);
+
+            cardLayout->addStretch(1);
+        }
+
+        topCardsLayout->addWidget(card, 1);
     }
-    topCardsLayout->addStretch();
 
     // ========== BOTTOM SECTION - TO-DO LISTS ==========
     QWidget *bottomCardsContainer = new QWidget();
     QHBoxLayout *bottomCardsLayout = new QHBoxLayout(bottomCardsContainer);
     bottomCardsLayout->setSpacing(20);
     bottomCardsLayout->setContentsMargins(0, 0, 0, 0);
+    bottomCardsContainer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
     // Create the task lists
     todoList = new QListWidget();
@@ -376,7 +393,7 @@ void MainWindow::setupResearchCards()
         "   background: transparent;"
         "}"
         "QListWidget::item {"
-        "   color: black;"  // Changed to black
+        "   color: black;"
         "   padding: 5px;"
         "}"
         "QListWidget::item:selected {"
@@ -387,18 +404,18 @@ void MainWindow::setupResearchCards()
     todoList->setStyleSheet(listStyle);
     completedList->setStyleSheet(listStyle);
 
-    todoManager->loadTasksFromDB(todoList, completedList);  // <-- ADD THIS LINE
+    todoManager->loadTasksFromDB(todoList, completedList);
 
     // Create and add the cards
-    bottomCardsLayout->addWidget(createTaskCard("To-Do List", todoList));
-    bottomCardsLayout->addWidget(createTaskCard("Completed", completedList));
+    bottomCardsLayout->addWidget(createTaskCard("To-Do List", todoList), 1);
+    bottomCardsLayout->addWidget(createTaskCard("Completed", completedList), 1);
     bottomCardsLayout->addStretch();
 
     // ========== MAIN LAYOUT ==========
-    researchLayout->addWidget(topCardsContainer);
-    researchLayout->addSpacing(30);
-    researchLayout->addWidget(bottomCardsContainer);
-    researchLayout->addStretch();
+           researchLayout->addWidget(topCardsContainer);
+           researchLayout->addSpacing(30);
+           researchLayout->addWidget(bottomCardsContainer, 1);
+           researchLayout->addStretch();
 
     // Add the "Afficher plus" button
     QPushButton *afficherPlusButton = new QPushButton("Afficher plus");
@@ -545,6 +562,97 @@ QWidget* MainWindow::createTaskCard(const QString &title, QListWidget *taskList)
 }
 
 
+
+
+QChartView* MainWindow::createCostRangeChart()
+{
+    // Get project count by cost range from database
+    QSqlQuery query(QSqlDatabase::database("main_connection"));
+    query.prepare(
+        "SELECT "
+        "COUNT(CASE WHEN COUT BETWEEN 0 AND 2000 THEN 1 END) AS low_range, "
+        "COUNT(CASE WHEN COUT BETWEEN 2001 AND 4000 THEN 1 END) AS mid_range, "
+        "COUNT(CASE WHEN COUT > 4000 THEN 1 END) AS high_range "
+        "FROM PROJETDERECHERCHES"
+        );
+
+    if (!query.exec() || !query.next()) {
+        qDebug() << "Failed to execute project count query:" << query.lastError().text();
+        return new QChartView(new QChart());
+    }
+
+    int lowRange = query.value(0).toInt();
+    int midRange = query.value(1).toInt();
+    int highRange = query.value(2).toInt();
+
+    // Create chart
+    QChart *chart = new QChart();
+    chart->setBackgroundBrush(Qt::transparent);
+    chart->setTitle("Projects by Cost Range");
+    chart->setTitleFont(QFont("Arial", 10, QFont::Bold));
+    chart->legend()->setVisible(true);
+    chart->legend()->setAlignment(Qt::AlignBottom);
+
+    // Create bar series
+    QBarSet *set = new QBarSet("Project Count");
+    *set << lowRange << midRange << highRange;
+    set->setColor(QColor("#3498db"));
+
+    QBarSeries *series = new QBarSeries();
+    series->append(set);
+    chart->addSeries(series);
+    chart->setAnimationOptions(QChart::SeriesAnimations);
+
+    // Axes setup
+    QStringList categories {"0-2000 dt", "2001-4000 dt", "4000+ dt"};
+    QBarCategoryAxis *axisX = new QBarCategoryAxis();
+    axisX->append(categories);
+    chart->addAxis(axisX, Qt::AlignBottom);
+    series->attachAxis(axisX);
+
+    QValueAxis *axisY = new QValueAxis();
+    axisY->setLabelFormat("%d");
+    axisY->setTitleText("Number of Projects");
+    axisY->setRange(0, qMax(qMax(lowRange, midRange), highRange) + 1);
+    chart->addAxis(axisY, Qt::AlignLeft);
+    series->attachAxis(axisY);
+
+    QChartView *chartView = new QChartView(chart);
+    chartView->setRenderHint(QPainter::Antialiasing);
+    chartView->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+
+    return chartView;
+}
+
+void MainWindow::refreshCostChart()
+{
+    if (!chartCard || !chartCard->layout()) {
+        qDebug() << "Chart card or layout not initialized";
+        return;
+    }
+
+    QVBoxLayout* cardLayout = qobject_cast<QVBoxLayout*>(chartCard->layout());
+    if (!cardLayout) {
+        qDebug() << "Card layout is not a QVBoxLayout";
+        return;
+    }
+
+    // Remove old chart if it exists
+    if (costChartView) {
+        cardLayout->removeWidget(costChartView);
+        delete costChartView;
+        costChartView = nullptr;
+    }
+
+    // Create and add new chart
+    costChartView = createCostRangeChart();
+    if (costChartView) {
+        // Insert at position 1 (between the stretches)
+        cardLayout->insertWidget(1, costChartView, 3); // 3 is the stretch factor
+    }
+}
+
+
 //---------------------------------------------------------------------------------------------------------------------------
 
 void MainWindow::updateSidebarIcons(QPushButton *selectedButton)
@@ -632,7 +740,8 @@ void MainWindow::setupResearchesTablePage() {
 
         if (ProjetDeRecherche::Delete(id)) {
             qDebug() << "Deleted successfully";
-            refreshResearchTable(); // reload model with same delegate
+            refreshResearchTable();
+            emit projectDataChanged();            // reload model with same delegate
         } else {
             qDebug() << "Delete FAILED for ID:" << id;
             QMessageBox::warning(this, "Error", "Delete failed");
@@ -843,6 +952,7 @@ void MainWindow::setupResearchesFormAddPage()
 
         if (projet.Add()) {
             QMessageBox::information(this, "Succès", "Recherche ajoutée avec succès !");
+            emit projectDataChanged();
 
             // Clear fields
             for (const QString &labelText : labels) {
@@ -958,6 +1068,7 @@ void MainWindow::setupResearchesFormUpdatePage(int projectId)
 
         if (projet.Update(projectId)) {
             QMessageBox::information(this, "Succès", "Recherche mise à jour avec succès !");
+            emit projectDataChanged();
 
             // Optionally: Clear the fields or navigate back to the main page
         } else {

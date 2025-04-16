@@ -19,6 +19,12 @@
 #include"todolist.h"
 #include <QLineEdit>
 #include <QSortFilterProxyModel>
+#include <QtCharts/QChartView>
+#include <QtCharts/QBarSeries>
+#include <QtCharts/QBarSet>
+#include <QtCharts/QValueAxis>
+#include <QtCharts/QBarCategoryAxis>
+
 
 
 
@@ -52,6 +58,7 @@ private slots:
     void setupResearchesTablePage();
     void handleDeleteRow(const QModelIndex &index);
     void searchProjects();
+    void refreshCostChart();
 
 
 private:
@@ -89,8 +96,9 @@ private:
     QPushButton *btnPersonel;
     QButtonGroup *sidebarButtonGroup;  // Ensure only one selection at a time
     ToDoList *todoManager;
-
-
+    QChartView* createCostRangeChart(); // New function for chart creation
+    QWidget* chartCard = nullptr;       // Pointer to the card containing the chart
+    QChartView* costChartView = nullptr;
 
     // Main Content
     QVBoxLayout *dashboardLayout;
@@ -131,6 +139,7 @@ private:
 signals:
     void taskMovedToCompleted(const QString &task);
     void taskMovedToTodo(const QString &task);
+     void projectDataChanged();
 };
 
 #endif // MAINWINDOW_H
