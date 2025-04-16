@@ -11,16 +11,32 @@
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QByteArray>
+#include <QSqlQuery>
+#include <QSqlError>
+#include <QDebug>
 
 
 class PatientsManager : public QObject {
     Q_OBJECT
+
+
+
+
 
 public:
     explicit PatientsManager(QTableWidget *patientstable, QWidget *parent = nullptr);
     ~PatientsManager();
 
 
+
+
+
+
+    // Add to patients.h
+    QMap<QString, int> getGenderDistribution();
+    QMap<QString, int> getChronicDiseaseDistribution();
+    QMap<QString, int> getCityDistribution();
+    QList<QStringList> getAllPatientsForExport();
 
 
     void addPatient(const QString &Nom, const QString &prenom, const QString &sexe,
@@ -40,6 +56,9 @@ public:
     QString getnumtel() const;
     QString getmaladiechronique() const;
 
+    QList<QStringList> searchPatients(const QString &field, const QString &value);
+    QList<QStringList> sortPatients(const QString &field, bool ascending = true);
+
 
 
     // Setters
@@ -53,7 +72,12 @@ public:
     void setmaladiechronique(const QString &maladiechronique);
 
 
+    // In patients.h, add this to the PatientsManager class declaration
 
+
+    // In patients.h, add this to the PatientsManager class declaration
+signals:
+    void dataChanged();
 
 private:
     // Attributes
@@ -65,6 +89,8 @@ private:
     QString adresse;
     QString numtel;
     QString maladiechronique;
+
+
 
 
 

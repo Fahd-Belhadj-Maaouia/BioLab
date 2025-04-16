@@ -12,6 +12,24 @@
 #include <QLabel>
 #include <QButtonGroup>
 #include <QMessageBox>
+#include <QMap>
+#include <QString>
+#include <QWidget>
+#include <QMainWindow>
+#include <QPropertyAnimation>
+#include <QEasingCurve>
+#include <QWidget>
+#include <QLabel>
+#include <QTableWidget>
+#include <QStackedWidget>
+#include <QLabel>
+#include <QButtonGroup>
+#include <QVariantMap>
+#include <QtCharts/QChartView>
+#include <QtCharts/QPieSeries>
+
+
+
 
 
 QT_BEGIN_NAMESPACE
@@ -19,7 +37,29 @@ namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
 
 class ToolsManager;
-class PatientsManager;    // Forward declaration
+class PatientsManager;
+
+
+
+
+// Add before MainWindow class declaration
+class ClickableWidget : public QWidget {
+    Q_OBJECT
+public:
+    explicit ClickableWidget(QWidget *parent = nullptr) : QWidget(parent) {}
+signals:
+    void clicked();
+protected:
+    void mousePressEvent(QMouseEvent *event) override {
+        QWidget::mousePressEvent(event);
+        emit clicked();
+    }
+};
+
+
+
+
+// Forward declaration
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -28,6 +68,8 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+public slots:
+    void showVaccinationHistory(int patientId);
 private slots:
     void showPatientsPage();
     void showPersonelPage();
@@ -40,10 +82,15 @@ private slots:
     void showPatientsTablePage();
     void updateSidebarIcons(QPushButton *selectedButton);
 
+
+
+
+
     // Tools-related slots
     void onAddToolClicked();
     void onEditToolClicked();
     void onDeleteToolClicked();
+    void exportStatsToPDF();
 
 
 
@@ -53,8 +100,38 @@ private slots:
     void loadPatientData(int patientID, QLineEdit *nomInput, QLineEdit *prenomInput, QComboBox *sexeInput, QLineEdit *cinInput, QComboBox *adresseInput, QLineEdit *numtelInput, QLineEdit *maladiechroniqueInput);
     // Handle submission of modification
     void onModifyPatientSubmit(int patientID, QLineEdit *nomInput, QLineEdit *prenomInput, QComboBox *sexeInput, QLineEdit *cinInput, QComboBox *adresseInput, QLineEdit *numtelInput, QLineEdit *maladiechroniqueInput);
-
+    bool patientExists( int patientID);
 private:
+
+
+
+    // Statistics widgets
+    QWidget *totalCard;
+    QWidget *genderCard;
+    QWidget *chronicCard;
+    QWidget *cityCard;
+    QWidget *statsContainer;
+    QHBoxLayout *statsLayout;
+
+    // Dark mode toggle (optional)
+    bool darkModeEnabled = false;
+
+    QPushButton *exportGenderChartBtn;
+    QPushButton *exportChronicChartBtn;
+    QPushButton *exportRegionChartBtn;
+    QPushButton *toggleDarkModeBtn;
+
+    // Statistics values
+    QString totalPatientsValue;
+    QString genderDistributionValue;
+    QString chronicPercentageValue;
+    QString topCityValue;
+
+
+
+
+
+
 
     QLineEdit *nomInput;
     QLineEdit *prenomInput;
@@ -63,6 +140,21 @@ private:
     QComboBox *adresseInput;
     QLineEdit *numtelInput;
     QLineEdit *maladiechroniqueInput;
+
+
+
+
+    // Function to create stat cards
+    QWidget* createModernStatCard(const QString &title,
+                                  const QMap<QString, int> &data,
+                                  const QString &bgColor);
+
+    // Update statistics function
+    void updateStatistics();
+
+
+    QWidget* createStatCard(const QString &iconPath, const QString &title, const QString &value);
+    void updateStatistics(QWidget *totalCard, QWidget *genderCard, QWidget *chronicCard, QWidget *cityCard);
 
 
 
@@ -121,5 +213,8 @@ private:
     void setupModifyPatientFormPage(const int patientID);
     QPushButton* createSidebarButton(const QString &text, const QString &iconPath);
 };
+
+
+
 
 #endif // MAINWINDOW_H

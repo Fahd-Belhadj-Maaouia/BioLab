@@ -11,17 +11,17 @@
 
 PatientsManager::PatientsManager(QTableWidget *patientstable, QWidget *parent)
     : QObject(parent), patientstable(patientstable) {
-    patientstable->setColumnCount(8);
-    patientstable->setHorizontalHeaderLabels({ "IDP", "Nom", "Prenom", "Sexe", "CIN", "Adresse", "NumTel", "Maladie Chronique"});
+    patientstable->setColumnCount(9);
+    patientstable->setHorizontalHeaderLabels({
+        "IDP", "Nom", "Prenom", "Sexe", "CIN", "Adresse", "NumTel", "Maladie Chronique", "Historique"
+    });
+
     patientstable->horizontalHeader()->setStyleSheet(
         "QHeaderView::section {"
-        "    background-color: #F5F5F7;"
-        "    color: black;"
-        "    font-weight: bold;"
-        "    font-size: 12px;"
-        "    padding: 8px;"
-        "    border: none;"
-        "    border-bottom: 1px solid #ddd;"
+        "    background-color: #F5F5F7 !important;"
+        "    color: black !important;"
+        "    padding: 8px !important;"
+        "    border-bottom: 1px solid #ddd !important;"
         "}"
         );
 
@@ -44,7 +44,9 @@ PatientsManager::PatientsManager(QTableWidget *patientstable, QWidget *parent)
     patientstable->setShowGrid(false);
     patientstable->verticalHeader()->setVisible(false);
     patientstable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
-    patientstable->horizontalHeader()->setVisible(true);
+    patientstable->horizontalHeader()->setVisible(true);  // Force header visibility
+    patientstable->horizontalHeader()->setHighlightSections(false);  // Prevent selection highlight
+    patientstable->horizontalHeader()->setMinimumHeight(30);  // Force minimum header height
     patientstable->verticalHeader()->setDefaultSectionSize(40);
     patientstable->setWordWrap(false);
     patientstable->setRowCount(5);  // Add some rows for testing
@@ -196,6 +198,100 @@ PatientsManager::~PatientsManager() {
     }
 
 
+    QList<QStringList> PatientsManager::searchPatients(const QString &field, const QString &value) {
+        QList<QStringList> results;
+        QSqlQuery query;
+
+        QString sql = QString("SELECT IDP, Nom, Prenom, Sexe, CIN, Adresse, NumTel, MaladieChronique FROM patients WHERE %1 LIKE :value").arg(field);
+        query.prepare(sql);
+        query.bindValue(":value", "%" + value + "%");
+
+        if (query.exec()) {
+            while (query.next()) {
+                QStringList row;
+                for (int i = 0; i < 8; i++) {
+                    row << query.value(i).toString();
+                }
+                results.append(row);
+            }
+        } else {
+            qDebug() << "Search error:" << query.lastError().text();
+        }
+
+        return results;
+    }
+
+    QList<QStringList> PatientsManager::sortPatients(const QString &field, bool ascending) {
+        QList<QStringList> results;
+        QSqlQuery query;
+
+        QString order = ascending ? "ASC" : "DESC";
+        QString sql = QString("SELECT IDP, Nom, Prenom, Sexe, CIN, Adresse, NumTel, MaladieChronique FROM patients ORDER BY %1 %2").arg(field, order);
+
+        if (query.exec(sql)) {
+            while (query.next()) {
+                QStringList row;
+                for (int i = 0; i < 8; i++) {
+                    row << query.value(i).toString();
+                }
+                results.append(row);
+            }
+        } else {
+            qDebug() << "Sort error:" << query.lastError().text();
+        }
+
+        return results;
+    }
+
+
+
+
+    QMap<QString, int> PatientsManager::getGenderDistribution() {
+        QMap<QString, int> distribution;
+        QSqlQuery query("SELECT Sexe, COUNT(*) FROM patients GROUP BY Sexe");
+
+        while (query.next()) {
+            distribution[query.value(0).toString()] = query.value(1).toInt();
+        }
+
+        // Ensure we have entries for both genders even if count is 0
+        if (!distribution.contains("Homme")) distribution["Homme"] = 0;
+        if (!distribution.contains("Femme")) distribution["Femme"] = 0;
+
+        return distribution;
+    }
+
+    QMap<QString, int> PatientsManager::getChronicDiseaseDistribution() {
+        QMap<QString, int> distribution;
+        QSqlQuery query("SELECT "
+                        "CASE WHEN MaladieChronique IS NULL OR MaladieChronique = '' THEN 'Sans' ELSE 'Avec' END, "
+                        "COUNT(*) FROM patients GROUP BY "
+                        "CASE WHEN MaladieChronique IS NULL OR MaladieChronique = '' THEN 'Sans' ELSE 'Avec' END");
+
+        while (query.next()) {
+            distribution[query.value(0).toString()] = query.value(1).toInt();
+        }
+
+        // Ensure we have both entries even if count is 0
+        if (!distribution.contains("Avec")) distribution["Avec"] = 0;
+        if (!distribution.contains("Sans")) distribution["Sans"] = 0;
+
+        return distribution;
+    }
+
+    QMap<QString, int> PatientsManager::getCityDistribution() {
+        QMap<QString, int> distribution;
+        QSqlQuery query("SELECT Adresse, COUNT(*) FROM patients GROUP BY Adresse ORDER BY COUNT(*) DESC");
+
+        while (query.next()) {
+            distribution[query.value(0).toString()] = query.value(1).toInt();
+        }
+
+        return distribution;
+    }
+
+
+
 
 
 
@@ -223,13 +319,20 @@ PatientsManager::~PatientsManager() {
             qDebug() << "Error adding patient:" << query.lastError().text();
         } else {
             loadPatients();
+            emit dataChanged();
         }
     }
 
 
+
+
     void PatientsManager::loadPatients() {
-        patientstable->setRowCount(0);
+        qDebug() << "Loading patients from database...";
+
+        patientstable->setRowCount(0);  // ✅ Clear table before reloading
+
         QSqlQuery query("SELECT IDP, Nom, Prenom, Sexe, CIN, Adresse, NumTel, MaladieChronique FROM patients ORDER BY IDP DESC");
+
         int row = 0;
         while (query.next()) {
             patientstable->insertRow(row);
@@ -238,7 +341,11 @@ PatientsManager::~PatientsManager() {
             }
             row++;
         }
+
+        qDebug() << "Patients loaded successfully!";
+        emit dataChanged();
     }
+
 
     void PatientsManager::updatePatient(int id) {
         // Retrieve the new data from the input fields
@@ -264,7 +371,8 @@ PatientsManager::~PatientsManager() {
         if (!query.exec()) {
             qDebug() << "Error updating patient:" << query.lastError().text();
         } else {
-            loadPatients();  // Reload the patients after updating
+            loadPatients();
+            emit dataChanged();            // Reload the patients after updating
         }
     }
 
@@ -277,7 +385,38 @@ PatientsManager::~PatientsManager() {
             qDebug() << "Error deleting patient:" << query.lastError().text();
         } else {
             loadPatients();
+            emit dataChanged();
+
         }
+    }
+
+
+
+
+    QList<QStringList> PatientsManager::getAllPatientsForExport() {
+        QList<QStringList> patients;
+
+        QSqlQuery query("SELECT IDP, Nom, Prenom, Sexe, CIN, Adresse, NumTel, MaladieChronique FROM patients ORDER BY Nom, Prenom");
+
+        if (!query.exec()) {
+            qDebug() << "Error fetching patients for export:" << query.lastError().text();
+            return patients;
+        }
+
+        while (query.next()) {
+            QStringList patient;
+            patient << query.value("IDP").toString()
+                    << query.value("Nom").toString()
+                    << query.value("Prenom").toString()
+                    << query.value("Sexe").toString()
+                    << query.value("CIN").toString()
+                    << query.value("Adresse").toString()
+                    << query.value("NumTel").toString()
+                    << query.value("MaladieChronique").toString();
+            patients.append(patient);
+        }
+
+        return patients;
     }
 
 

@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "toolsmanager.h"
 #include "patients.h"
+
 #include <QHeaderView>
 #include <QMessageBox>
 #include <QInputDialog>
@@ -8,13 +9,49 @@
 #include <QSqlError>
 #include <QDebug>
 #include <QSqlQuery>
+#include <QPdfWriter>
+#include <QPainter>
+#include <QFileDialog>
+#include <QDateTime>
+#include <QHBoxLayout>
+#include <QVBoxLayout>
+#include <QLabel>
+#include <QtCharts>
+#include <QChartView>
+#include <QPieSeries>
+#include <QPieSlice>
+#include <QNetworkAccessManager>
+#include <QNetworkRequest>
+#include <QNetworkReply>
+#include <QUrlQuery>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QGraphicsOpacityEffect>
+#include <QPropertyAnimation>
+#include <QEasingCurve>
+#include <QtCharts>
+#include <QChartView>
+#include <QPieSeries>
+#include <QPieSlice>
+#include <QBarSet>
+#include <QBarSeries>
+#include <QBarCategoryAxis>
+
+
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent) {
     setupUI();
+
+
+    // ✅ Load patients when the application starts
+    patientsManager->loadPatients();
 }
 
-MainWindow::~MainWindow() {}
+MainWindow::~MainWindow() {
+
+
+}
 
 void MainWindow::setupUI() {
     // Central Widget and Main Layout
@@ -94,6 +131,14 @@ void MainWindow::setupSidebar() {
     sidebarLayout->addWidget(btnTools);
     sidebarLayout->addWidget(btnVaccins);
     sidebarLayout->addWidget(btnSettings);
+
+
+
+
+
+
+
+
 
     // Bottom Image
     QLabel *PicLabel = new QLabel(this);
@@ -191,62 +236,54 @@ void MainWindow::setuppatientsPage() {
         "QPushButton:hover {"
         "    background-color: #157347;"
         "}"
+
         );
     patientLayout->addWidget(goToPatientsTableButton, 0, Qt::AlignCenter);
 
     // Connect Button to Slot
     connect(goToPatientsTableButton, &QPushButton::clicked, this, &MainWindow::showPatientsTablePage);
+
 }
+
+
+
+
+
+
+
+
+
 
 
 
 void MainWindow::setupPatientsTablePage() {
     QVBoxLayout *layout = new QVBoxLayout(PatientsTablePage);
-    // Add "Ajouter Materiels" Button
+    QHBoxLayout *controlsLayout = new QHBoxLayout();
+    layout->setContentsMargins(10, 10, 10, 10);  // Add some margins
+    layout->setSpacing(10);
+
     QPushButton *addPatientButton = new QPushButton("Ajouter Patients", this);
-    addPatientButton->setStyleSheet(
-        "QPushButton {"
-        "    background-color: #198754;"
-        "    color: white;"
-        "    padding: 10px 20px;"
-        "    border-radius: 8px;"
-        "    font-size: 14px;"
-        "}"
-        "QPushButton:hover {"
-        "    background-color: #157347;"
-        "}"
-        );
-
-    // Add "Modifier Materiels" Button
     QPushButton *editPatientButton = new QPushButton("Modifier Patients", this);
-    editPatientButton->setStyleSheet(
-        "QPushButton {"
-        "    background-color: #198754;"
-        "    color: white;"
-        "    padding: 10px 20px;"
-        "    border-radius: 8px;"
-        "    font-size: 14px;"
-        "}"
-        "QPushButton:hover {"
-        "    background-color: #157347;"
-        "}"
-        );
-
-    // Add "Supprimer Materiels" Button
     QPushButton *deletePatientButton = new QPushButton("Supprimer Patients", this);
-    deletePatientButton->setStyleSheet(
-        "QPushButton {"
-        "    background-color: #198754;"
-        "    color: white;"
-        "    padding: 10px 20px;"
-        "    border-radius: 8px;"
-        "    font-size: 14px;"
-        "}"
-        "QPushButton:hover {"
-        "    background-color: #157347;"
-        "}"
-        );
 
+    // Add "Ajouter Materiels" Button
+    QList<QPushButton*> buttons = {addPatientButton, editPatientButton, deletePatientButton};
+    for (auto *btn : buttons) {
+        btn->setStyleSheet(
+            "QPushButton {"
+            "    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #198754, stop:1 #28a745);"
+            "    color: white;"
+            "    padding: 10px 20px;"
+            "    border-radius: 10px;"
+            "    font-size: 15px;"
+            "    font-weight: bold;"
+            "    font-family: 'Segoe UI';"
+            "}"
+            "QPushButton:hover {"
+            "    background-color: #157347;"
+            "}"
+            );
+    }
     // Add Back Button
     QPushButton *backButton = new QPushButton(this);
     backButton->setIcon(QIcon(":/icons/svg/back.svg"));
@@ -263,56 +300,1232 @@ void MainWindow::setupPatientsTablePage() {
         "}"
         );
 
+    QPushButton *pdfButton = new QPushButton("Exporter PDF", this);
+    pdfButton->setIcon(QIcon(":/icons/svg/pdf.svg")); // optional icon
+    pdfButton->setStyleSheet(
+        "QPushButton {"
+        "    background-color: #dc3545;"
+        "    color: white;"
+        "    padding: 8px 16px;"
+        "    border-radius: 8px;"
+        "    font-size: 14px;"
+        "}"
+        "QPushButton:hover {"
+        "    background-color: #bb2d3b;"
+        "}"
+        );
+
+
+
+
+
     // Top Button Layout
     PatientsTablePage->setLayout(layout);
 
+    QComboBox *searchFieldCombo = new QComboBox();
+    searchFieldCombo->addItem("Nom", "Nom");
+    searchFieldCombo->addItem("Prénom", "Prenom");
+    searchFieldCombo->addItem("CIN", "CIN");
+    searchFieldCombo->addItem("Téléphone", "NumTel");
+
+    QLineEdit *searchInput = new QLineEdit();
+    searchInput->setPlaceholderText("Rechercher...");
+
+    QPushButton *searchButton = new QPushButton("Rechercher");
+    QPushButton *resetSearchButton = new QPushButton("Réinitialiser");
+
+    // Sort Controls
+    QComboBox *sortFieldCombo = new QComboBox();
+    sortFieldCombo->addItem("Nom", "Nom");
+    sortFieldCombo->addItem("Sexe", "Sexe");
+    sortFieldCombo->addItem("Gouvernorat", "Adresse");
+
+    QPushButton *sortAscButton = new QPushButton("Tri Croissant");
+    QPushButton *sortDescButton = new QPushButton("Tri Décroissant");
+
+    // Add controls to layout
+  /*  controlsLayout->addWidget(new QLabel("Rechercher par:"));
+    controlsLayout->addWidget(searchFieldCombo);
+    controlsLayout->addWidget(searchInput);
+    controlsLayout->addWidget(searchButton);
+    controlsLayout->addWidget(resetSearchButton);
+    controlsLayout->addSpacing(20);
+    controlsLayout->addWidget(new QLabel("Trier par:"));
+    controlsLayout->addWidget(sortFieldCombo);
+    controlsLayout->addWidget(sortAscButton);
+    controlsLayout->addWidget(sortDescButton);
+*/
+    layout->addLayout(controlsLayout);
+
+    // ========== STATISTICS SECTION ==========
+    // In setupPatientsTablePage() - replace the statistics section with this:
+    // ========== SECTION STATISTIQUES ==========
+    // Statistics Section
+    // Statistics Section
+    // ========== STATISTICS SECTION ==========
+    // ========== STATISTICS SECTION ==========
+    QWidget *statsHeader = new QWidget();
+    QHBoxLayout *headerLayout = new QHBoxLayout(statsHeader);
+    headerLayout->setContentsMargins(0, 0, 0, 0);
+    headerLayout->setSpacing(12);
+
+    // Section Title
+    QLabel *statsTitle = new QLabel(tr("STATISTIQUES PATIENTS"));
+    statsTitle->setStyleSheet(
+        "QLabel {"
+        "  color: #212529;"
+        "  font-size: 22px;"
+        "  font-weight: 800;"
+        "  letter-spacing: 1.2px;"
+        "  font-family: 'Segoe UI', sans-serif;"
+        "}"
+        );
+    headerLayout->addWidget(statsTitle);
+    headerLayout->addStretch();
+
+    // 🌗 Dark Mode Toggle
+    QPushButton *toggleDarkBtn = new QPushButton(darkModeEnabled ? tr("Mode Clair") : tr("Mode Sombre"));
+    toggleDarkBtn->setCursor(Qt::PointingHandCursor);
+    toggleDarkBtn->setStyleSheet(
+        "QPushButton {"
+        "  background-color: #007bff;"
+        "  color: white;"
+        "  padding: 6px 14px;"
+        "  border-radius: 8px;"
+        "  font-weight: 600;"
+        "  font-family: 'Segoe UI', sans-serif;"
+        "}"
+        "QPushButton:hover { background-color: #0056b3; }"
+        );
+    connect(toggleDarkBtn, &QPushButton::clicked, this, [=]() {
+        darkModeEnabled = !darkModeEnabled;
+        toggleDarkBtn->setText(darkModeEnabled ? tr("Mode Clair") : tr("Mode Sombre"));
+        updateStatistics();  // Trigger full refresh
+    });
+    headerLayout->addWidget(toggleDarkBtn);
+
+    layout->addWidget(statsHeader);
+
+    // 📊 Card Layout Section
+    statsContainer = new QWidget();
+    statsLayout = new QHBoxLayout(statsContainer);
+    statsLayout->setContentsMargins(0, 0, 0, 0);
+    statsLayout->setSpacing(20);
+
+    // 🎨 Chart Colors
+    QStringList colors = {"#198754", "#6f42c1", "#fd7e14", "#20c997"};
+
+    totalCard = createModernStatCard(tr("PATIENTS TOTAUX"), QMap<QString, int>{{tr("Nombre"), 0}}, colors[0]);
+    genderCard = createModernStatCard(tr("GENRE"), QMap<QString, int>{{tr("Femme"), 0}, {tr("Homme"), 0}}, colors[1]);
+    chronicCard = createModernStatCard(tr("MALADIES CHRONIQUES"), QMap<QString, int>{{tr("Avec"), 0}, {tr("Sans"), 0}}, colors[2]);
+    cityCard = createModernStatCard(tr("RÉGION PRINCIPALE"), QMap<QString, int>{{"-", 0}}, colors[3]);
+
+    statsLayout->addWidget(totalCard);
+    statsLayout->addWidget(genderCard);
+    statsLayout->addWidget(chronicCard);
+    statsLayout->addWidget(cityCard);
+
+    // Equal stretching
+    for (int i = 0; i < statsLayout->count(); ++i)
+        statsLayout->setStretch(i, 1);
+
+    // Wrapper with background
+    QWidget *statsWrapper = new QWidget();
+    statsWrapper->setStyleSheet(
+        QString("QWidget { background-color: %1; border-radius: 16px; padding: 24px; }")
+            .arg(darkModeEnabled ? "#1e1e1e" : "#f8f9fa")
+        );
+    QVBoxLayout *wrapperLayout = new QVBoxLayout(statsWrapper);
+    wrapperLayout->addWidget(statsContainer);
+    layout->addWidget(statsWrapper);
+
+
+    // ========== END STATISTICS SECTION ==========
+
+    // ========== END STATISTICS SECTION ==========
+
+
+
+    // ========== END STATISTICS SECTION ==========
+
+    // ========== END STATISTICS SECTION ==========
+    PatientsTablePage->setStyleSheet(
+        // Existing table styles
+        "QTableWidget {"
+        "    background-color: #FFFFFF;"
+        "    border: 1px solid #ddd;"
+        "    border-radius: 8px;"
+        "}"
+        "QTableWidget::item {"
+        "    border-bottom: 1px solid #ddd;"
+        "    padding: 8px;"
+        "    color: black;"
+        "}"
+        "QTableWidget::item:selected {"
+        "    background: #EDEDED;"
+        "}"
+        "QHeaderView::section {"
+        "    background-color: #F5F5F7;"
+        "    color: black;"
+        "    font-weight: bold;"
+        "    font-size: 12px;"
+        "    padding: 8px;"
+        "    border: none;"
+        "    border-bottom: 1px solid #ddd;"
+        "    color: black;"
+        "}"
+
+        // Styles for search and sort controls
+        "QComboBox {"
+        "    padding: 8px;"
+        "    border: 1px solid #ddd;"  // Border color same as QLineEdit
+        "    border-radius: 4px;"  // Rounded corners for a modern look
+        "    margin-bottom: 5px;"
+        "    color: black;"  // Black text color
+        "    font-size: 14px;"  // Consistent font size
+        "    font-family: Arial;"  // Consistent font family
+        "    transition: border-color 0.3s ease, box-shadow 0.3s ease;"  // Smooth transitions
+        "}"
+        "QComboBox:hover {"
+        "    border-color: #198754;"  // Green border on hover for a modern feel
+        "    box-shadow: 0 0 5px rgba(0, 155, 74, 0.3);"
+        "}"
+        "QComboBox::drop-down {"
+        "    border: 1px solid #ddd;"
+        "    background-color: #f7f7f7;"  // Lighter gray background for the dropdown
+        "    border-top-right-radius: 4px;"
+        "    border-top-left-radius: 4px;"
+        "}"
+
+        "QComboBox QAbstractItemView {"
+        "    border: 1px solid #ddd;"
+        "    border-radius: 4px;"
+        "    selection-background-color: #198754;"  // Green background for selected item
+        "    selection-color: white;"  // White text color for selected item // White background for the list
+        "    padding: 5px 0;"  // Padding around the list
+        "}"
+        "QComboBox QAbstractItemView::item {"
+        "    padding: 10px 15px;"
+        "    font-size: 14px;"
+        "    color: black;"  // Default text color
+        "}"
+        "QComboBox QAbstractItemView::item:hover {"
+        "    background-color: #f1f1f1;"  // Slight gray background on hover for items
+        "    color: #198754;"  // Green text color on hover
+        "}"
+
+        "QLineEdit {"
+        "    padding: 6px;"
+        "    border: 1px solid #ddd;"
+        "    border-radius: 4px;"
+        "    min-width: 150px;"
+        "    color: black;"
+        "}"
+        "QLineEdit:hover {"
+        "    border-color: #198754;"
+        "}"
+        "QLineEdit:focus {"
+        "    border-color: #198754;"
+        "    border-width: 1px;"
+        "    color: black;"
+        "}"
+
+        // Button styles (extending your existing button styles)
+        "QPushButton {"
+        "    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #198754, stop:1 #28a745);"
+        "    color: white;"
+        "    padding: 10px 20px;"
+        "    border-radius: 10px;"
+        "    font-size: 15px;"
+        "    font-weight: bold;"
+        "    font-family: 'Segoe UI';"
+        "}"
+        "QPushButton:hover {"
+        "    background-color: #157347;"
+        "}"
+        "QPushButton:pressed {"
+        "    background-color: #0d5c33;"
+        "    color: black;"
+        "}"
+
+        // Label styles
+        "QLabel {"
+        "    font-size: 13px;"
+        "    color: #555;"
+        "}"
+        );
+
     QHBoxLayout *topButtonLayout = new QHBoxLayout();
-    topButtonLayout->addWidget(backButton);
-    topButtonLayout->addStretch();
-    topButtonLayout->addWidget(addPatientButton);
-    topButtonLayout->addWidget(editPatientButton);
-    topButtonLayout->addWidget(deletePatientButton);
+    controlsLayout->addWidget(backButton);
+    controlsLayout->addSpacing(20);
+    controlsLayout->addWidget(pdfButton);
+    controlsLayout->addStretch();
+    controlsLayout->addWidget(addPatientButton);
+    controlsLayout->addWidget(editPatientButton);
+    controlsLayout->addWidget(deletePatientButton);
 
 
-    layout->addLayout(topButtonLayout);
+    topButtonLayout->addWidget(new QLabel("Rechercher par:"));
+    topButtonLayout->addWidget(searchFieldCombo);
+    topButtonLayout->addWidget(searchInput);
+    topButtonLayout->addWidget(searchButton);
+    topButtonLayout->addWidget(resetSearchButton);
+    topButtonLayout->addSpacing(20);
+    topButtonLayout->addWidget(new QLabel("Trier par:"));
+    topButtonLayout->addWidget(sortFieldCombo);
+    topButtonLayout->addWidget(sortAscButton);
+    topButtonLayout->addWidget(sortDescButton);
 
-    // Set layout for researchertablePage
-
-    layout->addStretch(1);
 
 
 
 
 
+
+
+    // Create the table widget
     QTableWidget *patientstable = new QTableWidget(this);
-    patientstable->setColumnCount(8);
-    patientstable->setHorizontalHeaderLabels({"IDP", "Nom", "Prenom", "Sexe", "CIN", "Adresse", "NumTel", "Maladie Chronique"});
-    layout->addWidget(patientstable);
 
-    // Now set the layout of the PatientsTablePage (no need for an extra QWidget)
-    PatientsTablePage->setLayout(layout);
+    // Set table properties
+    patientstable->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    patientstable->setColumnCount(9);
+    patientstable->setHorizontalHeaderLabels({
+        "IDP", "Nom", "Prenom", "Sexe", "CIN", "Adresse", "NumTel", "Maladie Chronique", "Historique"
+    });
 
-    // Set thepatientsManager->loadPatients(); PatientsTablePage as the central widget of the MainWindow
+    // Add the table to the layout with stretch factor
+      // Your existing button layout
 
-    // Initialize PatientsManager with the table
+    layout->addLayout(topButtonLayout, 0);    // Your statistics section
+    layout->addWidget(patientstable, 1);
+    // Initialize PatientsManager
     patientsManager = new class PatientsManager(patientstable, this);
 
+    // In the dataChanged connection:
+    // In setupPatientsTablePage() function
+    connect(patientsManager, &PatientsManager::dataChanged, this, [this, patientstable]() {
+        patientstable->setRowCount(0);
+
+        QSqlQuery query("SELECT IDP, Nom, Prenom, Sexe, CIN, Adresse, NumTel, MaladieChronique FROM patients ORDER BY IDP DESC");
+
+        int row = 0;
+        while (query.next()) {
+            patientstable->insertRow(row);
+
+            // Set data for columns
+            for (int col = 0; col < 8; col++) {
+                patientstable->setItem(row, col, new QTableWidgetItem(query.value(col).toString()));
+            }
+
+            // Create button with DPI-aware sizing
+            QPushButton *historyBtn = new QPushButton("Historique Vaccin");
+
+            // Get font metrics for accurate text sizing
+            QFontMetrics fm(historyBtn->font());
+            int textWidth = fm.horizontalAdvance("Historique Vaccin") + 32; // Text width + padding
+
+            historyBtn->setStyleSheet(QString(
+                                          "QPushButton {"
+                                          "    background-color: #20c997;"
+                                          "    color: white;"
+                                          "    border-radius: 6px;"
+                                          "    padding: 6px 12px;"
+                                          "    min-width: %1px;"  // Dynamic minimum width
+                                          "    font-size: 12px;"
+                                          "}"
+                                          "QPushButton:hover { background-color: #1aa179; }"
+                                          ).arg(textWidth));
+
+            // Size policy for better scaling
+            historyBtn->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Preferred);
 
 
 
+            int patientId = query.value("IDP").toInt();
+            connect(historyBtn, &QPushButton::clicked, this, [this, patientId]() {
+                showVaccinationHistory(patientId);
+            });
 
+            patientstable->setCellWidget(row, 8, historyBtn);
+            row++;
+        }
 
-
-
-
-
-    // Connect Buttons to Slots
+    });
+    // Connect buttons
     connect(addPatientButton, &QPushButton::clicked, this, &MainWindow::onAddPatientClicked);
     connect(editPatientButton, &QPushButton::clicked, this, &MainWindow::onEditPatientClicked);
     connect(deletePatientButton, &QPushButton::clicked, this, &MainWindow::onDeletePatientClicked);
     connect(backButton, &QPushButton::clicked, this, &MainWindow::showPatientsPage);
+    connect(pdfButton, &QPushButton::clicked, this, &MainWindow::exportStatsToPDF);
 
+    // Connect search and sort buttons
+    connect(searchButton, &QPushButton::clicked, this, [this, searchFieldCombo, searchInput, patientstable]() {
+        QString field = searchFieldCombo->currentData().toString();
+        QString value = searchInput->text().trimmed();
+
+        if (value.isEmpty()) {
+            patientsManager->loadPatients();
+            return;
+        }
+
+        auto results = patientsManager->searchPatients(field, value);
+        patientstable->setRowCount(0);
+
+        for (const auto &row : results) {
+            int currentRow = patientstable->rowCount();
+            patientstable->insertRow(currentRow);
+
+            for (int col = 0; col < row.size(); col++) {
+                patientstable->setItem(currentRow, col, new QTableWidgetItem(row[col]));
+            }
+
+            // Add "Historique Vaccin" button
+            QPushButton *historyBtn = new QPushButton("Historique Vaccin");
+            // Get font metrics for accurate text sizing
+            QFontMetrics fm(historyBtn->font());
+            int textWidth = fm.horizontalAdvance("Historique Vaccin") + 32; // Text width + padding
+
+            historyBtn->setStyleSheet(QString(
+                                          "QPushButton {"
+                                          "    background-color: #20c997;"
+                                          "    color: white;"
+                                          "    border-radius: 6px;"
+                                          "    padding: 6px 12px;"
+                                          "    min-width: %1px;"  // Dynamic minimum width
+                                          "    font-size: 12px;"
+                                          "}"
+                                          "QPushButton:hover { background-color: #1aa179; }"
+                                          ).arg(textWidth));
+
+            // Size policy for better scaling
+            historyBtn->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Preferred);
+            // Extract patient ID from the row
+            int patientId = row[0].toInt();
+            historyBtn->setFixedSize(100, 32);  // Width x Height in pixels
+            historyBtn->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+
+            connect(historyBtn, &QPushButton::clicked, this, [this, patientId]() {
+                showVaccinationHistory(patientId);
+            });
+
+            patientstable->setCellWidget(currentRow, 8, historyBtn);
+        }
+
+    });
+
+    connect(resetSearchButton, &QPushButton::clicked, this, [this, searchInput]() {
+        searchInput->clear();
+        patientsManager->loadPatients();
+    });
+
+    connect(sortAscButton, &QPushButton::clicked, this, [this, sortFieldCombo, patientstable]() {
+        QString field = sortFieldCombo->currentData().toString();
+        auto results = patientsManager->sortPatients(field, true);
+
+        patientstable->setRowCount(0);
+        for (const auto &row : results) {
+            int currentRow = patientstable->rowCount();
+            patientstable->insertRow(currentRow);
+
+            for (int col = 0; col < row.size(); col++) {
+                patientstable->setItem(currentRow, col, new QTableWidgetItem(row[col]));
+            }
+            QPushButton *historyBtn = new QPushButton("Historique Vaccin");
+            // Get font metrics for accurate text sizing
+            QFontMetrics fm(historyBtn->font());
+            int textWidth = fm.horizontalAdvance("Historique Vaccin") + 32; // Text width + padding
+
+            historyBtn->setStyleSheet(QString(
+                                          "QPushButton {"
+                                          "    background-color: #20c997;"
+                                          "    color: white;"
+                                          "    border-radius: 6px;"
+                                          "    padding: 6px 12px;"
+                                          "    min-width: %1px;"  // Dynamic minimum width
+                                          "    font-size: 12px;"
+                                          "}"
+                                          "QPushButton:hover { background-color: #1aa179; }"
+                                          ).arg(textWidth));
+
+            // Size policy for better scaling
+            historyBtn->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Preferred);
+            int patientId = row[0].toInt();
+            historyBtn->setFixedSize(100, 32);  // Width x Height in pixels
+            historyBtn->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+            connect(historyBtn, &QPushButton::clicked, this, [this, patientId]() {
+                showVaccinationHistory(patientId);
+            });
+                        patientstable->setCellWidget(currentRow, 8, historyBtn);
+
+
+        }
+    });
+
+    connect(sortDescButton, &QPushButton::clicked, this, [this, sortFieldCombo, patientstable]() {
+        QString field = sortFieldCombo->currentData().toString();
+        auto results = patientsManager->sortPatients(field, false);
+
+        patientstable->setRowCount(0);
+        for (const auto &row : results) {
+            int currentRow = patientstable->rowCount();
+            patientstable->insertRow(currentRow);
+
+            for (int col = 0; col < row.size(); col++) {
+                patientstable->setItem(currentRow, col, new QTableWidgetItem(row[col]));
+            }
+            QPushButton *historyBtn = new QPushButton("Historique Vaccin");
+            // Get font metrics for accurate text sizing
+            QFontMetrics fm(historyBtn->font());
+            int textWidth = fm.horizontalAdvance("Historique Vaccin") + 32; // Text width + padding
+
+            historyBtn->setStyleSheet(QString(
+                                          "QPushButton {"
+                                          "    background-color: #20c997;"
+                                          "    color: white;"
+                                          "    border-radius: 6px;"
+                                          "    padding: 6px 12px;"
+                                          "    min-width: %1px;"  // Dynamic minimum width
+                                          "    font-size: 12px;"
+                                          "}"
+                                          "QPushButton:hover { background-color: #1aa179; }"
+                                          ).arg(textWidth));
+
+            // Size policy for better scaling
+            historyBtn->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Preferred);
+            int patientId = row[0].toInt();
+            historyBtn->setFixedSize(100, 32);  // Width x Height in pixels
+            historyBtn->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+            connect(historyBtn, &QPushButton::clicked, this, [this, patientId]() {
+                showVaccinationHistory(patientId);
+            });
+            patientstable->setCellWidget(currentRow, 8, historyBtn);
+        }
+    });
+
+    // Update statistics when data changes
+    connect(patientsManager, &PatientsManager::dataChanged, this, [this]() {
+        this->updateStatistics();
+    });
+
+    // Initial update
+    updateStatistics();
 }
+
+
+#include <algorithm> // ADD THIS AT THE TOP OF YOUR FILE IF NOT PRESENT
+
+void MainWindow::updateStatistics() {
+    if (!patientsManager || !statsLayout) return;
+
+    QMap<QString, int> genderDist = patientsManager->getGenderDistribution();
+    QMap<QString, int> chronicDist = patientsManager->getChronicDiseaseDistribution();
+    QMap<QString, int> cityDist = patientsManager->getCityDistribution();
+
+    int totalPatients = genderDist.value("Homme", 0) + genderDist.value("Femme", 0);
+    int withChronic = chronicDist.value("Avec", 0);
+    int withoutChronic = totalPatients - withChronic;
+
+    // Get all cities for the region card (not just top one)
+    QMap<QString, int> allCities;
+    for (auto it = cityDist.begin(); it != cityDist.end(); ++it) {
+        if (it.value() > 0) {  // Only include cities with patients
+            allCities.insert(it.key(), it.value());
+        }
+    }
+
+    // Clear old cards
+    QLayoutItem* child;
+    while ((child = statsLayout->takeAt(0)) != nullptr) {
+        if (child->widget()) child->widget()->deleteLater();
+        delete child;
+    }
+
+    // Create new cards with enhanced visualization
+    totalCard = createModernStatCard(tr("PATIENTS TOTAUX"),
+                                     {{tr("Nombre"), totalPatients}},
+                                     "#198754");
+
+    genderCard = createModernStatCard(tr("GENRE"),
+                                      {
+                                          {tr("Femme"), genderDist.value("Femme", 0)},
+                                          {tr("Homme"), genderDist.value("Homme", 0)}
+                                      },
+                                      "#6f42c1");
+
+    chronicCard = createModernStatCard(tr("MALADIES CHRONIQUES"),
+                                       {
+                                           {tr("Avec"), withChronic},
+                                           {tr("Sans"), withoutChronic}
+                                       },
+                                       "#fd7e14");
+
+    // Pass the complete city distribution to show all regions
+    cityCard = createModernStatCard(tr("RÉGION PRINCIPALE"),
+                                    allCities,
+                                    "#20c997");
+
+    // Add cards to layout with equal stretching
+    statsLayout->addWidget(totalCard);
+    statsLayout->addWidget(genderCard);
+    statsLayout->addWidget(chronicCard);
+    statsLayout->addWidget(cityCard);
+
+    // Ensure equal width distribution
+    for (int i = 0; i < statsLayout->count(); ++i) {
+        statsLayout->setStretch(i, 1);
+    }
+
+    // Add some subtle animation when stats update
+    QGraphicsOpacityEffect *fadeEffect = new QGraphicsOpacityEffect(this);
+    statsContainer->setGraphicsEffect(fadeEffect);
+
+    QPropertyAnimation *fadeAnim = new QPropertyAnimation(fadeEffect, "opacity");
+    fadeAnim->setDuration(300);
+    fadeAnim->setStartValue(0);
+    fadeAnim->setEndValue(1);
+    fadeAnim->setEasingCurve(QEasingCurve::InOutQuad);
+    fadeAnim->start(QAbstractAnimation::DeleteWhenStopped);
+}
+
+
+void MainWindow::exportStatsToPDF() {
+    if (!patientsManager) {
+        QMessageBox::warning(this, "Error", "Patient manager not initialized!");
+        return;
+    }
+
+    // Get save file path
+    QString filePath = QFileDialog::getSaveFileName(
+        this,
+        "Export Patient Report",
+        QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) +
+            "/Patient_Report_" + QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss") + ".pdf",
+        "PDF Files (*.pdf)"
+        );
+
+    if (filePath.isEmpty()) return;
+
+    // Initialize PDF writer
+    QPdfWriter writer(filePath);
+    writer.setPageSize(QPageSize(QPageSize::A4));
+    writer.setResolution(120);
+    writer.setTitle("Patient Management Report");
+    writer.setCreator("BioLab Management System");
+
+    QPainter painter(&writer);
+    painter.setRenderHint(QPainter::Antialiasing);
+    painter.setRenderHint(QPainter::TextAntialiasing);
+
+    // Styles
+    QFont titleFont("Arial", 18, QFont::Bold);
+    QFont headerFont("Arial", 12, QFont::Bold);
+    QFont contentFont("Arial", 10);
+    QFont smallFont("Arial", 8);
+
+    // Colors
+    QColor titleColor(25, 135, 84); // Green
+    QColor headerColor(50, 50, 50);
+    QColor textColor(20, 20, 20);
+    QColor lightGray(240, 240, 240);
+
+    // Layout metrics
+    const int margin = 40;
+    int y = margin;
+    const int lineHeight = 20;
+    const int pageWidth = writer.width() - 2 * margin;
+
+    // ===== PAGE 1: COVER =====
+    painter.setFont(titleFont);
+    painter.setPen(titleColor);
+    painter.drawText(margin, y, "Patient Management Report");
+    y += lineHeight * 2;
+
+    painter.setFont(contentFont);
+    painter.setPen(textColor);
+    painter.drawText(margin, y, "Generated: " + QDateTime::currentDateTime().toString("MMMM d, yyyy h:mm AP"));
+    y += lineHeight * 3;
+
+    // Get statistics using the same query structure as loadPatients()
+    QSqlQuery countQuery("SELECT COUNT(*) FROM patients");
+    int totalPatients = 0;
+    if (countQuery.next()) {
+        totalPatients = countQuery.value(0).toInt();
+    }
+
+    QSqlQuery genderQuery("SELECT Sexe, COUNT(*) FROM patients GROUP BY Sexe");
+    QMap<QString, int> genderDist;
+    while (genderQuery.next()) {
+        genderDist[genderQuery.value(0).toString()] = genderQuery.value(1).toInt();
+    }
+
+    QSqlQuery chronicQuery("SELECT COUNT(*) FROM patients WHERE MaladieChronique IS NOT NULL AND MaladieChronique != ''");
+    int withChronic = 0;
+    if (chronicQuery.next()) {
+        withChronic = chronicQuery.value(0).toInt();
+    }
+    double chronicPercentage = totalPatients > 0 ? (withChronic * 100.0) / totalPatients : 0;
+
+    // Draw summary stats
+    painter.setFont(headerFont);
+    painter.drawText(margin, y, "Summary Statistics:");
+    y += lineHeight;
+
+    painter.setFont(contentFont);
+    painter.drawText(margin, y, QString("• Total Patients: %1").arg(totalPatients));
+    y += lineHeight;
+
+    // Handle gender distribution (using same labels as in your table)
+    painter.drawText(margin, y, QString("• Male Patients: %1").arg(genderDist.value("Homme", 0)));
+    y += lineHeight;
+    painter.drawText(margin, y, QString("• Female Patients: %1").arg(genderDist.value("Femme", 0)));
+    y += lineHeight;
+
+    painter.drawText(margin, y, QString("• Patients with Chronic Conditions: %1%").arg(qRound(chronicPercentage)));
+    y += lineHeight * 2;
+
+    // ===== PAGE 2: PATIENT DATA =====
+    writer.newPage();
+    y = margin;
+
+    painter.setFont(titleFont);
+    painter.setPen(titleColor);
+    painter.drawText(margin, y, "Patient Records");
+    y += lineHeight * 2;
+
+    // Get patient data using the same query as loadPatients()
+    QSqlQuery patientQuery("SELECT IDP, Nom, Prenom, Sexe, CIN, Adresse, NumTel, MaladieChronique FROM patients ORDER BY IDP DESC");
+
+    if (!patientQuery.isActive()) {
+        painter.setFont(contentFont);
+        painter.drawText(margin, y, "Error: Could not retrieve patient data from database.");
+        painter.end();
+        QMessageBox::warning(this, "Database Error", "Failed to execute patient data query.");
+        return;
+    }
+
+    if (!patientQuery.first()) {
+        painter.setFont(contentFont);
+        painter.drawText(margin, y, "No patient records found in database.");
+        painter.end();
+        QMessageBox::information(this, "Export Complete", "PDF generated with empty dataset.");
+        return;
+    }
+
+    // Table setup - matching your table columns
+    QStringList headers = {"ID", "Last Name", "First Name", "Gender", "CIN", "Address", "Phone", "Chronic Condition"};
+    QVector<int> colWidths = {40, 100, 100, 60, 80, 120, 80, 120};
+
+    // Draw table header
+    painter.setFont(headerFont);
+    painter.setPen(Qt::NoPen);
+    painter.setBrush(lightGray);
+    painter.drawRect(margin, y, pageWidth, lineHeight * 1.5);
+
+    painter.setPen(headerColor);
+    int x = margin;
+    for (int i = 0; i < headers.size(); i++) {
+        painter.drawText(x + 5, y + lineHeight, headers[i]);
+        x += colWidths[i];
+    }
+    y += lineHeight * 1.5 + 5;
+
+    // Draw rows
+    painter.setFont(contentFont);
+    painter.setPen(textColor);
+    bool alternate = false;
+
+    do {
+        // Check for page break
+        if (y > writer.height() - margin - lineHeight * 3) {
+            writer.newPage();
+            y = margin;
+
+            // Redraw header
+            painter.setFont(headerFont);
+            painter.setPen(Qt::NoPen);
+            painter.setBrush(lightGray);
+            painter.drawRect(margin, y, pageWidth, lineHeight * 1.5);
+
+            painter.setPen(headerColor);
+            x = margin;
+            for (int i = 0; i < headers.size(); i++) {
+                painter.drawText(x + 5, y + lineHeight, headers[i]);
+                x += colWidths[i];
+            }
+            y += lineHeight * 1.5 + 5;
+
+            painter.setFont(contentFont);
+            alternate = false;
+        }
+
+        // Draw row background
+        painter.setPen(Qt::NoPen);
+        painter.setBrush(alternate ? QColor(248, 249, 250) : Qt::white);
+        painter.drawRect(margin, y, pageWidth, lineHeight * 1.2);
+        alternate = !alternate;
+
+        // Draw cells - matching your table columns
+        painter.setPen(textColor);
+        x = margin;
+        for (int col = 0; col < 8; col++) {
+            QString text = patientQuery.value(col).toString();
+            if (text.length() > 15) text = text.left(12) + "...";
+            painter.drawText(x + 5, y + lineHeight, text);
+            x += colWidths[col];
+        }
+        y += lineHeight * 1.2;
+    } while (patientQuery.next());
+
+    painter.end();
+
+    // Show success message
+    QMessageBox::information(this, "Export Successful",
+                             QString("Patient report successfully saved to:\n%1").arg(filePath));
+}
+
+
+// In your MainWindow class header (mainwindow.h), add these member variables:
+
+
+
+
+#include <algorithm> // ADD THIS AT THE TOP OF YOUR FILE IF NOT PRESENT
+
+ // ADD THIS AT THE TOP OF YOUR FILE IF NOT PRESENT
+
+QWidget* MainWindow::createModernStatCard(const QString &title, const QMap<QString, int> &data, const QString &accentColor) {
+    QWidget *card = new QWidget();
+    card->setMinimumWidth(260);
+    card->setMaximumWidth(300);
+
+    QString bgColor = darkModeEnabled ? "#1e1e1e" : "#ffffff";
+    QString textColor = darkModeEnabled ? "#f1f3f5" : "#212529";
+    QString borderColor = darkModeEnabled ? "#343a40" : "#dee2e6";
+    QString subTextColor = darkModeEnabled ? "#adb5bd" : "#6c757d";
+
+    card->setStyleSheet(QString(
+                            "QWidget { background-color: %1; border-radius: 18px; padding: 12px; border: 1px solid %2; box-shadow: 0px 4px 12px rgba(0,0,0,0.05); }"
+                            "QLabel#title { font-size: 14px; color: %3; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; font-family: 'Segoe UI'; margin-bottom: 2px; }"
+                            "QLabel#value { font-size: 28px; font-weight: 800; color: %4; font-family: 'Segoe UI'; margin: 2px 0; }"
+                            "QLabel#subtitle { font-size: 12px; color: %5; font-style: italic; font-family: 'Segoe UI'; margin-top: 2px; }"
+                            ).arg(bgColor, borderColor, subTextColor, textColor, subTextColor));
+
+    QVBoxLayout *layout = new QVBoxLayout(card);
+    layout->setAlignment(Qt::AlignTop);
+    layout->setSpacing(6);  // Reduced from 10
+
+    QLabel *titleLabel = new QLabel(title.toUpper());
+    titleLabel->setObjectName("title");
+    layout->addWidget(titleLabel, 0, Qt::AlignLeft);
+
+    if (title == tr("PATIENTS TOTAUX")) {
+        QLabel *valueLabel = new QLabel(QString::number(data.value(tr("Nombre"))));
+        valueLabel->setObjectName("value");
+        layout->addWidget(valueLabel, 0, Qt::AlignCenter);
+
+        QLabel *sub = new QLabel(tr("Nombre total des patients enregistrés"));
+        sub->setObjectName("subtitle");
+        layout->addWidget(sub, 0, Qt::AlignCenter);
+
+    } else if (title == tr("GENRE") || title == tr("MALADIES CHRONIQUES")) {
+        QPieSeries *series = new QPieSeries();
+        series->setHoleSize(0.55);
+        series->setPieSize(0.9);  // Slightly smaller pie
+        series->setLabelsVisible(true);
+
+        int total = 0;
+        for (int value : data.values()) total += value;
+        if (total == 0) total = 1;
+
+        for (auto it = data.begin(); it != data.end(); ++it) {
+            int percent = (it.value() * 100) / total;
+            QString label = QString("%1 (%2%)").arg(it.key()).arg(percent);
+            QPieSlice *slice = series->append(label, it.value());
+            slice->setLabelFont(QFont("Segoe UI", 8, QFont::DemiBold));  // Smaller font
+            slice->setLabelColor(QColor(textColor));
+        }
+
+        QChart *chart = new QChart();
+        chart->addSeries(series);
+        chart->legend()->hide();
+        chart->setBackgroundVisible(false);
+        chart->setMargins(QMargins(0, 0, 0, 0));
+        chart->setContentsMargins(0, 0, 0, 0);
+        chart->setAnimationOptions(QChart::AllAnimations);
+
+        QChartView *chartView = new QChartView(chart);
+        chartView->setRenderHint(QPainter::Antialiasing);
+        chartView->setFixedHeight(150);  // Reduced from 200
+        chartView->setStyleSheet("background-color: transparent;");
+
+        QVBoxLayout *chartWithLegendLayout = new QVBoxLayout();
+        chartWithLegendLayout->addWidget(chartView);
+
+        // Compact legend layout
+        QHBoxLayout *legendLayout = new QHBoxLayout();
+        legendLayout->setSpacing(8);  // Reduced from 10
+        legendLayout->setAlignment(Qt::AlignCenter);
+
+        QList<QPieSlice*> slices = series->slices();
+        for (QPieSlice *slice : slices) {
+            QWidget *legendItem = new QWidget();
+            legendItem->setFixedHeight(18);  // Slightly smaller
+            QHBoxLayout *itemLayout = new QHBoxLayout(legendItem);
+            itemLayout->setContentsMargins(0, 0, 0, 0);
+            itemLayout->setSpacing(4);  // Reduced from 5
+
+            QLabel *colorBox = new QLabel();
+            colorBox->setFixedSize(10, 10);  // Smaller color box
+            colorBox->setStyleSheet(QString("background-color: %1; border-radius: 2px;").arg(slice->brush().color().name()));
+
+            QLabel *label = new QLabel(slice->label().split(" (").first());
+            label->setStyleSheet(QString("color: %1; font-size: 10px; font-family: 'Segoe UI';").arg(textColor));  // Smaller font
+
+            itemLayout->addWidget(colorBox);
+            itemLayout->addWidget(label);
+            legendLayout->addWidget(legendItem);
+        }
+
+        chartWithLegendLayout->addLayout(legendLayout);
+        layout->addLayout(chartWithLegendLayout);
+
+        QLabel *sub = new QLabel(title == tr("GENRE") ? tr("Répartition femmes / hommes") : tr("Avec ou sans maladie chronique"));
+        sub->setObjectName("subtitle");
+        layout->addWidget(sub, 0, Qt::AlignCenter);
+
+    } else if (title == tr("RÉGION PRINCIPALE")) {
+        // Get the top region
+        QString topRegion = "-";
+        int topCount = 0;
+        for (auto it = data.begin(); it != data.end(); ++it) {
+            if (it.value() > topCount) {
+                topCount = it.value();
+                topRegion = it.key();
+            }
+        }
+
+        // Compact region display
+        QWidget *regionDisplay = new QWidget();
+        QHBoxLayout *regionLayout = new QHBoxLayout(regionDisplay);
+        regionLayout->setContentsMargins(0, 0, 0, 0);
+        regionLayout->setSpacing(12);  // Reduced from 15
+
+        // Smaller region info
+        QVBoxLayout *infoLayout = new QVBoxLayout();
+        infoLayout->setSpacing(4);  // Reduced from 5
+
+        QLabel *regionName = new QLabel(topRegion);
+        regionName->setStyleSheet(QString("font-size: 16px; font-weight: bold; color: %1;").arg(accentColor));  // Smaller font
+
+        QLabel *patientCount = new QLabel(QString("%1 patients").arg(topCount));
+        patientCount->setStyleSheet(QString("font-size: 13px; color: %1;").arg(subTextColor));  // Smaller font
+
+        // Compact progress bar
+        QWidget *progressContainer = new QWidget();
+        progressContainer->setFixedHeight(6);  // Thinner
+        progressContainer->setStyleSheet("background-color: #e9ecef; border-radius: 3px;");
+
+        QWidget *progressBar = new QWidget(progressContainer);
+        progressBar->setFixedWidth(qMin(topCount * 2, 180));  // Slightly narrower
+        progressBar->setStyleSheet(QString("background-color: %1; border-radius: 3px;").arg(accentColor));
+
+        QHBoxLayout *progressLayout = new QHBoxLayout(progressContainer);
+        progressLayout->setContentsMargins(0, 0, 0, 0);
+        progressLayout->addWidget(progressBar);
+
+        infoLayout->addWidget(regionName);
+        infoLayout->addWidget(patientCount);
+        infoLayout->addWidget(progressContainer);
+        regionLayout->addLayout(infoLayout);
+
+        layout->addWidget(regionDisplay);
+
+        // Compact subtitle
+        if (data.size() > 1) {
+            QStringList regions;
+            for (auto it = data.begin(); it != data.end(); ++it) {
+                regions << QString("%1: %2").arg(it.key()).arg(it.value());
+            }
+
+            QLabel *sub = new QLabel(regions.join(" • "));
+            sub->setObjectName("subtitle");
+            sub->setStyleSheet("font-size: 11px;");  // Smaller font
+            sub->setWordWrap(true);
+            layout->addWidget(sub);
+        } else {
+            QLabel *sub = new QLabel(tr("Région la plus représentée"));
+            sub->setObjectName("subtitle");
+            sub->setStyleSheet("font-size: 11px;");  // Smaller font
+            layout->addWidget(sub);
+        }
+    }
+
+    return card;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Update your updateStatistics() function:
+
+
+#include <QNetworkAccessManager>
+#include <QNetworkRequest>
+#include <QNetworkReply>
+#include <QUrlQuery>
+
+void MainWindow::showVaccinationHistory(int patientId) {
+    QDialog *dialog = new QDialog(this);
+    dialog->setWindowTitle("Historique de Vaccination - Patient ID: " + QString::number(patientId));
+    dialog->resize(600, 400);
+
+    QVBoxLayout *layout = new QVBoxLayout(dialog);
+
+    // Create table to show vaccination history
+    QTableWidget *table = new QTableWidget(dialog);
+    table->setColumnCount(4);
+    table->setHorizontalHeaderLabels({"Vaccin", "Date", "Doses Totales", "Prochaine Dose"});
+    table->horizontalHeader()->setStretchLastSection(true);
+
+    // Function to send SMS
+    // Function to send SMS
+    auto sendVaccinationSMS = [](const QString& phoneNumber, const QString& patientName,
+                                 const QString& vaccineName, const QDate& nextDoseDate) {
+        QString cleanedNumber = phoneNumber.trimmed().remove(QRegularExpression("[^0-9+]"));
+        if (cleanedNumber.startsWith("2")) {
+            cleanedNumber = "+216" + cleanedNumber;
+        } else if (cleanedNumber.startsWith("0")) {
+            cleanedNumber = "+216" + cleanedNumber.mid(1);
+        } else if (!cleanedNumber.startsWith("+216")) {
+            cleanedNumber = "+216" + cleanedNumber;
+        }
+
+        if (!QRegularExpression("^\\+216[0-9]{8}$").match(cleanedNumber).hasMatch()) {
+            qWarning() << "Invalid Tunisian number:" << cleanedNumber;
+            return false;
+        }
+
+        QString message = QString(
+                              "Bonjour %1,\n"
+                              "Rappel: Votre dose de %2 est prévue le %3\n"
+                              "Centre Médical BioLab\n"
+                              "Contact: +216 51 588 576\n")
+                              .arg(patientName, vaccineName, nextDoseDate.toString("dd/MM/yyyy"));
+
+        const QString accountSid = "ACbaa59420b0be9423a398f091c01c6062";
+        const QString authToken = "c4d51bc770f7b173cff7b47577d3985a";
+        const QString fromNumber = "+19706606312";  // <-- YOUR Twilio Number
+
+        QProcess curl;
+        QStringList args = {
+            "-X", "POST",
+            QString("https://api.twilio.com/2010-04-01/Accounts/%1/Messages.json").arg(accountSid),
+            "--data-urlencode", QString("To=%1").arg(cleanedNumber),
+            "--data-urlencode", QString("From=%1").arg(fromNumber),
+            "--data-urlencode", QString("Body=%1").arg(message),
+            "-u", QString("%1:%2").arg(accountSid, authToken)
+        };
+
+        curl.start("curl", args);
+        if (!curl.waitForFinished(5000)) {
+            qWarning() << "SMS sending timed out";
+            return false;
+        }
+
+        QByteArray response = curl.readAllStandardOutput();
+        qDebug() << "Twilio response:" << response;
+
+        if (response.contains("\"error_code\"")) {
+            qWarning() << "Twilio error:" << response;
+            return false;
+        }
+
+        qDebug() << "SMS successfully sent to" << cleanedNumber;
+        return true;
+    };
+
+    // Load vaccination data into the table
+    auto loadVaccinationData = [=]() {
+        table->clearContents();
+        table->setRowCount(0);
+
+        QSqlQuery query;
+        query.prepare("SELECT V.NOMVACCIN, VACC.DATE_DE_VACCINATION, V.NBDOSE "
+                      "FROM VACCINATIONS VACC "
+                      "JOIN VACCINS V ON V.IDV = VACC.IDV "
+                      "WHERE VACC.IDP = :idp "
+                      "ORDER BY VACC.DATE_DE_VACCINATION");
+        query.bindValue(":idp", patientId);
+
+        if (query.exec()) {
+            int row = 0;
+            while (query.next()) {
+                table->insertRow(row);
+                table->setItem(row, 0, new QTableWidgetItem(query.value(0).toString()));
+
+                QDate vaccDate = query.value(1).toDate();
+                table->setItem(row, 1, new QTableWidgetItem(vaccDate.toString("dd/MM/yyyy")));
+
+                int totalDoses = query.value(2).toInt();
+                table->setItem(row, 2, new QTableWidgetItem(QString::number(totalDoses)));
+
+                if (totalDoses > 1) {
+                    QDate nextDoseDate = vaccDate.addDays(30);
+                    table->setItem(row, 3, new QTableWidgetItem(nextDoseDate.toString("dd/MM/yyyy")));
+                    if (QDate::currentDate().daysTo(nextDoseDate) <= 7) {
+                        for (int col = 0; col < 4; col++) {
+                            table->item(row, col)->setBackground(QColor(255, 255, 150));
+                        }
+                    }
+                } else {
+                    table->setItem(row, 3, new QTableWidgetItem("Complet"));
+                }
+                row++;
+            }
+        } else {
+            QMessageBox::warning(dialog, "Erreur", "Impossible de charger l'historique: " + query.lastError().text());
+        }
+    };
+
+    loadVaccinationData();
+
+    // Add button to create new vaccination
+    QPushButton *addBtn = new QPushButton("Ajouter Vaccination", dialog);
+    addBtn->setStyleSheet(
+        "QPushButton { background-color: #198754; color: white; padding: 8px 25px; border-radius: 8px; font-size: 10px; }"
+        "QPushButton:hover { background-color: #157347; }");
+
+    connect(addBtn, &QPushButton::clicked, this, [=]() {
+        QDialog addDialog(dialog);
+        addDialog.setWindowTitle("Nouvelle Vaccination");
+        QFormLayout *form = new QFormLayout(&addDialog);
+
+        QComboBox *vaccinCombo = new QComboBox();
+        QSqlQuery vaccinQuery("SELECT IDV, NOMVACCIN, NBDOSE FROM VACCINS");
+        while (vaccinQuery.next()) {
+            vaccinCombo->addItem(
+                vaccinQuery.value(1).toString() + " (" + vaccinQuery.value(2).toString() + " doses)",
+                vaccinQuery.value(0));
+        }
+
+        QDateEdit *dateEdit = new QDateEdit(QDate::currentDate());
+        dateEdit->setCalendarPopup(true);
+        dateEdit->setDisplayFormat("dd/MM/yyyy");
+
+        form->addRow("Vaccin:", vaccinCombo);
+        form->addRow("Date:", dateEdit);
+
+        QPushButton *saveBtn = new QPushButton("Enregistrer");
+        form->addRow(saveBtn);
+
+        connect(saveBtn, &QPushButton::clicked, this, [=, &addDialog]() {
+            int idv = vaccinCombo->currentData().toInt();
+            QDate date = dateEdit->date();
+
+            QSqlQuery checkQuery;
+            checkQuery.prepare("SELECT COUNT(*) FROM VACCINATIONS WHERE IDP = :idp AND IDV = :idv");
+            checkQuery.bindValue(":idp", patientId);
+            checkQuery.bindValue(":idv", idv);
+
+            if (checkQuery.exec() && checkQuery.next() && checkQuery.value(0).toInt() > 0) {
+                QMessageBox::warning(&addDialog, "Attention", "Ce patient a déjà reçu ce vaccin!");
+                return;
+            }
+
+            QSqlQuery insert;
+            insert.prepare("INSERT INTO VACCINATIONS (IDP, IDV, DATE_DE_VACCINATION) VALUES (:idp, :idv, :date)");
+            insert.bindValue(":idp", patientId);
+            insert.bindValue(":idv", idv);
+            insert.bindValue(":date", date);
+
+            if (insert.exec()) {
+                QSqlQuery dosesQuery;
+                dosesQuery.prepare("SELECT NBDOSE FROM VACCINS WHERE IDV = :idv");
+                dosesQuery.bindValue(":idv", idv);
+
+                if (dosesQuery.exec() && dosesQuery.next()) {
+                    int totalDoses = dosesQuery.value(0).toInt();
+                    if (totalDoses > 1) {
+                        QDate nextDoseDate = date.addDays(30);
+
+                        QSqlQuery patientQuery;
+                        patientQuery.prepare("SELECT NOM, PRENOM, NUMTEL FROM PATIENTS WHERE IDP = :idp");
+                        patientQuery.bindValue(":idp", patientId);
+
+                        if (patientQuery.exec() && patientQuery.next()) {
+                            QString patientName = patientQuery.value(0).toString() + " " + patientQuery.value(1).toString();
+                            QString phoneNumber = patientQuery.value(2).toString();
+                            QString vaccineName = vaccinCombo->currentText().split(" (").first();
+
+                            sendVaccinationSMS(phoneNumber, patientName, vaccineName, nextDoseDate);
+                        }
+                    }
+                }
+
+                QMessageBox::information(&addDialog, "Succès", "Vaccination enregistrée!");
+                addDialog.accept();
+                loadVaccinationData();
+            } else {
+                QMessageBox::critical(&addDialog, "Erreur", "Échec de l'enregistrement: " + insert.lastError().text());
+            }
+        });
+
+        addDialog.exec();
+    });
+
+    layout->addWidget(table);
+    layout->addWidget(addBtn);
+    dialog->exec();
+}
+
+
+
+
+
 
 
 
@@ -328,33 +1541,51 @@ void MainWindow::setupaddPatientsFormPage() {
     titleLabel->setStyleSheet("font-size: 18px; font-weight: bold; margin-bottom: 10px;");
     formLayout->addWidget(titleLabel, 0, Qt::AlignCenter);
 
-    QLabel *nomLabel = new QLabel("Nom:");
+    // Create input fields
+    QLabel *nomLabel = new QLabel("Nom*:");
     QLineEdit *nomInput = new QLineEdit();
-    QLabel *prenomLabel = new QLabel("Prénom:");
+    nomInput->setPlaceholderText("Entrez le nom");
+    nomInput->setValidator(new QRegularExpressionValidator(QRegularExpression("[A-Za-zÀ-ÿ\\s'-]+"), nomInput)); // Allows letters, spaces, apostrophes and hyphens
+
+    QLabel *prenomLabel = new QLabel("Prénom*:");
     QLineEdit *prenomInput = new QLineEdit();
-    QLabel *sexeLabel = new QLabel("Sexe:");
+    prenomInput->setPlaceholderText("Entrez le prénom");
+    prenomInput->setValidator(new QRegularExpressionValidator(QRegularExpression("[A-Za-zÀ-ÿ\\s'-]+"), prenomInput));
+
+    QLabel *sexeLabel = new QLabel("Sexe*:");
     QComboBox *sexeInput = new QComboBox();
-    sexeInput->addItem("Homme");  // Male
-    sexeInput->addItem("Femme");  // Female
-    QLabel *cinLabel = new QLabel("CIN:");
+    sexeInput->addItem("Homme");
+    sexeInput->addItem("Femme");
+
+    QLabel *cinLabel = new QLabel("CIN*:");
     QLineEdit *cinInput = new QLineEdit();
-    QLabel *adresseLabel = new QLabel("Gouvernorat:");
+    cinInput->setPlaceholderText("Entrez le CIN (8 chiffres)");
+    cinInput->setValidator(new QRegularExpressionValidator(QRegularExpression("\\d{8}"), cinInput)); // Exactly 8 digits
+    cinInput->setMaxLength(8);
+
+    QLabel *adresseLabel = new QLabel("Gouvernorat*:");
     QComboBox *adresseInput = new QComboBox();
-    // Add all the governorates of Tunisia to the dropdown
     adresseInput->addItems({
         "Ariana", "Beja", "Ben Arous", "Bizerte", "Gabes", "Gafsa", "Jendouba", "Kairouan",
         "Kasserine", "Kebili", "Kef", "Mahdia", "Manouba", "Medenine", "Monastir", "Nabeul",
         "Sfax", "Sidi Bouzid", "Siliana", "Tataouine", "Tozeur", "Tunis", "Zaghouan"
     });
+
+    QLabel *numtelLabel = new QLabel("Numéro de Téléphone*:");
+    QLineEdit *numtelInput = new QLineEdit();
+    numtelInput->setPlaceholderText("Entrez le numéro (8 chiffres)");
+    numtelInput->setValidator(new QRegularExpressionValidator(QRegularExpression("[259]\\d{7}"), numtelInput)); // Starts with 2,5 or 9 followed by 7 digits
+    numtelInput->setMaxLength(8);
+
+    QLabel *maladiechroniqueLabel = new QLabel("Maladie Chronique:");
+    QLineEdit *maladiechroniqueInput = new QLineEdit();
+    maladiechroniqueInput->setPlaceholderText("Facultatif");
+
+    // Set default values
     sexeInput->setCurrentIndex(0);
     adresseInput->setCurrentIndex(0);
 
-
-    QLabel *numtelLabel = new QLabel("Numéro de Téléphone:");
-    QLineEdit *numtelInput = new QLineEdit();
-    QLabel *maladiechroniqueLabel = new QLabel("Maladie Chronique:");
-    QLineEdit *maladiechroniqueInput = new QLineEdit();
-
+    // Create form layout
     QFormLayout *inputLayout = new QFormLayout();
     inputLayout->addRow(nomLabel, nomInput);
     inputLayout->addRow(prenomLabel, prenomInput);
@@ -365,6 +1596,7 @@ void MainWindow::setupaddPatientsFormPage() {
     inputLayout->addRow(maladiechroniqueLabel, maladiechroniqueInput);
     formLayout->addLayout(inputLayout);
 
+    // Create buttons
     QPushButton *submitButton = new QPushButton("Ajouter");
     QPushButton *backButton = new QPushButton("Retour");
 
@@ -448,40 +1680,37 @@ void MainWindow::setupaddPatientsFormPage() {
 
     connect(submitButton, &QPushButton::clicked, this, [this, nomInput, prenomInput, sexeInput, cinInput, adresseInput, numtelInput, maladiechroniqueInput]() {
         if (!patientsManager) {
-            qDebug() << "Error: patientsManager is not initialized!";
+            QMessageBox::critical(nullptr, "Erreur", "Système non initialisé!");
             return;
         }
 
-        // Debugging - Print Input Values
-        qDebug() << "Nom: " << nomInput->text();
-        qDebug() << "Prenom: " << prenomInput->text();
-        qDebug() << "Sexe: " << sexeInput->currentText();
-        qDebug() << "CIN: " << cinInput->text();
-        qDebug() << "Adresse: " << adresseInput->currentText();
-        qDebug() << "NumTel: " << numtelInput->text();
-        qDebug() << "Maladie Chronique: " << maladiechroniqueInput->text();
-
-        // Debug which field is empty
-        if (nomInput->text().trimmed().isEmpty()) qDebug() << "Nom is empty!";
-        if (prenomInput->text().trimmed().isEmpty()) qDebug() << "Prenom is empty!";
-        if (sexeInput->currentText().trimmed().isEmpty()) qDebug() << "Sexe is empty!";
-        if (cinInput->text().trimmed().isEmpty()) qDebug() << "CIN is empty!";
-        if (adresseInput->currentText().trimmed().isEmpty()) qDebug() << "Adresse is empty!";
-        if (numtelInput->text().trimmed().isEmpty()) qDebug() << "NumTel is empty!";
-
-
-
-        if (nomInput->text().trimmed().isEmpty() || prenomInput->text().trimmed().isEmpty() ||
-            sexeInput->currentText().trimmed().isEmpty() || cinInput->text().trimmed().isEmpty() ||
-            adresseInput->currentText().trimmed().isEmpty() || numtelInput->text().trimmed().isEmpty()) {
-
-            QMessageBox::warning(nullptr, "Validation Error", "Please fill all required fields.");
-            qDebug() << "Validation Failed: Some fields are empty!";
+        // Validate each field with specific messages
+        if (nomInput->text().trimmed().isEmpty()) {
+            QMessageBox::warning(nullptr, "Validation", "Le nom est obligatoire!");
+            nomInput->setFocus();
             return;
         }
 
+        if (prenomInput->text().trimmed().isEmpty()) {
+            QMessageBox::warning(nullptr, "Validation", "Le prénom est obligatoire!");
+            prenomInput->setFocus();
+            return;
+        }
 
-        // Insert values into patientsManager
+        if (cinInput->text().trimmed().isEmpty() || cinInput->text().length() != 8) {
+            QMessageBox::warning(nullptr, "Validation", "Le CIN doit contenir exactement 8 chiffres!");
+            cinInput->setFocus();
+            return;
+        }
+
+        if (numtelInput->text().trimmed().isEmpty() || numtelInput->text().length() != 8 ||
+            !(numtelInput->text().startsWith('2') || numtelInput->text().startsWith('5') || numtelInput->text().startsWith('9'))) {
+            QMessageBox::warning(nullptr, "Validation", "Le numéro de téléphone doit commencer par 2, 5 ou 9 et contenir 8 chiffres!");
+            numtelInput->setFocus();
+            return;
+        }
+
+        // All fields are valid, proceed with adding patient
         patientsManager->setNom(nomInput->text());
         patientsManager->setprenom(prenomInput->text());
         patientsManager->setsexe(sexeInput->currentText());
@@ -490,7 +1719,6 @@ void MainWindow::setupaddPatientsFormPage() {
         patientsManager->setnumtel(numtelInput->text());
         patientsManager->setmaladiechronique(maladiechroniqueInput->text());
 
-        // Now call addPatient with the correct arguments
         patientsManager->addPatient(
             patientsManager->getNom(),
             patientsManager->getprenom(),
@@ -500,13 +1728,19 @@ void MainWindow::setupaddPatientsFormPage() {
             patientsManager->getnumtel(),
             patientsManager->getmaladiechronique()
             );
+
         patientsManager->loadPatients();
-
         stackedWidget->setCurrentWidget(PatientsTablePage);
+
+        // Clear form for next entry
+        nomInput->clear();
+        prenomInput->clear();
+        cinInput->clear();
+        numtelInput->clear();
+        maladiechroniqueInput->clear();
+        sexeInput->setCurrentIndex(0);
+        adresseInput->setCurrentIndex(0);
     });
-
-
-
 
     connect(backButton, &QPushButton::clicked, this, [this]() {
         stackedWidget->setCurrentWidget(PatientsTablePage);
@@ -646,11 +1880,13 @@ void MainWindow::setupModifyPatientFormPage(const int ID) {
     // Connect submit button to modify patient slot
     connect(submitButton, &QPushButton::clicked, this, [this, ID, nomInput, prenomInput, sexeInput, cinInput, adresseInput, numtelInput, maladiechroniqueInput](){
         onModifyPatientSubmit(ID, nomInput, prenomInput, sexeInput, cinInput, adresseInput, numtelInput, maladiechroniqueInput);
-        setCentralWidget(patientsPage);
+        //setCentralWidget(patientsPage);
+        stackedWidget->setCurrentWidget(PatientsTablePage);
     });
 
     connect(backButton, &QPushButton::clicked, this, [this]() {
-        setCentralWidget(patientsPage);
+       // setCentralWidget(patientsPage);
+        stackedWidget->setCurrentWidget(PatientsTablePage);
     });
 }
 
@@ -940,6 +2176,26 @@ void MainWindow::loadPatientData(int patientID, QLineEdit *nomInput, QLineEdit *
 
 
 
+bool MainWindow::patientExists(int patientID) {
+    QSqlQuery query;
+    query.prepare("SELECT id FROM patients WHERE id = :id");
+    query.bindValue(":id", patientID);
+
+    qDebug() << "SQL Query: " << query.lastQuery(); // Debug the query to see the full query being executed
+
+    if (!query.exec()) {
+        qDebug() << "❌ Error checking patient existence:" << query.lastError().text();
+        return false;
+    }
+
+    if (query.next()) {
+        qDebug() << "🟢 Patient ID" << patientID << "exists in database";
+        return true;
+    }
+
+    qDebug() << "❌ Patient ID" << patientID << "does not exist in database";
+    return false;
+}
 
 
 
@@ -951,12 +2207,57 @@ void MainWindow::onAddPatientClicked() {
 
 void MainWindow::onEditPatientClicked() {
     bool ok;
-    int patientID = QInputDialog::getInt(this, "Modifier Patient", "Entrez l'ID du patient à modifier:", 1, 1, 10000, 1, &ok);
+    int patientID = QInputDialog::getInt(this,
+                                         "Modifier Patient",
+                                         "Entrez l'ID du patient à modifier:",
+                                         1, 1, 10000, 1, &ok);
+
     if (ok) {
-        setupModifyPatientFormPage(patientID);
-        setCentralWidget(ModifyPatientFormPage);
+        qDebug() << "🟢 Recherche du patient avec IDP:" << patientID;
+
+        // Vérifier si le patient existe dans la base de données
+        QSqlQuery query;
+        query.prepare("SELECT COUNT(*) FROM patients WHERE IDP = :id");
+        query.bindValue(":id", patientID);
+
+        if (query.exec()) {
+            if (query.next()) {
+                int count = query.value(0).toInt();
+
+                if (count > 0) {
+                    // Patient existe, procéder à la modification
+                    qDebug() << "🟢 Patient trouvé, préparation du formulaire";
+                    setupModifyPatientFormPage(patientID);
+
+                    if (ModifyPatientFormPage) {
+                        stackedWidget->addWidget(ModifyPatientFormPage);
+                        stackedWidget->setCurrentWidget(ModifyPatientFormPage);
+                        qDebug() << "🟢 Affichage du formulaire de modification";
+                    } else {
+                        qDebug() << "❌ Erreur: ModifyPatientFormPage non créé";
+                        QMessageBox::critical(this, "Erreur", "Le formulaire de modification n'a pas pu être chargé.");
+                    }
+                } else {
+                    qDebug() << "❌ Aucun patient avec IDP:" << patientID;
+                    QMessageBox::warning(this, "ID Invalide", "Aucun patient avec cet ID trouvé.");
+
+                    // Debug: Afficher quelques IDs existants
+                    QSqlQuery idQuery("SELECT IDP FROM patients LIMIT 5");
+                    QStringList existingIds;
+                    while (idQuery.next()) {
+                        existingIds << idQuery.value(0).toString();
+                    }
+                    qDebug() << "IDs existants (5 premiers):" << existingIds.join(", ");
+                }
+            }
+        } else {
+            qDebug() << "❌ Erreur de requête:" << query.lastError().text();
+            QMessageBox::critical(this, "Erreur Base de Données",
+                                  "Erreur lors de la vérification du patient:\n" + query.lastError().text());
+        }
     }
 }
+
 
 void MainWindow::onDeletePatientClicked() {
     bool ok;
@@ -997,6 +2298,7 @@ void MainWindow::onModifyPatientSubmit(int patientID, QLineEdit *nomInput, QLine
     } else {
         QMessageBox::information(this, "Success", "Patient information updated successfully!");
     }
+    patientsManager->loadPatients();
 }
 
 
@@ -1011,6 +2313,7 @@ void MainWindow::onModifyPatientSubmit(int patientID, QLineEdit *nomInput, QLine
 void MainWindow::showPatientsPage() {
     stackedWidget->setCurrentWidget(patientsPage);
     updateSidebarIcons(btnPatients);
+    patientsManager->loadPatients();
 }
 
 void MainWindow::showPersonelPage() {
@@ -1048,6 +2351,7 @@ void MainWindow::showToolsTablePage() {
 }
 void MainWindow::showPatientsTablePage() {
     stackedWidget->setCurrentWidget(PatientsTablePage);
+    patientsManager->loadPatients();
 }
 void MainWindow::updateSidebarIcons(QPushButton *selectedButton) {
     btnPatients->setIcon(QIcon(":/icons/svg/patient.svg"));
