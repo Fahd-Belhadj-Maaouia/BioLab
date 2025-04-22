@@ -48,6 +48,14 @@ MainWindow::MainWindow(QWidget *parent)
     stackedWidget = new QStackedWidget(this);
     setupUI();
     connect(this, &MainWindow::projectDataChanged, this, &MainWindow::refreshCostChart);
+    serialManager = new SerialManager(this);
+
+    // Connect the signal to your slot
+    connect(serialManager, &SerialManager::keyReceived, this, &MainWindow::onKeypadPressed);
+
+    // Connect to your port
+    serialManager->connectToPort("COM9"); // Replace with your actual COM port
+
 
 }
 
@@ -87,6 +95,59 @@ void MainWindow::setupUI()
 
     mainLayout->addLayout(contentLayout);
 }
+
+
+
+
+//----------------------ARDUINO-INPUT----------------------------
+
+
+void MainWindow::onKeypadPressed(char key) {
+    if (key == 'A') {
+        // Open the dialog
+        inputDialog = new MaterialInputDialog(this);
+        inputDialog->show();
+    }
+    else if (key == 'B' && inputDialog) {
+        QString idStr = inputDialog->getEnteredId();
+        inputDialog->close();
+
+        // Get the named connection
+        QSqlDatabase db = QSqlDatabase::database("main_connection");
+
+        if (!db.isOpen()) {
+            qDebug() << "Database not open:" << db.lastError().text();
+            inputDialog->deleteLater();
+            inputDialog = nullptr;
+            return;
+        }
+
+        QSqlQuery query(db);
+
+        query.prepare("SELECT NOMMATERIEL FROM RESSOURCESMÉDICALES WHERE IDR = :idr");
+        query.bindValue(":idr", idStr.toInt());
+
+        if (query.exec()) {
+            if (query.next()) {
+                QString nom = query.value(0).toString();
+                qDebug() << "NOMMATERIEL:" << nom;
+            } else {
+                qDebug() << "ID not found";
+            }
+        } else {
+            qDebug() << "Query error:" << query.lastError().text();
+        }
+
+        inputDialog->deleteLater();
+        inputDialog = nullptr;
+    }
+    else if (inputDialog) {
+        inputDialog->appendKey(key);
+    }
+}
+
+
+//-------------------------------------------------------------------
 
 void MainWindow::handleDeleteRow(const QModelIndex &index) {
     qDebug() << "Delete requested for row:" << index.row();
@@ -537,7 +598,7 @@ void MainWindow::sendMessageToChatbot(const QString &userMessage) {
     QNetworkRequest request(url);
 
 
-    QString apiKey = "YOUR API KEY HERE";
+    QString apiKey = "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";
     request.setRawHeader("Authorization", "Bearer " + apiKey.toUtf8());
     request.setRawHeader("HTTP-Referer", "https://localhost");
     request.setRawHeader("X-Title", "Qt Chat Assistant");
@@ -1085,6 +1146,8 @@ void MainWindow::exportToExcel() {
 
 
 //-----------------------------------recherche(ramma)--------------------------
+
+
 void MainWindow::searchProjects() {
     QString searchTitle = searchLineEdit->text();
     if (searchTitle.isEmpty()) {
@@ -1092,7 +1155,7 @@ void MainWindow::searchProjects() {
         return;
     }
 
-    proxyModel->setFilterKeyColumn(1); // column 1 = "TITRE"
+    proxyModel->setFilterKeyColumn(5); // column 1 = "TITRE"
     proxyModel->setFilterRegularExpression(QRegularExpression(searchTitle, QRegularExpression::CaseInsensitiveOption));
 }
 

@@ -25,6 +25,8 @@
 #include <QtCharts/QValueAxis>
 #include <QtCharts/QBarCategoryAxis>
 #include <QTextEdit>
+#include "serialmanager.h"
+#include "materialinputdialog.h"
 
 
 
@@ -62,6 +64,7 @@ private slots:
     void refreshCostChart();
     void exportToExcel();
     void sendMessageToChatbot(const QString &userMessage);
+    void onKeypadPressed(char key);
 
 
 private:
@@ -105,6 +108,8 @@ private:
     QChartView* createCostRangeChart(); // New function for chart creation
     QWidget* chartCard = nullptr;       // Pointer to the card containing the chart
     QChartView* costChartView = nullptr;
+     SerialManager *serialManager;
+       MaterialInputDialog *inputDialog = nullptr;
 
     // Main Content
     QVBoxLayout *dashboardLayout;

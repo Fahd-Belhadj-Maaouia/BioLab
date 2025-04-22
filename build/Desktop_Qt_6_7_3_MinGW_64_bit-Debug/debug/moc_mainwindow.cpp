@@ -66,7 +66,9 @@ constexpr auto qt_meta_stringdata_CLASSMainWindowENDCLASS = QtMocHelpers::string
     "refreshCostChart",
     "exportToExcel",
     "sendMessageToChatbot",
-    "userMessage"
+    "userMessage",
+    "onKeypadPressed",
+    "key"
 );
 #else  // !QT_MOC_HAS_STRINGDATA
 #error "qtmochelpers.h not found or too old."
@@ -79,7 +81,7 @@ Q_CONSTINIT static const uint qt_meta_data_CLASSMainWindowENDCLASS[] = {
       12,       // revision
        0,       // classname
        0,    0, // classinfo
-      22,   14, // methods
+      23,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
@@ -87,30 +89,31 @@ Q_CONSTINIT static const uint qt_meta_data_CLASSMainWindowENDCLASS[] = {
        3,       // signalCount
 
  // signals: name, argc, parameters, tag, flags, initial metatype offsets
-       1,    1,  146,    2, 0x06,    1 /* Public */,
-       4,    1,  149,    2, 0x06,    3 /* Public */,
-       5,    0,  152,    2, 0x06,    5 /* Public */,
+       1,    1,  152,    2, 0x06,    1 /* Public */,
+       4,    1,  155,    2, 0x06,    3 /* Public */,
+       5,    0,  158,    2, 0x06,    5 /* Public */,
 
  // slots: name, argc, parameters, tag, flags, initial metatype offsets
-       6,    0,  153,    2, 0x08,    6 /* Private */,
-       7,    0,  154,    2, 0x08,    7 /* Private */,
-       8,    0,  155,    2, 0x08,    8 /* Private */,
-       9,    0,  156,    2, 0x08,    9 /* Private */,
-      10,    0,  157,    2, 0x08,   10 /* Private */,
-      11,    0,  158,    2, 0x08,   11 /* Private */,
-      12,    0,  159,    2, 0x08,   12 /* Private */,
-      13,    0,  160,    2, 0x08,   13 /* Private */,
-      14,    1,  161,    2, 0x08,   14 /* Private */,
-      17,    0,  164,    2, 0x08,   16 /* Private */,
-      18,    0,  165,    2, 0x08,   17 /* Private */,
-      19,    0,  166,    2, 0x08,   18 /* Private */,
-      20,    1,  167,    2, 0x08,   19 /* Private */,
-      22,    0,  170,    2, 0x08,   21 /* Private */,
-      23,    1,  171,    2, 0x08,   22 /* Private */,
-      26,    0,  174,    2, 0x08,   24 /* Private */,
-      27,    0,  175,    2, 0x08,   25 /* Private */,
-      28,    0,  176,    2, 0x08,   26 /* Private */,
-      29,    1,  177,    2, 0x08,   27 /* Private */,
+       6,    0,  159,    2, 0x08,    6 /* Private */,
+       7,    0,  160,    2, 0x08,    7 /* Private */,
+       8,    0,  161,    2, 0x08,    8 /* Private */,
+       9,    0,  162,    2, 0x08,    9 /* Private */,
+      10,    0,  163,    2, 0x08,   10 /* Private */,
+      11,    0,  164,    2, 0x08,   11 /* Private */,
+      12,    0,  165,    2, 0x08,   12 /* Private */,
+      13,    0,  166,    2, 0x08,   13 /* Private */,
+      14,    1,  167,    2, 0x08,   14 /* Private */,
+      17,    0,  170,    2, 0x08,   16 /* Private */,
+      18,    0,  171,    2, 0x08,   17 /* Private */,
+      19,    0,  172,    2, 0x08,   18 /* Private */,
+      20,    1,  173,    2, 0x08,   19 /* Private */,
+      22,    0,  176,    2, 0x08,   21 /* Private */,
+      23,    1,  177,    2, 0x08,   22 /* Private */,
+      26,    0,  180,    2, 0x08,   24 /* Private */,
+      27,    0,  181,    2, 0x08,   25 /* Private */,
+      28,    0,  182,    2, 0x08,   26 /* Private */,
+      29,    1,  183,    2, 0x08,   27 /* Private */,
+      31,    1,  186,    2, 0x08,   29 /* Private */,
 
  // signals: parameters
     QMetaType::Void, QMetaType::QString,    3,
@@ -137,6 +140,7 @@ Q_CONSTINIT static const uint qt_meta_data_CLASSMainWindowENDCLASS[] = {
     QMetaType::Void,
     QMetaType::Void,
     QMetaType::Void, QMetaType::QString,   30,
+    QMetaType::Void, QMetaType::Char,   32,
 
        0        // eod
 };
@@ -199,7 +203,10 @@ Q_CONSTINIT const QMetaObject MainWindow::staticMetaObject = { {
         QtPrivate::TypeAndForceComplete<void, std::false_type>,
         // method 'sendMessageToChatbot'
         QtPrivate::TypeAndForceComplete<void, std::false_type>,
-        QtPrivate::TypeAndForceComplete<const QString &, std::false_type>
+        QtPrivate::TypeAndForceComplete<const QString &, std::false_type>,
+        // method 'onKeypadPressed'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        QtPrivate::TypeAndForceComplete<char, std::false_type>
     >,
     nullptr
 } };
@@ -232,6 +239,7 @@ void MainWindow::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, 
         case 19: _t->refreshCostChart(); break;
         case 20: _t->exportToExcel(); break;
         case 21: _t->sendMessageToChatbot((*reinterpret_cast< std::add_pointer_t<QString>>(_a[1]))); break;
+        case 22: _t->onKeypadPressed((*reinterpret_cast< std::add_pointer_t<char>>(_a[1]))); break;
         default: ;
         }
     } else if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
@@ -290,13 +298,13 @@ int MainWindow::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 22)
+        if (_id < 23)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 22;
+        _id -= 23;
     } else if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 22)
+        if (_id < 23)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 22;
+        _id -= 23;
     }
     return _id;
 }

@@ -2,9 +2,13 @@ debug/buttondelegate.o
 debug/connection.o
 debug/main.o
 debug/mainwindow.o
+debug/materialinputdialog.o
 debug/projetderecherche.o
+debug/serialmanager.o
 debug/todolist.o
 debug/qrc_Resouces.o
 debug/moc_buttondelegate.o
 debug/moc_mainwindow.o
+debug/moc_materialinputdialog.o
+debug/moc_serialmanager.o
 debug/moc_todolist.o
