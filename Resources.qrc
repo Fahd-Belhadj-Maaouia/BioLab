@@ -1,0 +1,33 @@
+<!DOCTYPE RCC>
+<RCC version="1.0">
+    <qresource prefix="/icons">
+        <file>svg/back.svg</file>
+        <file>svg/flask.svg</file>
+        <file>svg/magnifying-glass.svg</file>
+        <file>svg/microscope.svg</file>
+        <file>svg/patient.svg</file>
+        <file>svg/personel.svg</file>
+        <file>svg/photo-camera-interface-symbol-for-button.svg</file>
+        <file>svg/scientist.svg</file>
+        <file>svg/settings.svg</file>
+        <file>svg/syringe.svg</file>
+        <file>svg/Asset 1.png</file>
+        <file>svg/Asset 2.svg</file>
+        <file>svg/BIOLAB.svg</file>
+        <file>svg/Camera.svg</file>
+        <file>svg/flask-selected.svg</file>
+        <file>svg/lOGO.svg</file>
+        <file>svg/microscope-selected.svg</file>
+        <file>svg/patient-selected.svg</file>
+        <file>svg/personel-selected.svg</file>
+        <file>svg/scientist-selected.svg</file>
+        <file>svg/settings-selected.svg</file>
+        <file>svg/syringe-selected.svg</file>
+    </qresource>
+    <qresource prefix="/">
+        <file>MapView.qml</file>
+        <file>icons/marker.png</file>
+        <file>qml/map.qml</file>
+        <file>images/marker.png</file>
+    </qresource>
+</RCC>

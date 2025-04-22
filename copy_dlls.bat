@@ -1,0 +1,2 @@
+@echo off 
+if exist "C:\Users\DHOUIB Najet\Documents\interfacemateriels1\OpenCV-MinGW-Build-OpenCV-4.5.5-x64\OpenCV-MinGW-Build-OpenCV-4.5.5-x64\x64\mingw\bin\*.dll" xcopy /Y "C:\Users\DHOUIB Najet\Documents\interfacemateriels1\OpenCV-MinGW-Build-OpenCV-4.5.5-x64\OpenCV-MinGW-Build-OpenCV-4.5.5-x64\x64\mingw\bin\*.dll" "C:\Users\DHOUIB Najet\Documents\interfacemateriels1\build\Desktop_Qt_6_7_3_MinGW_64_bit-Debug\" > nul 
