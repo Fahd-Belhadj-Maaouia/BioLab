@@ -1,0 +1,13 @@
+release/connection.o
+release/logindialog.o
+release/main.o
+release/mainwindow.o
+release/personnelmanager.o
+release/toolsmanager.o
+release/vaccinmanager.o
+release/qrc_Resources.o
+release/moc_logindialog.o
+release/moc_mainwindow.o
+release/moc_personnelmanager.o
+release/moc_toolsmanager.o
+release/moc_vaccinmanager.o

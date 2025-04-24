@@ -1,0 +1,15 @@
+debug/connection.o
+debug/loginwindow.o
+debug/main.o
+debug/mainwindow.o
+debug/passwordrecoverydialog.o
+debug/personnelmanager.o
+debug/toolsmanager.o
+debug/vaccinmanager.o
+debug/qrc_Resources.o
+debug/moc_loginwindow.o
+debug/moc_mainwindow.o
+debug/moc_passwordrecoverydialog.o
+debug/moc_personnelmanager.o
+debug/moc_toolsmanager.o
+debug/moc_vaccinmanager.o
