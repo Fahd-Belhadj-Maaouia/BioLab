@@ -124,18 +124,26 @@ void MainWindow::onKeypadPressed(char key) {
 
         QSqlQuery query(db);
 
-        query.prepare("SELECT NOMMATERIEL FROM RESSOURCESMÉDICALES WHERE IDR = :idr");
+        query.prepare("SELECT STOCK FROM RESSOURCESMÉDICALES WHERE IDR = :idr");
         query.bindValue(":idr", idStr.toInt());
 
         if (query.exec()) {
             if (query.next()) {
                 QString nom = query.value(0).toString();
-                qDebug() << "NOMMATERIEL:" << nom;
+                qDebug() << "STOCK:" << nom;
+                 serialManager->getSerial()->write("STOCK:");
+                // Send to Arduino - ensure newline at end
+                QByteArray data = nom.toUtf8() + "\n";
+                serialManager->getSerial()->write(data);
             } else {
                 qDebug() << "ID not found";
+                // Send "not found" message to Arduino
+                serialManager->getSerial()->write("ID not found\n");
             }
         } else {
             qDebug() << "Query error:" << query.lastError().text();
+            // Send error message to Arduino
+            serialManager->getSerial()->write("Query error\n");
         }
 
         inputDialog->deleteLater();
@@ -145,7 +153,6 @@ void MainWindow::onKeypadPressed(char key) {
         inputDialog->appendKey(key);
     }
 }
-
 
 //-------------------------------------------------------------------
 

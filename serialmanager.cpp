@@ -23,7 +23,8 @@ bool SerialManager::connectToPort(const QString &portName, int baudRate)
     serial->setStopBits(QSerialPort::OneStop);
     serial->setFlowControl(QSerialPort::NoFlowControl);
 
-    if (serial->open(QIODevice::ReadOnly)) {
+    // Change this line to open in ReadWrite mode instead of ReadOnly
+    if (serial->open(QIODevice::ReadWrite)) {
         qDebug() << "Connected to" << portName;
         return true;
     } else {

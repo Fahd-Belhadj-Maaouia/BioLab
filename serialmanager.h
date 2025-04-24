@@ -16,7 +16,8 @@ public:
     bool connectToPort(const QString &portName, int baudRate = QSerialPort::Baud9600);
     void disconnectPort();
     QStringList availablePorts();
-
+    QSerialPort* getSerial() const { return serial; }
+    void writeToSerial(const QByteArray &data);
 signals:
     void keyReceived(char key);
 
