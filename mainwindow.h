@@ -103,7 +103,8 @@ private slots:
     bool patientExists( int patientID);
 private:
 
-
+    void clearLayout(QLayout *layout);
+    void animateStatsUpdate();
 
     // Statistics widgets
     QWidget *totalCard;

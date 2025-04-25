@@ -817,6 +817,7 @@ void MainWindow::setupPatientsTablePage() {
 void MainWindow::updateStatistics() {
     if (!patientsManager || !statsLayout) return;
 
+    // Fetch distributions
     QMap<QString, int> genderDist = patientsManager->getGenderDistribution();
     QMap<QString, int> chronicDist = patientsManager->getChronicDiseaseDistribution();
     QMap<QString, int> cityDist = patientsManager->getCityDistribution();
@@ -825,57 +826,50 @@ void MainWindow::updateStatistics() {
     int withChronic = chronicDist.value("Avec", 0);
     int withoutChronic = totalPatients - withChronic;
 
-    // Get all cities for the region card (not just top one)
-    QMap<QString, int> allCities;
+    // Filter valid cities only
+    QMap<QString, int> filteredCities;
     for (auto it = cityDist.begin(); it != cityDist.end(); ++it) {
-        if (it.value() > 0) {  // Only include cities with patients
-            allCities.insert(it.key(), it.value());
+        if (it.value() > 0) {
+            filteredCities.insert(it.key(), it.value());
         }
     }
 
-    // Clear old cards
+    // Clear current cards
     QLayoutItem* child;
     while ((child = statsLayout->takeAt(0)) != nullptr) {
         if (child->widget()) child->widget()->deleteLater();
         delete child;
     }
 
-    // Create new cards with enhanced visualization
-    totalCard = createModernStatCard(tr("PATIENTS TOTAUX"),
-                                     {{tr("Nombre"), totalPatients}},
-                                     "#198754");
+    // Add refreshed stat cards
+    statsLayout->addWidget(createModernStatCard(tr("PATIENTS TOTAUX"),
+                                                {{tr("Nombre"), totalPatients}},
+                                                "#198754"));
 
-    genderCard = createModernStatCard(tr("GENRE"),
-                                      {
-                                          {tr("Femme"), genderDist.value("Femme", 0)},
-                                          {tr("Homme"), genderDist.value("Homme", 0)}
-                                      },
-                                      "#6f42c1");
+    statsLayout->addWidget(createModernStatCard(tr("GENRE"),
+                                                {
+                                                    {tr("Femme"), genderDist.value("Femme", 0)},
+                                                    {tr("Homme"), genderDist.value("Homme", 0)}
+                                                },
+                                                "#6f42c1"));
 
-    chronicCard = createModernStatCard(tr("MALADIES CHRONIQUES"),
-                                       {
-                                           {tr("Avec"), withChronic},
-                                           {tr("Sans"), withoutChronic}
-                                       },
-                                       "#fd7e14");
+    statsLayout->addWidget(createModernStatCard(tr("MALADIES CHRONIQUES"),
+                                                {
+                                                    {tr("Avec"), withChronic},
+                                                    {tr("Sans"), withoutChronic}
+                                                },
+                                                "#fd7e14"));
 
-    // Pass the complete city distribution to show all regions
-    cityCard = createModernStatCard(tr("RÉGION PRINCIPALE"),
-                                    allCities,
-                                    "#20c997");
+    statsLayout->addWidget(createModernStatCard(tr("RÉGION PRINCIPALE"),
+                                                filteredCities,
+                                                "#20c997"));
 
-    // Add cards to layout with equal stretching
-    statsLayout->addWidget(totalCard);
-    statsLayout->addWidget(genderCard);
-    statsLayout->addWidget(chronicCard);
-    statsLayout->addWidget(cityCard);
-
-    // Ensure equal width distribution
+    // Equal spacing
     for (int i = 0; i < statsLayout->count(); ++i) {
         statsLayout->setStretch(i, 1);
     }
 
-    // Add some subtle animation when stats update
+    // Apply fade-in animation
     QGraphicsOpacityEffect *fadeEffect = new QGraphicsOpacityEffect(this);
     statsContainer->setGraphicsEffect(fadeEffect);
 
@@ -1084,14 +1078,14 @@ void MainWindow::exportStatsToPDF() {
 }
 
 
-// In your MainWindow class header (mainwindow.h), add these member variables:
+
 
 
 
 
 #include <algorithm> // ADD THIS AT THE TOP OF YOUR FILE IF NOT PRESENT
 
- // ADD THIS AT THE TOP OF YOUR FILE IF NOT PRESENT
+ // ADD
 
 QWidget* MainWindow::createModernStatCard(const QString &title, const QMap<QString, int> &data, const QString &accentColor) {
     QWidget *card = new QWidget();
@@ -1112,7 +1106,7 @@ QWidget* MainWindow::createModernStatCard(const QString &title, const QMap<QStri
 
     QVBoxLayout *layout = new QVBoxLayout(card);
     layout->setAlignment(Qt::AlignTop);
-    layout->setSpacing(6);  // Reduced from 10
+    layout->setSpacing(6);
 
     QLabel *titleLabel = new QLabel(title.toUpper());
     titleLabel->setObjectName("title");
@@ -1130,19 +1124,26 @@ QWidget* MainWindow::createModernStatCard(const QString &title, const QMap<QStri
     } else if (title == tr("GENRE") || title == tr("MALADIES CHRONIQUES")) {
         QPieSeries *series = new QPieSeries();
         series->setHoleSize(0.55);
-        series->setPieSize(0.9);  // Slightly smaller pie
-        series->setLabelsVisible(true);
+        series->setPieSize(0.9);
+        series->setLabelsVisible(false);  // We'll handle labels manually
 
         int total = 0;
         for (int value : data.values()) total += value;
         if (total == 0) total = 1;
 
+        // Create slices
+        QList<QColor> sliceColors = {
+            QColor(accentColor),
+            QColor(accentColor).lighter(150),
+            QColor(accentColor).darker(120),
+            QColor(accentColor).lighter(180)
+        };
+
+        int colorIndex = 0;
         for (auto it = data.begin(); it != data.end(); ++it) {
-            int percent = (it.value() * 100) / total;
-            QString label = QString("%1 (%2%)").arg(it.key()).arg(percent);
-            QPieSlice *slice = series->append(label, it.value());
-            slice->setLabelFont(QFont("Segoe UI", 8, QFont::DemiBold));  // Smaller font
-            slice->setLabelColor(QColor(textColor));
+            QPieSlice *slice = series->append(it.key(), it.value());
+            slice->setColor(sliceColors[colorIndex % sliceColors.size()]);
+            colorIndex++;
         }
 
         QChart *chart = new QChart();
@@ -1153,9 +1154,63 @@ QWidget* MainWindow::createModernStatCard(const QString &title, const QMap<QStri
         chart->setContentsMargins(0, 0, 0, 0);
         chart->setAnimationOptions(QChart::AllAnimations);
 
-        QChartView *chartView = new QChartView(chart);
-        chartView->setRenderHint(QPainter::Antialiasing);
-        chartView->setFixedHeight(150);  // Reduced from 200
+        // Custom chart view that will handle the percentage labels
+        // Custom chart view that will handle the percentage labels
+        class PieChartView : public QChartView {
+        public:
+            PieChartView(QChart *chart, QPieSeries *series, const QString &textColor)
+                : QChartView(chart), m_series(series), m_textColor(textColor) {
+                setRenderHint(QPainter::Antialiasing);
+            }
+
+        protected:
+            void drawForeground(QPainter *painter, const QRectF &rect) override {
+                QChartView::drawForeground(painter, rect);
+
+                painter->save();
+                painter->setRenderHint(QPainter::Antialiasing);
+
+                QRectF plotArea = chart()->plotArea();
+                QPointF center = plotArea.center();
+
+                // Distance from center where the text appears (inside the arc)
+                qreal innerRadius = qMin(plotArea.width(), plotArea.height()) * 0.30;
+
+                for (QPieSlice *slice : m_series->slices()) {
+                    if (slice->value() == 0) continue;
+
+                    // Calculate angle in radians to position label
+                    qreal angle = slice->startAngle() + slice->angleSpan() / 2.0;
+                    qreal rad = qDegreesToRadians(angle);
+
+                    QPointF labelPos = center + QPointF(innerRadius * cos(rad), innerRadius * sin(rad));
+
+                    // Draw percentage label
+                    //int percent = qRound((slice->value() * 100.0) / m_series->sum());
+                    //QString text = QString("%1%").arg(percent);
+
+                    QFont font("Segoe UI", 10, QFont::Bold);
+                    painter->setFont(font);
+                    painter->setPen(QColor(m_textColor));
+
+                    QFontMetrics fm(font);
+                    //QRect textRect = fm.boundingRect(text);
+                    //QPointF textTopLeft(labelPos.x() - textRect.width() / 2, labelPos.y() - textRect.height() / 2);
+
+                   // painter->drawText(QRectF(textTopLeft, textRect.size()), Qt::AlignCenter, text);
+                }
+
+                painter->restore();
+            }
+
+        private:
+            QPieSeries *m_series;
+            QString m_textColor;
+        };
+
+
+        PieChartView *chartView = new PieChartView(chart, series, textColor);
+        chartView->setFixedHeight(150);
         chartView->setStyleSheet("background-color: transparent;");
 
         QVBoxLayout *chartWithLegendLayout = new QVBoxLayout();
@@ -1163,23 +1218,26 @@ QWidget* MainWindow::createModernStatCard(const QString &title, const QMap<QStri
 
         // Compact legend layout
         QHBoxLayout *legendLayout = new QHBoxLayout();
-        legendLayout->setSpacing(8);  // Reduced from 10
+        legendLayout->setSpacing(8);
         legendLayout->setAlignment(Qt::AlignCenter);
 
         QList<QPieSlice*> slices = series->slices();
         for (QPieSlice *slice : slices) {
             QWidget *legendItem = new QWidget();
-            legendItem->setFixedHeight(18);  // Slightly smaller
+            legendItem->setFixedHeight(18);
             QHBoxLayout *itemLayout = new QHBoxLayout(legendItem);
             itemLayout->setContentsMargins(0, 0, 0, 0);
-            itemLayout->setSpacing(4);  // Reduced from 5
+            itemLayout->setSpacing(4);
 
             QLabel *colorBox = new QLabel();
-            colorBox->setFixedSize(10, 10);  // Smaller color box
+            colorBox->setFixedSize(10, 10);
             colorBox->setStyleSheet(QString("background-color: %1; border-radius: 2px;").arg(slice->brush().color().name()));
 
-            QLabel *label = new QLabel(slice->label().split(" (").first());
-            label->setStyleSheet(QString("color: %1; font-size: 10px; font-family: 'Segoe UI';").arg(textColor));  // Smaller font
+            int percent = qRound((slice->percentage()) * 100);
+            QString labelText = QString("%1 (%2%)").arg(slice->label()).arg(percent);
+            QLabel *label = new QLabel(labelText);
+
+            label->setStyleSheet(QString("color: %1; font-size: 10px; font-family: 'Segoe UI';").arg(textColor));
 
             itemLayout->addWidget(colorBox);
             itemLayout->addWidget(label);
@@ -1208,25 +1266,25 @@ QWidget* MainWindow::createModernStatCard(const QString &title, const QMap<QStri
         QWidget *regionDisplay = new QWidget();
         QHBoxLayout *regionLayout = new QHBoxLayout(regionDisplay);
         regionLayout->setContentsMargins(0, 0, 0, 0);
-        regionLayout->setSpacing(12);  // Reduced from 15
+        regionLayout->setSpacing(12);
 
         // Smaller region info
         QVBoxLayout *infoLayout = new QVBoxLayout();
-        infoLayout->setSpacing(4);  // Reduced from 5
+        infoLayout->setSpacing(4);
 
         QLabel *regionName = new QLabel(topRegion);
-        regionName->setStyleSheet(QString("font-size: 16px; font-weight: bold; color: %1;").arg(accentColor));  // Smaller font
+        regionName->setStyleSheet(QString("font-size: 16px; font-weight: bold; color: %1;").arg(accentColor));
 
         QLabel *patientCount = new QLabel(QString("%1 patients").arg(topCount));
-        patientCount->setStyleSheet(QString("font-size: 13px; color: %1;").arg(subTextColor));  // Smaller font
+        patientCount->setStyleSheet(QString("font-size: 13px; color: %1;").arg(subTextColor));
 
         // Compact progress bar
         QWidget *progressContainer = new QWidget();
-        progressContainer->setFixedHeight(6);  // Thinner
+        progressContainer->setFixedHeight(6);
         progressContainer->setStyleSheet("background-color: #e9ecef; border-radius: 3px;");
 
         QWidget *progressBar = new QWidget(progressContainer);
-        progressBar->setFixedWidth(qMin(topCount * 2, 180));  // Slightly narrower
+        progressBar->setFixedWidth(qMin(topCount * 2, 180));
         progressBar->setStyleSheet(QString("background-color: %1; border-radius: 3px;").arg(accentColor));
 
         QHBoxLayout *progressLayout = new QHBoxLayout(progressContainer);
@@ -1249,13 +1307,13 @@ QWidget* MainWindow::createModernStatCard(const QString &title, const QMap<QStri
 
             QLabel *sub = new QLabel(regions.join(" • "));
             sub->setObjectName("subtitle");
-            sub->setStyleSheet("font-size: 11px;");  // Smaller font
+            sub->setStyleSheet("font-size: 11px;");
             sub->setWordWrap(true);
             layout->addWidget(sub);
         } else {
             QLabel *sub = new QLabel(tr("Région la plus représentée"));
             sub->setObjectName("subtitle");
-            sub->setStyleSheet("font-size: 11px;");  // Smaller font
+            sub->setStyleSheet("font-size: 11px;");
             layout->addWidget(sub);
         }
     }
