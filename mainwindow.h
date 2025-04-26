@@ -29,20 +29,21 @@ public:
     void setCurrentUser(int userId, const QString &nom, const QString &prenom);
     ~MainWindow();
 
+signals:  // Ajoutez cette section
+    void logoutRequested();
+
+public slots:  // Ajoutez cette section
+    void logout();
+
 private slots:
-    void showPatientsPage();
     void showPersonelPage();
-    void showResearchPage();
+    void showPatientsPage();
+    void showResearchesPage();
     void showResearchersPage();
     void showToolsPage();
     void showVaccinsPage();
     void showSettingsPage();
-    void showToolsTablePage();
     void showPersonnelTablePage();
-
-    void onAddToolClicked();
-    void onEditToolClicked();
-    void onDeleteToolClicked();
     void onAddPersonelClicked();
     void onEditPersonelClicked();
     void onDeletePersonelClicked();
@@ -76,11 +77,7 @@ private:
     QString currentUserName;
     QString currentUserRole;
     QString convertImageToBase64(const QString& imagePath);
-
-
-
-
-
+    QPushButton *btnLogout;
 
     QWidget *centralWidget;
     QVBoxLayout *mainLayout;
@@ -134,7 +131,6 @@ private:
     QComboBox *sexeEdit;
     QDateEdit *dateAjoutEdit;
 
-    ToolsManager *toolsManager;
     PersonnelManager *personnelManager;
 };
 

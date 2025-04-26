@@ -24,7 +24,6 @@
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent),
-    toolsManager(new ToolsManager(new QTableWidget(this), this)),
     personnelManager(new PersonnelManager(new QTableWidget(this), this))
 {
     setupUI();
@@ -87,7 +86,7 @@ void MainWindow::setCurrentUser(int userId, const QString &nom, const QString &p
 
     // Charger les données initiales
     personnelManager->loadPersonnel();
-    toolsManager->loadTools();
+    updateStats(); // Force la mise à jour des graphiques
 }
 
 void MainWindow::setupUI() {
@@ -127,13 +126,14 @@ void MainWindow::setupSidebar() {
 
     sidebarLayout = new QVBoxLayout(sidebarWidget);
 
+    // Logo
     QLabel *logoLabel = new QLabel(this);
-    QPixmap logoPixmap(":/icons/svg/BIOLAB.svg");
-    logoLabel->setPixmap(logoPixmap);
+    logoLabel->setPixmap(QPixmap(":/icons/svg/BIOLAB.svg"));
     logoLabel->setAlignment(Qt::AlignLeft);
     logoLabel->setStyleSheet("QLabel { margin-left: 20px; margin-top: 10px; }");
     sidebarLayout->addWidget(logoLabel);
 
+    // Boutons principaux
     btnPatients = createSidebarButton("  Patients", ":/icons/svg/patient.svg");
     btnPersonel = createSidebarButton("  Personel", ":/icons/svg/personel.svg");
     btnResearches = createSidebarButton("  Recherche", ":/icons/svg/flask.svg");
@@ -142,6 +142,7 @@ void MainWindow::setupSidebar() {
     btnVaccins = createSidebarButton("  Vaccin", ":/icons/svg/syringe.svg");
     btnSettings = createSidebarButton("  Paramètres", ":/icons/svg/settings.svg");
 
+    // Groupe de boutons
     sidebarButtonGroup = new QButtonGroup(this);
     sidebarButtonGroup->addButton(btnPatients);
     sidebarButtonGroup->addButton(btnPersonel);
@@ -152,6 +153,7 @@ void MainWindow::setupSidebar() {
     sidebarButtonGroup->addButton(btnSettings);
     sidebarButtonGroup->setExclusive(true);
 
+    // Ajout des boutons principaux
     sidebarLayout->addWidget(btnPatients);
     sidebarLayout->addWidget(btnPersonel);
     sidebarLayout->addWidget(btnResearches);
@@ -160,16 +162,42 @@ void MainWindow::setupSidebar() {
     sidebarLayout->addWidget(btnVaccins);
     sidebarLayout->addWidget(btnSettings);
 
+    // Bouton de déconnexion
+    btnLogout = new QPushButton("  Déconnexion", this);
+    btnLogout->setIcon(QIcon(":/icons/svg/logout.svg")); // Ajoutez une icône si disponible
+    btnLogout->setStyleSheet(
+        "QPushButton {"
+        "    background: transparent;"
+        "    color: #e74c3c;"
+        "    text-align: left;"
+        "    padding: 15px;"
+        "    font-size: 16px;"
+        "    border-radius: 8px;"
+        "}"
+        "QPushButton:hover {"
+        "    background: rgba(231, 76, 60, 0.1);"
+        "}"
+        "QPushButton::icon {"
+        "    margin-right: 10px;"
+        "}"
+        );
+
+    // Image en bas
     QLabel *PicLabel = new QLabel(this);
-    QPixmap PicPixmap(":/icons/svg/Asset 2.svg");
-    PicLabel->setPixmap(PicPixmap.scaled(22, 22, Qt::KeepAspectRatio));
+    PicLabel->setPixmap(QPixmap(":/icons/svg/Asset 2.svg").scaled(22, 22, Qt::KeepAspectRatio));
     PicLabel->setStyleSheet("QLabel { margin-left: 8px; margin-bottom: 50px; }");
+
+    // Organisation finale
+    sidebarLayout->addStretch();
+    sidebarLayout->addWidget(btnLogout);
     sidebarLayout->addStretch();
     sidebarLayout->addWidget(PicLabel);
 
-    connect(btnPatients, &QPushButton::clicked, this, &MainWindow::showPatientsPage);
+    // Connexions
     connect(btnPersonel, &QPushButton::clicked, this, &MainWindow::showPersonelPage);
-    connect(btnResearches, &QPushButton::clicked, this, &MainWindow::showResearchPage);
+    connect(btnLogout, &QPushButton::clicked, this, &MainWindow::logout);
+    connect(btnPatients, &QPushButton::clicked, this, &MainWindow::showPatientsPage);
+    connect(btnResearches, &QPushButton::clicked, this, &MainWindow::showResearchesPage);
     connect(btnResearchers, &QPushButton::clicked, this, &MainWindow::showResearchersPage);
     connect(btnTools, &QPushButton::clicked, this, &MainWindow::showToolsPage);
     connect(btnVaccins, &QPushButton::clicked, this, &MainWindow::showVaccinsPage);
@@ -188,7 +216,6 @@ QPushButton* MainWindow::createSidebarButton(const QString &text, const QString 
         );
     return button;
 }
-
 void MainWindow::setupPersonelPage() {
     personelPage = new QWidget();
     QGridLayout *layout = new QGridLayout(personelPage);
@@ -237,20 +264,11 @@ void MainWindow::setupPersonelPage() {
     statsLayout->addWidget(secretairesLabel);
     layout->addWidget(statsBox, 1, 0);
 
-    // 4. Mini-tableau (bas droit)
-    QGroupBox *tableBox = new QGroupBox("Derniers ajouts");
-    tableBox->setStyleSheet("QGroupBox { font-weight: bold; font-size: 16px; color: #333; border: 1px solid #e0e0e0; border-radius: 8px; }");
-    QVBoxLayout *tableLayout = new QVBoxLayout(tableBox);
-
-    miniPersonnelTable = new QTableWidget(personelPage);
-    miniPersonnelTable->setColumnCount(4);
-    miniPersonnelTable->setHorizontalHeaderLabels({"Nom", "Prénom", "Ville", "Rôle"});
-    miniPersonnelTable->setFixedHeight(180);
-    styleTableView(miniPersonnelTable);
-    miniPersonnelTable->horizontalHeader()->setVisible(true);
-    miniPersonnelTable->verticalHeader()->setVisible(false);
-
-    personnelManager->loadMiniTable(miniPersonnelTable);
+    // 4. Bouton Voir plus seulement (bas droit)
+    QGroupBox *buttonBox = new QGroupBox("Personnel");
+    buttonBox->setStyleSheet("QGroupBox { font-weight: bold; font-size: 16px; color: #333; border: 1px solid #e0e0e0; border-radius: 8px; }");
+    QVBoxLayout *buttonLayout = new QVBoxLayout(buttonBox);
+    buttonLayout->setAlignment(Qt::AlignCenter);
 
     voirPlusButton = new QPushButton("Voir plus");
     voirPlusButton->setStyleSheet(
@@ -267,9 +285,8 @@ void MainWindow::setupPersonelPage() {
         "}"
         );
 
-    tableLayout->addWidget(miniPersonnelTable);
-    tableLayout->addWidget(voirPlusButton, 0, Qt::AlignRight);
-    layout->addWidget(tableBox, 1, 1);
+    buttonLayout->addWidget(voirPlusButton);
+    layout->addWidget(buttonBox, 1, 1);
 
     connect(voirPlusButton, &QPushButton::clicked, this, &MainWindow::showPersonnelTablePage);
 
@@ -296,7 +313,6 @@ void MainWindow::setupPages() {
     setupPersonelTablePage();
     setupAddPersonelFormPage();
     setupEditPersonelFormPage();
-    setupToolsPage();
 
     stackedWidget->addWidget(patientsPage);
     stackedWidget->addWidget(researchersPage);
@@ -311,7 +327,7 @@ void MainWindow::setupPages() {
     stackedWidget->addWidget(addPersonelFormPage);
     stackedWidget->addWidget(editPersonelFormPage);
 
-    stackedWidget->setCurrentWidget(personelPage);
+    stackedWidget->setCurrentWidget(patientsPage);
 }
 
 void MainWindow::setupPersonelTablePage() {
@@ -499,17 +515,16 @@ void MainWindow::showPersonnelTablePage() {
     updateSidebarIcons(btnPersonel);
 }
 
+void MainWindow::showPersonelPage() {
+    stackedWidget->setCurrentWidget(personelPage);
+    updateSidebarIcons(btnPersonel);
+}
 void MainWindow::showPatientsPage() {
     stackedWidget->setCurrentWidget(patientsPage);
     updateSidebarIcons(btnPatients);
 }
 
-void MainWindow::showPersonelPage() {
-    stackedWidget->setCurrentWidget(personelPage);
-    updateSidebarIcons(btnPersonel);
-}
-
-void MainWindow::showResearchPage() {
+void MainWindow::showResearchesPage() {
     stackedWidget->setCurrentWidget(researchesPage);
     updateSidebarIcons(btnResearches);
 }
@@ -534,11 +549,6 @@ void MainWindow::showSettingsPage() {
     updateSidebarIcons(btnSettings);
 }
 
-void MainWindow::showToolsTablePage() {
-    stackedWidget->setCurrentWidget(toolsTablePage);
-    updateSidebarIcons(btnTools);
-    toolsManager->loadTools();
-}
 
 void MainWindow::updateSidebarIcons(QPushButton *selectedButton) {
     btnPatients->setIcon(QIcon(":/icons/svg/patient.svg"));
@@ -1157,53 +1167,6 @@ void MainWindow::setupEditPersonelFormPage() {
     });
 }
 
-void MainWindow::setupToolsPage() {
-    toolsPage = new QWidget();
-    QVBoxLayout *toolsLayout = new QVBoxLayout(toolsPage);
-
-    QPushButton *goToToolsTableButton = new QPushButton("Voir Matériels", this);
-    goToToolsTableButton->setStyleSheet(
-        "QPushButton {"
-        "    background-color: #198754;"
-        "    color: white;"
-        "    padding: 12px 24px;"
-        "    border-radius: 8px;"
-        "    font-size: 16px;"
-        "}"
-        "QPushButton:hover {"
-        "    background-color: #157347;"
-        "}"
-        );
-    toolsLayout->addWidget(goToToolsTableButton, 0, Qt::AlignCenter);
-
-    connect(goToToolsTableButton, &QPushButton::clicked, this, &MainWindow::showToolsTablePage);
-}
-
-void MainWindow::onAddToolClicked() {
-    stackedWidget->setCurrentWidget(addToolFormPage);
-}
-
-void MainWindow::onEditToolClicked() {
-    bool ok;
-    int id = QInputDialog::getInt(this, "Modifier Matériel", "Entrez l'ID du matériel à modifier:", 1, 1, 100, 1, &ok);
-    if (ok) {
-        toolsManager->setId(id);
-        toolsManager->setNomMateriel("Nom Modifié");
-        toolsManager->setDescription("Description Modifiée");
-        toolsManager->setQuantiteMaximale(10);
-        toolsManager->editTool();
-    }
-}
-
-void MainWindow::onDeleteToolClicked() {
-    bool ok;
-    int id = QInputDialog::getInt(this, "Supprimer Matériel", "Entrez l'ID du matériel à supprimer:", 1, 1, 100, 1, &ok);
-    if (ok) {
-        toolsManager->setId(id);
-        toolsManager->deleteTool();
-    }
-}
-
 void MainWindow::updateStats() {
     // Mettre à jour les graphiques
     villeChartView->setChart(personnelManager->createVillePieChart());
@@ -1217,8 +1180,6 @@ void MainWindow::updateStats() {
     infirmiersLabel->setText(QString("Infirmiers: %1").arg(roleCounts.first));
     secretairesLabel->setText(QString("Secrétaires: %1").arg(roleCounts.second));
 
-    // Mettre à jour le mini tableau
-    personnelManager->loadMiniTable(miniPersonnelTable);
 }
 
 
@@ -1232,4 +1193,11 @@ QString MainWindow::convertImageToBase64(const QString &imagePath)
     return QString::fromLatin1(imageData.toBase64());
 }
 
-
+void MainWindow::logout()
+{
+    if (QMessageBox::question(this, "Déconnexion",
+                              "Êtes-vous sûr de vouloir vous déconnecter?",
+                              QMessageBox::Yes|QMessageBox::No) == QMessageBox::Yes) {
+        emit logoutRequested();
+    }
+}

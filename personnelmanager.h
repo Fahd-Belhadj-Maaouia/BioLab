@@ -78,7 +78,6 @@ public:
     QMap<QString, QVariant> getPersonnelById(int id);
 
     // Fonctions d'affichage
-    void loadMiniTable(QTableWidget *table);
     void loadPersonnel(const QString& sortColumn = "DATEAJOUT", const QString& sortOrder = "DESC");
     void filterByVille(const QString& ville);
     void searchPersonnel(const QString &searchTerm);
@@ -93,6 +92,7 @@ public:
     // Utilitaires
     static QByteArray imageToBase64(const QPixmap &pixmap);
     static QPixmap base64ToImage(const QString &base64);
+
 
 signals:
     void personnelDataChanged();

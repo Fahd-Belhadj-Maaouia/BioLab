@@ -184,31 +184,6 @@ QStringList PersonnelManager::getVillesTunisie() {
     };
 }
 
-
-
-void PersonnelManager::loadMiniTable(QTableWidget *table) {
-    table->setRowCount(0);
-    table->setColumnCount(4);
-    table->setHorizontalHeaderLabels({"Nom", "Prénom", "Ville", "Rôle"});
-    table->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
-    table->verticalHeader()->setVisible(false);
-
-    QSqlQuery query(dbConnection.getDatabase());
-    query.prepare("SELECT nom, prenom, adresse, role FROM personnels ORDER BY dateajout DESC LIMIT 5");
-
-    if (query.exec()) {
-        int row = 0;
-        while (query.next()) {
-            table->insertRow(row);
-            for (int col = 0; col < 4; col++) {
-                QTableWidgetItem *item = new QTableWidgetItem(query.value(col).toString());
-                item->setTextAlignment(Qt::AlignCenter);
-                table->setItem(row, col, item);
-            }
-            row++;
-        }
-    }
-}
 void PersonnelManager::loadPersonnel(const QString& sortColumn, const QString& sortOrder) {
     personnelTable->setRowCount(0);
 

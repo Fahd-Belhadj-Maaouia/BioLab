@@ -27,10 +27,16 @@ int main(int argc, char *argv[])
                      [&](int userId, QString nom, QString prenom) {
                          mainWindow.setCurrentUser(userId, nom, prenom);
                          mainWindow.showMaximized();
-                         loginWindow.close(); // Fermer la fenêtre de login
+                         loginWindow.hide(); // Cache la fenêtre de login plutôt que de la fermer
                      });
 
-    // Afficher la fenêtre de login
+    // Connecter le signal de déconnexion
+    QObject::connect(&mainWindow, &MainWindow::logoutRequested, [&]() {
+        mainWindow.hide();
+        loginWindow.show();
+    });
+
+    // Afficher la fenêtre de login au démarrage
     loginWindow.show();
 
     return a.exec();
