@@ -1,6 +1,7 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
-
+#include <QSerialPort>
+#include <QSerialPortInfo>
 #include <QMainWindow>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -26,6 +27,10 @@
 #include <QSplitter>
 #include <QScrollArea>
 #include <QScrollBar>  // Ajout de l'inclusion pour QScrollBar
+#include"arduinomanager.h"
+#include <QComboBox>
+#include <QPushButton>
+#include <QLabel>
 
 // Forward declarations
 class ToolsManager;
@@ -44,6 +49,7 @@ public:
     ~MainWindow();
 
 private slots:
+    void readSerialData();
     // Navigation slots
     void showPatientsPage();
     void showPersonelPage();
@@ -72,6 +78,7 @@ private slots:
     void showExpirationPopup(const QString &message);
     void loadNotifications();
     void styleNotificationsWidget(QWidget *notificationsWidget);
+    void loadVaccinDataToEditForm(int vaccinId);
     void exportVaccinsTableToPDF();
 
     // Message-related slots
@@ -82,6 +89,11 @@ private slots:
     void onSendMessageClicked();
     void onRefreshMessagesButtonClicked();
     void displayConversation(int contactId);
+
+   // void setupArduinoConnection();
+    /*void handleColorDetection(const QString &color);
+    void handleVaccinExpiration(bool isExpired, const QString &vaccinName, const QString &reference, const QString &expDate);
+    void handleArduinoError(const QString &errorMessage);*/
 
 private:
     // UI Components
@@ -102,9 +114,21 @@ private:
     QPushButton *btnMessagerie;
     QButtonGroup *sidebarButtonGroup;
 
+
+    ArduinoManager *arduinoManager;
+    QComboBox *portSelector;
+    QPushButton *connectButton;
+    QLabel *statusLabel;
+    QLabel *detectedColorLabel;
+    QLabel *vaccinInfoLabel;
+
     // Main Content
     QStackedWidget *stackedWidget;
 
+
+
+
+    //void setupArduinoPanel();
     // Pages
     QWidget *patientsPage;
     QWidget *researchersPage;
@@ -201,6 +225,9 @@ private:
     void updateVaccinTypeStats();
     QChartView* createPieChart(const QMap<QString, int> &typeStats, int totalVaccins);
     void applyAnimatedContainerStyle(QWidget *container);
+    QString buttonStyle(const QString &color);
+    QString tableStyle();
+    QString groupBoxStyle(const QString &color) ;
 
     // Message bubble styles
     QString getIncomingMessageStyle();

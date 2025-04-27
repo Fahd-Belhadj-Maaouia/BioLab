@@ -21,7 +21,7 @@ void VaccinManager::setupTable() {
     QStringList headers = {
         "IDV", "Nom Vaccin", "Référence", "Type",
         "Maladie Chronique", "Nombre de Doses",
-        "Quantité", "Date d'Expiration"
+        "Quantité", "Date d'Expiration", "Couleur"  // Ajout de "Couleur" à l'en-tête
     };
 
     vaccinTable->setColumnCount(headers.size());
@@ -158,7 +158,7 @@ void VaccinManager::loadVaccins(SortType sortType, bool ascending) {
     // Utiliser TO_CHAR pour formater la date directement dans la requête SQL
     QString queryStr = QString(
                            "SELECT IDV, NOMVACCIN, REFERENCE, TYPE, MALADIECHRONIQUE, NBDOSE, QUANTITE, "
-                           "TO_CHAR(DATEEXP, 'DD/MM/YYYY') as DATEEXP_FORMATTED "
+                           "TO_CHAR(DATEEXP, 'DD/MM/YYYY') as DATEEXP_FORMATTED, COULEUR " // Ajout de COULEUR
                            "FROM vaccins %1").arg(orderByClause);
 
     query.prepare(queryStr);
@@ -176,9 +176,8 @@ void VaccinManager::loadVaccins(SortType sortType, bool ascending) {
             vaccinTable->setItem(row, 4, new QTableWidgetItem(query.value("MALADIECHRONIQUE").toString()));
             vaccinTable->setItem(row, 5, new QTableWidgetItem(query.value("NBDOSE").toString()));
             vaccinTable->setItem(row, 6, new QTableWidgetItem(query.value("QUANTITE").toString()));
-
-            // Utiliser directement la date formatée par Oracle
             vaccinTable->setItem(row, 7, new QTableWidgetItem(query.value("DATEEXP_FORMATTED").toString()));
+            vaccinTable->setItem(row, 8, new QTableWidgetItem(query.value("COULEUR").toString())); // Ajout de la couleur
 
             row++;
         }
@@ -242,9 +241,9 @@ bool VaccinManager::addVaccin() {
         QSqlQuery query(db);
         query.prepare(
             "INSERT INTO vaccins "
-            "(IDV, NOMVACCIN, REFERENCE, TYPE, MALADIECHRONIQUE, NBDOSE, QUANTITE, DATEEXP) "
+            "(IDV, NOMVACCIN, REFERENCE, TYPE, MALADIECHRONIQUE, NBDOSE, QUANTITE, DATEEXP, COULEUR) " // Ajout de COULEUR
             "VALUES (:IDV, :NOMVACCIN, :REFERENCE, :TYPE, :MALADIECHRONIQUE, :NBDOSE, :QUANTITE, "
-            "TO_DATE(:DATEEXP, 'DD/MM/YYYY'))"
+            "TO_DATE(:DATEEXP, 'DD/MM/YYYY'), :COULEUR)" // Ajout du paramètre COULEUR
             );
 
         query.bindValue(":IDV", nextId);
@@ -256,6 +255,7 @@ bool VaccinManager::addVaccin() {
         query.bindValue(":QUANTITE", quantite);
         // Format de date pour Oracle lors de l'insertion
         query.bindValue(":DATEEXP", dateExp.toString("dd/MM/yyyy"));
+        query.bindValue(":COULEUR", couleur); // Bind de la valeur de couleur
 
         if (!query.exec()) {
             throw std::runtime_error(query.lastError().text().toStdString());
@@ -321,7 +321,8 @@ bool VaccinManager::editVaccin() {
             "NOMVACCIN = :NOMVACCIN, REFERENCE = :REFERENCE, "
             "TYPE = :TYPE, MALADIECHRONIQUE = :MALADIECHRONIQUE, "
             "NBDOSE = :NBDOSE, QUANTITE = :QUANTITE, "
-            "DATEEXP = TO_DATE(:DATEEXP, 'DD/MM/YYYY') "
+            "DATEEXP = TO_DATE(:DATEEXP, 'DD/MM/YYYY'), "
+            "COULEUR = :COULEUR " // Ajout de la mise à jour de COULEUR
             "WHERE IDV = :IDV"
             );
 
@@ -334,6 +335,7 @@ bool VaccinManager::editVaccin() {
         query.bindValue(":QUANTITE", quantite);
         // Format de date pour Oracle lors de la modification
         query.bindValue(":DATEEXP", dateExp.toString("dd/MM/yyyy"));
+        query.bindValue(":COULEUR", couleur); // Bind de la valeur de couleur
 
         if (!query.exec()) {
             throw std::runtime_error(query.lastError().text().toStdString());
@@ -436,11 +438,11 @@ bool VaccinManager::loadVaccinSummary(QTableWidget *summaryTable) {
     // Réinitialisation du tableau
     summaryTable->clear();
     summaryTable->setRowCount(0);
-    summaryTable->setColumnCount(4);
-    summaryTable->setHorizontalHeaderLabels({"Nom", "Type", "Doses", "Quantité"});
+    summaryTable->setColumnCount(5); // Augmenté à 5 pour inclure la couleur
+    summaryTable->setHorizontalHeaderLabels({"Nom", "Type", "Doses", "Quantité", "Couleur"}); // Ajout de "Couleur"
 
     QSqlQuery query(db);
-    query.prepare("SELECT NOMVACCIN, TYPE, NBDOSE, QUANTITE FROM vaccins WHERE ROWNUM <= 4");
+    query.prepare("SELECT NOMVACCIN, TYPE, NBDOSE, QUANTITE, COULEUR FROM vaccins WHERE ROWNUM <= 4"); // Ajout de COULEUR
 
     if (query.exec()) {
         int row = 0;
@@ -450,6 +452,7 @@ bool VaccinManager::loadVaccinSummary(QTableWidget *summaryTable) {
             summaryTable->setItem(row, 1, new QTableWidgetItem(query.value(1).toString()));
             summaryTable->setItem(row, 2, new QTableWidgetItem(query.value(2).toString()));
             summaryTable->setItem(row, 3, new QTableWidgetItem(query.value(3).toString()));
+            summaryTable->setItem(row, 4, new QTableWidgetItem(query.value(4).toString())); // Ajout de couleur
             row++;
         }
 
@@ -471,7 +474,7 @@ QMap<QString, QVariant> VaccinManager::getVaccinById(int id) {
     }
 
     QSqlQuery query(dbConnection.getDatabase());
-    query.prepare("SELECT * FROM vaccins WHERE IDV = :id");  // Make sure to use IDV instead of id
+    query.prepare("SELECT * FROM vaccins WHERE IDV = :id");
     query.bindValue(":id", id);
 
     if (query.exec() && query.next()) {
@@ -483,13 +486,13 @@ QMap<QString, QVariant> VaccinManager::getVaccinById(int id) {
         vaccinData["nb_dose"] = query.value("NBDOSE");
         vaccinData["quantite"] = query.value("QUANTITE");
         vaccinData["date_exp"] = query.value("DATEEXP");
+        vaccinData["couleur"] = query.value("COULEUR"); // Ajout de la couleur
     } else {
         qDebug() << "Error fetching vaccin:" << query.lastError().text();
     }
 
     return vaccinData;
 }
-
 QMap<QString, int> VaccinManager::getVaccinTypeStats() {
     QMap<QString, int> typeStats;
 
@@ -656,5 +659,97 @@ bool VaccinManager::searchVaccins(const QString& searchText, const QString& sear
         QMessageBox::warning(nullptr, "Erreur",
                              "Impossible de rechercher les vaccins");
         return false;
+    }
+}
+
+
+bool VaccinManager::isVaccinExpiredByColor(const QString &color) {
+    if (!dbConnection.createConnection()) {
+        QMessageBox::critical(nullptr, "Erreur de base de données",
+                              "Impossible de se connecter à la base de données");
+        return false;
+    }
+
+    QSqlQuery query(dbConnection.getDatabase());
+    query.prepare("SELECT COUNT(*) FROM vaccins WHERE COULEUR = :color AND DATEEXP < SYSDATE");
+    query.bindValue(":color", color);
+
+    if (query.exec() && query.next()) {
+        return query.value(0).toInt() > 0;
+    }
+    return false;
+}
+
+QStringList VaccinManager::getExpiredVaccinsByColor(const QString &color) {
+    QStringList expiredVaccins;
+
+    if (!dbConnection.createConnection()) {
+        QMessageBox::critical(nullptr, "Erreur de base de données",
+                              "Impossible de se connecter à la base de données");
+        return expiredVaccins;
+    }
+
+    QSqlQuery query(dbConnection.getDatabase());
+    query.prepare("SELECT NOMVACCIN, TO_CHAR(DATEEXP, 'DD/MM/YYYY') as DATEEXP_FORMATTED "
+                  "FROM vaccins "
+                  "WHERE COULEUR = :color AND DATEEXP < SYSDATE");
+    query.bindValue(":color", color);
+
+    if (query.exec()) {
+        while (query.next()) {
+            expiredVaccins.append(QString("%1 (Expiré le %2)")
+                                      .arg(query.value("NOMVACCIN").toString())
+                                      .arg(query.value("DATEEXP_FORMATTED").toString()));
+        }
+    }
+
+    return expiredVaccins;
+}
+bool VaccinManager::findVaccinByColor(const QString &color)
+{
+    if (!dbConnection.createConnection()) {
+        QMessageBox::critical(nullptr, "Erreur de base de données",
+                              "Impossible de se connecter à la base de données");
+        return false;
+    }
+
+    QSqlQuery query(dbConnection.getDatabase());
+    query.prepare("SELECT IDV, NOMVACCIN, REFERENCE, TYPE, MALADIECHRONIQUE, NBDOSE, QUANTITE, "
+                  "DATEEXP, TO_CHAR(DATEEXP, 'DD/MM/YYYY') as DATEEXP_FORMATTED, COULEUR "
+                  "FROM vaccins WHERE UPPER(COULEUR) = UPPER(:couleur)");
+    query.bindValue(":couleur", color);
+
+    if (query.exec() && query.next()) {
+        // Récupérer les données du vaccin trouvé
+        id = query.value("IDV").toInt();
+        nomVaccin = query.value("NOMVACCIN").toString();
+        reference = query.value("REFERENCE").toString();
+        type = query.value("TYPE").toString();
+        maladieChronique = query.value("MALADIECHRONIQUE").toString();
+        nbDose = query.value("NBDOSE").toInt();
+        quantite = query.value("QUANTITE").toInt();
+        dateExp = query.value("DATEEXP").toDate();
+        couleur = query.value("COULEUR").toString();
+
+        return true;
+    }
+    return false;
+}
+int VaccinManager::getTotalVaccinCount() {
+    if (!dbConnection.createConnection()) {
+        QMessageBox::critical(nullptr, "Erreur de base de données",
+                              "Impossible de se connecter à la base de données");
+        return 0;
+    }
+
+    QSqlQuery query(dbConnection.getDatabase());
+    query.prepare("SELECT SUM(QUANTITE) as TOTAL FROM vaccins");
+
+    if (query.exec() && query.next()) {
+        return query.value("TOTAL").toInt();
+    } else {
+        qDebug() << "Erreur lors du calcul du nombre total de vaccins:"
+                 << query.lastError().text();
+        return 0;
     }
 }

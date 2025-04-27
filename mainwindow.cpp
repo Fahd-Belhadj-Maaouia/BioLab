@@ -23,9 +23,17 @@
 #include <QParallelAnimationGroup>
 #include <QEasingCurve>
 #include <QInputDialog>
+#include <QGroupBox>
+#include <QStatusBar>
+#include <QVBoxLayout>
+#include <QHBoxLayout>
+#include <QGridLayout>
+#include <QMessageBox>
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent) {
     setupUI();
+    //setupArduinoConnection();
+
 }
 
 MainWindow::~MainWindow() {}
@@ -402,282 +410,265 @@ void MainWindow::setupAddToolFormPage() {
 
 // -----------------------------
 // Vaccin Pages Implementation
-// -----------------------------
 void MainWindow::setupVaccinsPage() {
-    qDebug() << "Début de setupVaccinsPage";
+    qDebug() << "Initialisation dynamique de la page vaccins";
 
-    // Vérification et allocation de vaccinsPage
+    // Initialisation de la page si nécessaire
     if (!vaccinsPage) {
         vaccinsPage = new QWidget(this);
-        qDebug() << "vaccinsPage initialisé";
     }
 
-    QVBoxLayout *vaccinsLayout = new QVBoxLayout(vaccinsPage);
-    vaccinsPage->setLayout(vaccinsLayout);
-    vaccinsLayout->setSpacing(15);
+    // Layout principal
+    QVBoxLayout *mainLayout = new QVBoxLayout(vaccinsPage);
+    mainLayout->setSpacing(15);
+    mainLayout->setContentsMargins(15, 15, 15, 15);
 
-    // Titre
-    QLabel *titleLabel = new QLabel("Résumé des Vaccins", this);
-    titleLabel->setStyleSheet("font-size: 18px; font-weight: bold;");
-    vaccinsLayout->addWidget(titleLabel);
+    // 1. En-tête avec titre
+    QLabel *titleLabel = new QLabel("Tableau de Bord des Vaccins", vaccinsPage);
+    titleLabel->setStyleSheet("QLabel {"
+                              "font-size: 24px;"
+                              "font-weight: bold;"
+                              "color: #2c3e50;"
+                              "padding-bottom: 10px;"
+                              "border-bottom: 2px solid #3498db;"
+                              "}");
+    mainLayout->addWidget(titleLabel);
 
-    // Tableau des vaccins
-    QTableWidget *summaryTable = new QTableWidget(this);
-    summaryTable->setColumnCount(4);
-    summaryTable->setHorizontalHeaderLabels({"Nom", "Type", "Doses", "Quantité"});
-    summaryTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    // 2. Section "Bibliothèque des Vaccins"
+    QLabel *libraryLabel = new QLabel("Bibliothèque des Vaccins", vaccinsPage);
+    libraryLabel->setStyleSheet("font-size: 18px; font-weight: bold; color: #34495e;");
+    mainLayout->addWidget(libraryLabel);
 
-    // Chargement des données avec vaccinManager
-    /*if (vaccinManager) {
-        qDebug() << "Chargement des données avec vaccinManager";
-        vaccinManager->loadVaccinSummary(summaryTable);
-    } else {
-        qDebug() << "Erreur: vaccinManager est NULL";
-    }*/
+    // 3. Conteneur pour stats et notifications
+    QWidget *statsNotifContainer = new QWidget(vaccinsPage);
+    QHBoxLayout *statsNotifLayout = new QHBoxLayout(statsNotifContainer);
+    statsNotifLayout->setSpacing(20);
+    statsNotifLayout->setContentsMargins(0, 0, 0, 0);
 
-    vaccinsLayout->addWidget(summaryTable);
+    // 3.1 Carte des statistiques (2/3 de largeur)
+    QGroupBox *statsGroup = new QGroupBox("Répartition par Type de Vaccin", statsNotifContainer);
+    statsGroup->setStyleSheet(groupBoxStyle("#3498db"));
 
-    // Section statistiques et notifications côte à côte
-    QWidget *statsWidget = new QWidget(this);
-    QHBoxLayout *statsLayout = new QHBoxLayout(statsWidget);
-    statsLayout->setSpacing(30); // Espace plus large entre les statistiques et les notifications
-    statsLayout->setContentsMargins(0, 10, 0, 10);
+    QVBoxLayout *statsLayout = new QVBoxLayout(statsGroup);
 
-    // Widget statistiques par type de vaccin (côté gauche)
-    QWidget *vaccTypeWidget = new QWidget(this);
-    QVBoxLayout *vaccTypeLayout = new QVBoxLayout(vaccTypeWidget);
-    vaccTypeLayout->setContentsMargins(0, 0, 0, 0);
+    QWidget *statsContent = new QWidget();
+    statsContent->setObjectName("statsContent");
+    statsLayout->addWidget(statsContent);
 
-    // Titre des statistiques par type
-    QLabel *typeStatsTitle = new QLabel("Distribution des Vaccins par Type", this);
-    QFont titleFont = typeStatsTitle->font();
-    titleFont.setBold(true);
-    typeStatsTitle->setFont(titleFont);
-    typeStatsTitle->setAlignment(Qt::AlignLeft);
-    vaccTypeLayout->addWidget(typeStatsTitle);
+    // 3.2 Carte des notifications (1/3 de largeur)
+    QGroupBox *notifGroup = new QGroupBox("Notifications", statsNotifContainer);
+    notifGroup->setStyleSheet(groupBoxStyle("#e74c3c"));
 
-    // Créer un widget pour contenir les statistiques
-    QWidget *statsContainer = new QWidget();
-    vaccTypeLayout->addWidget(statsContainer);
+    QVBoxLayout *notifLayout = new QVBoxLayout(notifGroup);
 
-    // Appeler la fonction pour afficher les statistiques
-    try {
-        // Essayer d'afficher les statistiques de manière sécurisée
-        QTimer::singleShot(100, this, [this, statsContainer]() {
-            displayVaccinTypeStats(statsContainer);
-        });
-    } catch (std::exception &e) {
-        qDebug() << "Erreur lors de l'affichage des statistiques:" << e.what();
-        QLabel *errorLabel = new QLabel("Erreur: Impossible de charger les statistiques");
-        vaccTypeLayout->addWidget(errorLabel);
-    }
+    // Créer le placeholder pour les notifications
+    QWidget *notifContent = new QWidget();
+    notifContent->setObjectName("notificationsPlaceholder");
+    notifLayout->addWidget(notifContent);
 
-    // Ajouter le widget des statistiques au layout horizontal avec un ratio de 2
-    statsLayout->addWidget(vaccTypeWidget, 2);
+    statsNotifLayout->addWidget(statsGroup, 2); // 2/3 de l'espace
+    statsNotifLayout->addWidget(notifGroup, 1); // 1/3 de l'espace
+    mainLayout->addWidget(statsNotifContainer);
 
-    // Ajouter un spacer pour pousser les notifications plus à droite
-    statsLayout->addStretch(1);
+    // 4. Section "Liste Comptée des Vaccins"
+    QLabel *listLabel = new QLabel("Liste Comptée des Vaccins", vaccinsPage);
+    listLabel->setStyleSheet("font-size: 18px; font-weight: bold; color: #34495e;");
+    mainLayout->addWidget(listLabel);
 
-    // Widget Notifications (côté droit)
-    QWidget *notificationsContainerWidget = new QWidget(this);
-    QVBoxLayout *notificationsContainerLayout = new QVBoxLayout(notificationsContainerWidget);
-    notificationsContainerLayout->setContentsMargins(0, 0, 0, 0);
+    // 5. Tableau dynamique des vaccins
+    QTableWidget *vaccinsTable = new QTableWidget(vaccinsPage);
+    vaccinsTable->setColumnCount(8);
+    vaccinsTable->setHorizontalHeaderLabels({"ID", "Nom", "Référence", "Type", "Doses", "Quantité", "Expiration", "Couleur"});
+    vaccinsTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    vaccinsTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    vaccinsTable->setSelectionBehavior(QAbstractItemView::SelectRows);
 
-    // Titre des notifications
-    QLabel *notificationsTitle = new QLabel("Notifications", this);
-    notificationsTitle->setFont(titleFont);
-    notificationsTitle->setAlignment(Qt::AlignLeft);
-    notificationsContainerLayout->addWidget(notificationsTitle);
+    // Style du tableau
+    vaccinsTable->setStyleSheet(tableStyle());
+    mainLayout->addWidget(vaccinsTable);
 
-    // Créer un widget animé pour contenir les notifications
-    QWidget *notificationsAnimatedContainer = new QWidget(this);
-    QVBoxLayout *notificationsAnimatedLayout = new QVBoxLayout(notificationsAnimatedContainer);
-    notificationsAnimatedLayout->setContentsMargins(0, 0, 0, 0);
 
-    // Appliquer le style animé au conteneur
-    applyAnimatedContainerStyle(notificationsAnimatedContainer);
+    // 7. Boutons d'action en bas de page
+    QHBoxLayout *buttonLayout = new QHBoxLayout();
 
-    // Ajouter le widget animé au conteneur des notifications
-    notificationsContainerLayout->addWidget(notificationsAnimatedContainer);
+    QPushButton *viewAllBtn = new QPushButton("Afficher Plus", vaccinsPage);
+    viewAllBtn->setStyleSheet(buttonStyle("#2ecc71"));
+    viewAllBtn->setCursor(Qt::PointingHandCursor);
+    connect(viewAllBtn, &QPushButton::clicked, this, &MainWindow::showVaccinsTablePage);
 
-    // Définir un widget pour contenir les notifications qui seront chargées plus tard
-    QWidget *notificationsPlaceholder = new QWidget(this);
-    QVBoxLayout *notificationsPlaceholderLayout = new QVBoxLayout(notificationsPlaceholder);
-    notificationsPlaceholderLayout->setContentsMargins(10, 10, 10, 10);
-    notificationsPlaceholder->setObjectName("notificationsPlaceholder"); // Pour le retrouver facilement
-    notificationsPlaceholder->setMinimumWidth(250); // Largeur minimale du widget de notifications
-    notificationsPlaceholder->setMaximumWidth(300); // Largeur maximale
-    notificationsAnimatedLayout->addWidget(notificationsPlaceholder);
+    QPushButton *pdfBtn = new QPushButton("Exporter PDF", vaccinsPage);
+    pdfBtn->setStyleSheet(buttonStyle("#3498db"));
+    pdfBtn->setCursor(Qt::PointingHandCursor);
+    connect(pdfBtn, &QPushButton::clicked, this, &MainWindow::exportVaccinsTableToPDF);
 
-    // Ajouter le conteneur de notifications au layout horizontal avec un ratio de 1
-    statsLayout->addWidget(notificationsContainerWidget, 1);
+    buttonLayout->addWidget(viewAllBtn);
+    buttonLayout->addWidget(pdfBtn);
+    buttonLayout->addStretch();
 
-    // Ajouter le widget contenant les stats et notifications au layout principal
-    vaccinsLayout->addWidget(statsWidget);
+    mainLayout->addLayout(buttonLayout);
 
-    // Chargement des notifications avec un délai
-    if (vaccinManager) {
-        QTimer::singleShot(500, this, &MainWindow::loadNotifications);
-    } else {
-        qDebug() << "🚨 vaccinManager n'est pas initialisé, pas de notifications affichées.";
-        QLabel *errorLabel = new QLabel("Impossible de charger les notifications", this);
-        notificationsPlaceholderLayout->addWidget(errorLabel);
-    }
+    // Initialisation du gestionnaire de vaccins - IMPORTANT
+    vaccinManager = new VaccinManager(vaccinsTable, this);
+    vaccinManager->loadVaccins();
 
-    // Bouton "Afficher Plus"
-    QPushButton *moreButton = new QPushButton("Afficher Plus", this);
-    moreButton->setStyleSheet("background-color: #198754; color: white; padding: 10px 20px; border-radius: 8px;");
-    vaccinsLayout->addWidget(moreButton, 0, Qt::AlignCenter);
+    // Affichage des stats et notifications
+    displayVaccinTypeStats(statsContent);
+    loadNotifications();
 
-    // Vérification et connexion du bouton
-    if (!connect(moreButton, &QPushButton::clicked, this, &MainWindow::showVaccinsTablePage)) {
-        qDebug() << "Erreur: connexion du bouton échouée";
-    }
+    // Timer pour rafraîchissement automatique
+    QTimer *refreshTimer = new QTimer(this);
+    connect(refreshTimer, &QTimer::timeout, [this]() {
+        vaccinManager->loadVaccins();
+        updateVaccinTypeStats();
+        loadNotifications();
+    });
+    refreshTimer->start(30000); // 30 secondes
 
-    // Bouton "Exporter en PDF"
-    QPushButton *exportPdfButton = new QPushButton("Exporter en PDF", this);
-    exportPdfButton->setStyleSheet("background-color: #0d6efd; color: white; padding: 10px 20px; border-radius: 8px;");
-    vaccinsLayout->addWidget(exportPdfButton, 0, Qt::AlignCenter);
-
-    // Connexion du bouton d'export
-    connect(exportPdfButton, &QPushButton::clicked, this, &MainWindow::showVaccinTypeStats);
-    qDebug() << "Fin de setupVaccinsPage";
+    qDebug() << "Page vaccins initialisée avec succès";
 }
-void MainWindow::styleNotificationsWidget(QWidget *notificationsWidget) {
-    // Style global pour le widget des notifications
-    notificationsWidget->setStyleSheet(
-        "QWidget { background-color: transparent; }"
-        );
 
-    // Parcourir tous les widgets enfants pour appliquer des styles spécifiques
+QString MainWindow::groupBoxStyle(const QString &color) {
+    return QString(
+               "QGroupBox {"
+               "border: 2px solid %1;"
+               "border-radius: 8px;"
+               "margin-top: 10px;"
+               "padding-top: 15px;"
+               "background: white;"
+               "}"
+               "QGroupBox::title {"
+               "subcontrol-origin: margin;"
+               "left: 10px;"
+               "padding: 0 5px;"
+               "color: %1;"
+               "font-weight: bold;"
+               "}").arg(color);
+}
+
+QString MainWindow::tableStyle() {
+    return QString(
+        "QTableWidget {"
+        "background-color: white;"
+        "border: 1px solid #ddd;"
+        "border-radius: 5px;"
+        "}"
+        "QHeaderView::section {"
+        "background-color: #3498db;"
+        "color: white;"
+        "padding: 10px;"
+        "border: none;"
+        "font-weight: bold;"
+        "}"
+        "QTableWidget::item {"
+        "padding: 8px;"
+        "border-bottom: 1px solid #eee;"
+        "}"
+        "QTableWidget::item:selected {"
+        "background-color: #d6eaf8;"
+        "}");
+}
+
+QString MainWindow::buttonStyle(const QString &color) {
+    return QString(
+               "QPushButton {"
+               "background-color: %1;"
+               "color: white;"
+               "border: none;"
+               "border-radius: 5px;"
+               "padding: 8px 16px;"
+               "font-weight: bold;"
+               "min-width: 100px;"
+               "}"
+               "QPushButton:hover {"
+               "background-color: %2;"
+               "}").arg(color, QColor(color).darker(120).name());
+}
+
+
+void MainWindow::styleNotificationsWidget(QWidget *notificationsWidget) {
+    // Basic transparent background
+    notificationsWidget->setStyleSheet("QWidget { background-color: transparent; }");
+
+    // Find all child widgets
     QList<QWidget*> children = notificationsWidget->findChildren<QWidget*>();
     for (QWidget *child : children) {
-        // Style pour les frames contenant les notifications - Fond bleu au lieu de blanc
+        // Style notification frames
         if (QFrame *frame = qobject_cast<QFrame*>(child)) {
+            QString backgroundColor, borderColor;
+
+            // Set colors based on notification type
             if (frame->property("notificationType") == "warning") {
-                frame->setStyleSheet(
-                    "QFrame {"
-                    "  background-color: #f0f8ff;"  // Bleu très clair
-                    "  border: 1px solid #ffc107;"
-                    "  border-radius: 6px;"
-                    "  margin-bottom: 12px;"
-                    "  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);"  // Ombre plus prononcée
-                    "}"
-                    );
+                backgroundColor = "#f8f9fa";  // Light gray background
+                borderColor = "#ffc107";      // Warning yellow
             } else if (frame->property("notificationType") == "expiry") {
-                frame->setStyleSheet(
-                    "QFrame {"
-                    "  background-color: #e6f2ff;"  // Bleu très clair
-                    "  border: 1px solid #dc3545;"
-                    "  border-radius: 6px;"
-                    "  margin-bottom: 12px;"
-                    "  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);"  // Ombre plus prononcée
-                    "}"
-                    );
+                backgroundColor = "#f8f9fa";
+                borderColor = "#dc3545";      // Danger red
             } else if (frame->property("notificationType") == "info") {
-                frame->setStyleSheet(
-                    "QFrame {"
-                    "  background-color: #e1f5fe;"  // Bleu clair
-                    "  border: 1px solid #17a2b8;"
-                    "  border-radius: 6px;"
-                    "  margin-bottom: 12px;"
-                    "  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);"  // Ombre plus prononcée
-                    "}"
-                    );
+                backgroundColor = "#f8f9fa";
+                borderColor = "#17a2b8";      // Info blue
             } else {
-                frame->setStyleSheet(
-                    "QFrame {"
-                    "  background-color: #e3f2fd;"  // Bleu clair
-                    "  border: 1px solid #6c757d;"
-                    "  border-radius: 6px;"
-                    "  margin-bottom: 12px;"
-                    "  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);"  // Ombre plus prononcée
-                    "}"
-                    );
+                backgroundColor = "#f8f9fa";
+                borderColor = "#6c757d";      // Default gray
             }
 
-            // Ajouter un effet d'ombre plus prononcé avec QGraphicsDropShadowEffect
-            QGraphicsDropShadowEffect *shadowEffect = new QGraphicsDropShadowEffect(frame);
-            shadowEffect->setBlurRadius(10);
-            shadowEffect->setColor(QColor(0, 0, 0, 80));
-            shadowEffect->setOffset(0, 3);
-            frame->setGraphicsEffect(shadowEffect);
+            // Apply simpler frame style
+            frame->setStyleSheet(QString(
+                                     "QFrame {"
+                                     "  background-color: %1;"
+                                     "  border-left: 4px solid %2;"
+                                     "  border-radius: 2px;"
+                                     "  margin-bottom: 8px;"
+                                     "}"
+                                     ).arg(backgroundColor, borderColor));
+
+            // Remove shadow effect to simplify
+            frame->setGraphicsEffect(nullptr);
         }
 
-        // Style pour les étiquettes dans les notifications - Style d'écriture modifié
+        // Style notification labels
         if (QLabel *label = qobject_cast<QLabel*>(child)) {
+            QColor textColor;
+
             if (label->property("notificationType") == "warning") {
-                label->setStyleSheet(
-                    "QLabel {"
-                    "  color: #ffc107;"
-                    "  font-weight: bold;"
-                    "  font-size: 14px;"  // Taille de police augmentée
-                    "  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;"  // Police moderne
-                    "  padding: 10px;"
-                    "  border-bottom: 1px solid #ffc107;"
-                    "  background-color: #fff8e5;"
-                    "  border-top-left-radius: 5px;"
-                    "  border-top-right-radius: 5px;"
-                    "}"
-                    );
+                textColor = QColor("#ffc107");  // Warning yellow
             } else if (label->property("notificationType") == "expiry") {
-                label->setStyleSheet(
-                    "QLabel {"
-                    "  color: #dc3545;"
-                    "  font-weight: bold;"
-                    "  font-size: 14px;"  // Taille de police augmentée
-                    "  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;"  // Police moderne
-                    "  padding: 10px;"
-                    "  border-bottom: 1px solid #dc3545;"
-                    "  background-color: #ffebee;"
-                    "  border-top-left-radius: 5px;"
-                    "  border-top-right-radius: 5px;"
-                    "}"
-                    );
+                textColor = QColor("#dc3545");  // Danger red
             } else if (label->property("notificationType") == "info") {
-                label->setStyleSheet(
-                    "QLabel {"
-                    "  color: #17a2b8;"
-                    "  font-weight: bold;"
-                    "  font-size: 14px;"  // Taille de police augmentée
-                    "  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;"  // Police moderne
-                    "  padding: 10px;"
-                    "  border-bottom: 1px solid #17a2b8;"
-                    "  background-color: #e6f7fa;"
-                    "  border-top-left-radius: 5px;"
-                    "  border-top-right-radius: 5px;"
-                    "}"
-                    );
+                textColor = QColor("#17a2b8");  // Info blue
             } else {
-                label->setStyleSheet(
-                    "QLabel {"
-                    "  color: #333333;"
-                    "  font-size: 13px;"  // Taille de police augmentée
-                    "  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;"  // Police moderne
-                    "  padding: 10px;"
-                    "}"
-                    );
+                textColor = QColor("#333333");  // Default dark gray
             }
+
+            // Apply simpler label style
+            label->setStyleSheet(QString(
+                                     "QLabel {"
+                                     "  color: %1;"
+                                     "  font-weight: bold;"
+                                     "  font-size: 13px;"
+                                     "  font-family: 'Segoe UI', sans-serif;"
+                                     "  padding: 8px;"
+                                     "}"
+                                     ).arg(textColor.name()));
         }
 
-        // Style pour tout autre texte descriptif - Style d'écriture modifié
+        // Style description text
         if (QLabel *textLabel = qobject_cast<QLabel*>(child)) {
-            if (!textLabel->property("notificationType").isValid()) { // S'assurer que c'est une étiquette de description
+            if (!textLabel->property("notificationType").isValid()) {
                 textLabel->setStyleSheet(
                     "QLabel {"
                     "  border: none;"
                     "  background-color: transparent;"
-                    "  padding: 5px 10px;"
-                    "  font-size: 13px;"  // Taille de police augmentée
-                    "  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;"  // Police moderne
-                    "  color: #0d47a1;"  // Couleur de texte bleu foncé
-                    "  line-height: 1.4;"  // Espace entre les lignes
+                    "  padding: 4px 8px 8px 8px;"
+                    "  font-size: 12px;"
+                    "  font-family: 'Segoe UI', sans-serif;"
+                    "  color: #212529;"
                     "}"
                     );
             }
         }
     }
 }
+
 void MainWindow::applyAnimatedContainerStyle(QWidget *container) {
     // Style de base pour le conteneur des notifications
     container->setObjectName("notificationsContainer");
@@ -817,8 +808,6 @@ void MainWindow::loadNotifications() {
     }
 }
 // Si vous n'avez pas déjà cette fonction, vous devez l'ajouter à votre classe
-
-// Si vous n'avez pas déjà cette fonction, vous devez l'ajouter à votre classe
 QProgressBar* MainWindow::createVaccinationRateBar(double percentage) {
     QProgressBar *bar = new QProgressBar();
     bar->setMaximumWidth(200);
@@ -828,14 +817,15 @@ QProgressBar* MainWindow::createVaccinationRateBar(double percentage) {
     return bar;
 }
 void MainWindow::displayVaccinTypeStats(QWidget *parentWidget) {
-    // S'assurer qu'il y a un layout pour parentWidget
+    // Nettoyer le layout existant
     QVBoxLayout *layout = qobject_cast<QVBoxLayout*>(parentWidget->layout());
     if (!layout) {
         layout = new QVBoxLayout(parentWidget);
+        layout->setContentsMargins(5, 5, 5, 5);
+        layout->setSpacing(5);
     } else {
-        // Nettoyer le layout existant
         QLayoutItem *child;
-        while ((child = layout->takeAt(0)) != nullptr) {
+        while ((child = layout->takeAt(0))) {
             if (child->widget()) {
                 child->widget()->deleteLater();
             }
@@ -843,168 +833,105 @@ void MainWindow::displayVaccinTypeStats(QWidget *parentWidget) {
         }
     }
 
-    // Get statistics from VaccinManager
-    QMap<QString, int> typeStats = vaccinManager->getVaccinTypeStats();
+    if (!vaccinManager) {
+        QLabel *errorLabel = new QLabel("Erreur: Gestionnaire de vaccins non initialisé");
+        errorLabel->setStyleSheet("color: #e74c3c; font-style: italic;");
+        layout->addWidget(errorLabel);
+        return;
+    }
 
-    // Calculate total for percentage
+    // Récupérer les données dynamiques
+    QMap<QString, int> typeStats = vaccinManager->getVaccinTypeStats();
     int totalVaccins = 0;
-    for (auto it = typeStats.begin(); it != typeStats.end(); ++it) {
-        totalVaccins += it.value();
+    for (const auto &count : typeStats) {
+        totalVaccins += count;
     }
 
     if (totalVaccins == 0) {
-        layout->addWidget(new QLabel("Aucune donnée disponible."));
-    } else {
-        // Créer le graphique circulaire
-        chartView = createPieChart(typeStats, totalVaccins);
-        layout->addWidget(chartView);
-
-        // Ajouter un libellé pour le total
-        QLabel *totalLabel = new QLabel("<b>Total: " + QString::number(totalVaccins) + " unités</b>");
-        totalLabel->setAlignment(Qt::AlignCenter);
-        layout->addWidget(totalLabel);
-
-        // Configuration du timer pour mise à jour automatique (toutes les 5 secondes)
-        if (!updateTimer) {
-            updateTimer = new QTimer(this);
-            connect(updateTimer, &QTimer::timeout, this, &MainWindow::updateVaccinTypeStats);
-            updateTimer->start(5000); // 5000 ms = 5 secondes
-        }
+        QLabel *emptyLabel = new QLabel("Aucune donnée de vaccin disponible");
+        emptyLabel->setStyleSheet("color: #7f8c8d; font-style: italic;");
+        emptyLabel->setAlignment(Qt::AlignCenter);
+        layout->addWidget(emptyLabel);
+        return;
     }
-}
 
-QChartView* MainWindow::createPieChart(const QMap<QString, int> &typeStats, int totalVaccins) {
-    // Créer la série pour le graphique circulaire
+    // Création du graphique circulaire
     QPieSeries *series = new QPieSeries();
-
-    // Définir un tableau de couleurs bleu graduées
-    QStringList blueGradients = {
-        "#0d47a1", // Bleu très foncé
-        "#1976d2", // Bleu foncé
-        "#2196f3", // Bleu moyen
-        "#42a5f5", // Bleu clair
-        "#64b5f6", // Bleu très clair
-        "#90caf9", // Bleu pâle
-        "#bbdefb"  // Bleu très pâle
-    };
+    QStringList colors = {"#3498db", "#2ecc71", "#e74c3c", "#f39c12", "#9b59b6", "#1abc9c"};
 
     int colorIndex = 0;
-
-    // Ajouter les données au graphique
     for (auto it = typeStats.begin(); it != typeStats.end(); ++it) {
-        QString type = it.key();
-        int quantity = it.value();
-        double percentage = (totalVaccins > 0) ? (quantity * 100.0 / totalVaccins) : 0;
+        double percentage = (it.value() * 100.0) / totalVaccins;
+        QString label = QString("%1 (%2%)").arg(it.key()).arg(QString::number(percentage, 'f', 1));
 
-        // Ajouter une tranche au graphique
-        QPieSlice *slice = series->append(type + " - " + QString::number(quantity) + " (" +
-                                              QString::number(percentage, 'f', 1) + "%)", quantity);
+        QPieSlice *slice = series->append(label, it.value());
+        slice->setBrush(QColor(colors[colorIndex % colors.size()]));
+        slice->setBorderColor(Qt::white);
 
-        // Appliquer la couleur à la tranche
-        slice->setBrush(QColor(blueGradients[colorIndex % blueGradients.size()]));
-        slice->setPen(QPen(Qt::white, 1));
-
-        // Augmenter l'index de couleur
-        colorIndex++;
-
-        // Ajouter une animation lors du survol
+        // Configuration du style pour chaque slice
         slice->setLabelVisible(true);
-        slice->setExploded(false);
-        slice->setExplodeDistanceFactor(0.1);
+        slice->setLabelFont(QFont("Arial", 9)); // Police plus grande
+        slice->setLabelArmLengthFactor(0.1); // Longueur du bras du label
 
-        // Connecter le signal de survol pour l'animation
-        connect(slice, &QPieSlice::hovered, [slice](bool hovered) {
-            slice->setExploded(hovered);
-            slice->setLabelVisible(true);
+        // Effet de survol
+        connect(slice, &QPieSlice::hovered, [slice](bool isHovered) {
+            slice->setExploded(isHovered);
+            if (isHovered) {
+                slice->setLabelFont(QFont("Arial", 10, QFont::Bold));
+            } else {
+                slice->setLabelFont(QFont("Arial", 9));
+            }
         });
+
+        colorIndex++;
     }
 
-    // Créer le graphique
+    // Configuration du graphique
     QChart *chart = new QChart();
     chart->addSeries(series);
-    chart->setTitle("Distribution des Vaccins par Type");
+    chart->setTitle("Répartition par Type");
+    chart->setTitleFont(QFont("Arial", 12, QFont::Bold)); // Police de titre plus grande
+    chart->legend()->setVisible(false);
     chart->setAnimationOptions(QChart::AllAnimations);
-    chart->legend()->setVisible(true);
-    chart->legend()->setAlignment(Qt::AlignBottom);
-    chart->setTheme(QChart::ChartThemeLight);
+    chart->setBackgroundBrush(QBrush(Qt::transparent));
+    chart->setMargins(QMargins(0, 0, 0, 0));
 
-    // Créer la vue du graphique
-    QChartView *chartView = new QChartView(chart);
+    // Position des labels
+    series->setLabelsPosition(QPieSlice::LabelOutside);
+
+    // Vue du graphique
+    QChartView *chartView = new QChartView(chart, parentWidget);
     chartView->setRenderHint(QPainter::Antialiasing);
-    chartView->setMinimumSize(300, 300);
+    chartView->setStyleSheet("background: transparent; border: none;");
+    chartView->setMinimumSize(300, 200); // Dimensions minimales augmentées
+    chartView->setMaximumSize(450, 300); // Dimensions maximales augmentées
 
-    return chartView;
+    layout->addWidget(chartView, 0, Qt::AlignCenter);
+
+    // Label du total
+    QLabel *totalLabel = new QLabel(QString("Total: %1 unités").arg(totalVaccins), parentWidget);
+    totalLabel->setStyleSheet(
+        "font-weight: bold;"
+        "font-size: 14px;" // Taille de police augmentée
+        "color: #2c3e50;"
+        "background: #f8f9fa;"
+        "border-radius: 3px;"
+        "padding: 5px;" // Padding augmenté
+        );
+    totalLabel->setAlignment(Qt::AlignCenter);
+    totalLabel->setMaximumWidth(250); // Largeur maximale augmentée
+    layout->addWidget(totalLabel, 0, Qt::AlignCenter);
 }
 
 void MainWindow::updateVaccinTypeStats() {
-    // Vérifier si le graphique est visible
-    if (vaccinsPage && vaccinsPage->isVisible() && chartView) {
-        QWidget *statsContainer = vaccinsPage->findChild<QWidget*>("statsContainer");
-        if (statsContainer) {
-            qDebug() << "Mise à jour automatique des statistiques de vaccins...";
-            displayVaccinTypeStats(statsContainer);
-        }
+    if (!vaccinsPage || !vaccinManager) return;
+
+    QWidget *statsContainer = vaccinsPage->findChild<QWidget*>("statsContent");
+    if (statsContainer) {
+        displayVaccinTypeStats(statsContainer);
     }
 }
 
-// Modifier aussi la fonction showVaccinTypeStats pour utiliser le graphique circulaire
-void MainWindow::showVaccinTypeStats() {
-    // Create dialog for statistics
-    QDialog *statsDialog = new QDialog(this);
-    statsDialog->setWindowTitle("Statistiques par Type de Vaccin");
-    statsDialog->setMinimumSize(600, 500);
-
-    QVBoxLayout *mainLayout = new QVBoxLayout(statsDialog);
-
-    // Add title
-    QLabel *titleLabel = new QLabel("Distribution des Vaccins par Type");
-    QFont titleFont = titleLabel->font();
-    titleFont.setPointSize(14);
-    titleFont.setBold(true);
-    titleLabel->setFont(titleFont);
-    titleLabel->setAlignment(Qt::AlignCenter);
-    mainLayout->addWidget(titleLabel);
-
-    // Get statistics from VaccinManager
-    QMap<QString, int> typeStats = vaccinManager->getVaccinTypeStats();
-
-    // Calculate total for percentage
-    int totalVaccins = 0;
-    for (auto it = typeStats.begin(); it != typeStats.end(); ++it) {
-        totalVaccins += it.value();
-    }
-
-    if (totalVaccins == 0) {
-        mainLayout->addWidget(new QLabel("Aucune donnée disponible."));
-    } else {
-        // Créer et ajouter le graphique circulaire
-        QChartView *dialogChartView = createPieChart(typeStats, totalVaccins);
-        mainLayout->addWidget(dialogChartView);
-    }
-
-    // Add export button
-    QPushButton *exportButton = new QPushButton("Exporter les Statistiques");
-    // Nouvelle connexion qui passe les données à la fonction d'exportation PDF
-    connect(exportButton, &QPushButton::clicked, [this, typeStats, totalVaccins]() {
-        exportVaccinStatsToPDF(typeStats, totalVaccins);
-    });
-
-    // Add close button
-    QPushButton *closeButton = new QPushButton("Fermer");
-    connect(closeButton, &QPushButton::clicked, [statsDialog]() {
-        statsDialog->close();
-    });
-
-    // Add buttons to layout
-    QHBoxLayout *buttonLayout = new QHBoxLayout();
-    buttonLayout->addWidget(exportButton);
-    buttonLayout->addWidget(closeButton);
-    mainLayout->addLayout(buttonLayout);
-
-    // Show dialog
-    statsDialog->setLayout(mainLayout);
-    statsDialog->exec();
-}
 void MainWindow::exportVaccinStatsToPDF(const QMap<QString, int>& typeStats, int totalVaccins) {
     // Demander à l'utilisateur où sauvegarder le fichier
     QString fileName = QFileDialog::getSaveFileName(this,
@@ -1190,16 +1117,24 @@ void MainWindow::addVaccinSummaryTable(QVBoxLayout *vaccinsLayout) {
 
 QTableWidget* MainWindow::createVaccinSummaryTable() {
     QTableWidget *summaryTable = new QTableWidget(this);
+
+    // Configure table structure
     summaryTable->setColumnCount(4);
-    summaryTable->setRowCount(0);
     summaryTable->setHorizontalHeaderLabels({"Nom", "Type", "Doses", "Quantité"});
     summaryTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+
+    // Configure selection and edit properties
     summaryTable->setSelectionBehavior(QAbstractItemView::SelectRows);
+    summaryTable->setSelectionMode(QAbstractItemView::SingleSelection);
     summaryTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
+
+    // Configure appearance
+    summaryTable->setAlternatingRowColors(true);
+    summaryTable->setShowGrid(true);
+    summaryTable->verticalHeader()->setVisible(false);
 
     return summaryTable;
 }
-
 void MainWindow::addStatisticsSection(QVBoxLayout *vaccinsLayout) {
     QWidget *statsWidget = new QWidget(this);
     QHBoxLayout *statsLayout = new QHBoxLayout(statsWidget);
@@ -1249,6 +1184,15 @@ void MainWindow::setupEditVaccinFormPage() {
     dateExpInput->setMinimumDate(QDate::currentDate().addDays(1));
     dateExpInput->setMaximumDate(QDate::currentDate().addYears(10));
 
+    // Ajout du champ de couleur avec QComboBox
+    QComboBox *couleurInput = new QComboBox();
+    couleurInput->addItem("Rouge", "Rouge");
+    couleurInput->addItem("Vert", "Vert");
+    couleurInput->addItem("Bleu", "Bleu");
+    couleurInput->addItem("Jaune", "Jaune");
+    couleurInput->addItem("Orange", "Orange");
+    couleurInput->addItem("Violet", "Violet");
+
     // Tooltips pour guider l'utilisateur
     nomVaccinInput->setPlaceholderText("Entrez le nom du vaccin");
     nomVaccinInput->setToolTip("50 caractères maximum");
@@ -1286,6 +1230,7 @@ void MainWindow::setupEditVaccinFormPage() {
     inputLayout->addRow("Nombre de Doses *:", nbDoseInput);
     inputLayout->addRow("Quantité *:", quantiteInput);
     inputLayout->addRow("Date d'Expiration *:", dateExpInput);
+    inputLayout->addRow("Couleur:", couleurInput); // Ajout du champ couleur au formulaire
 
     // Label explicatif
     QLabel *infoLabel = new QLabel("Les champs marqués d'un * sont obligatoires");
@@ -1307,7 +1252,7 @@ void MainWindow::setupEditVaccinFormPage() {
 
     // Style the form
     editVaccinFormPage->setStyleSheet(
-        "QLineEdit, QSpinBox, QDateEdit {"
+        "QLineEdit, QSpinBox, QDateEdit, QComboBox {"
         "    padding: 8px;"
         "    border: 1px solid #ddd;"
         "    border-radius: 4px;"
@@ -1326,7 +1271,7 @@ void MainWindow::setupEditVaccinFormPage() {
 
     // Connect the update button
     connect(updateButton, &QPushButton::clicked, this, [this, nomVaccinInput, referenceInput, typeInput,
-                                                        maladieChronicInput, nbDoseInput, quantiteInput, dateExpInput, idInput]() {
+                                                        maladieChronicInput, nbDoseInput, quantiteInput, dateExpInput, idInput, couleurInput]() {
         // Validation préliminaire côté UI
         bool isValid = true;
 
@@ -1359,6 +1304,7 @@ void MainWindow::setupEditVaccinFormPage() {
         int nbDose = nbDoseInput->value();
         int quantite = quantiteInput->value();
         QDate dateExp = dateExpInput->date();
+        QString couleur = couleurInput->currentData().toString(); // Récupération du nom de la couleur
 
         // Set values in VaccinManager
         vaccinManager->setId(id);
@@ -1369,6 +1315,7 @@ void MainWindow::setupEditVaccinFormPage() {
         vaccinManager->setNbDose(nbDose);
         vaccinManager->setQuantite(quantite);
         vaccinManager->setDateExp(dateExp);
+        vaccinManager->setCouleur(couleur); // Ajout de la couleur au VaccinManager
 
         // Update the vaccine in the database
         if (vaccinManager->editVaccin()) {
@@ -1391,6 +1338,7 @@ void MainWindow::setupEditVaccinFormPage() {
     editVaccinFormPage->setProperty("nbDoseInput", QVariant::fromValue(nbDoseInput));
     editVaccinFormPage->setProperty("quantiteInput", QVariant::fromValue(quantiteInput));
     editVaccinFormPage->setProperty("dateExpInput", QVariant::fromValue(dateExpInput));
+    editVaccinFormPage->setProperty("couleurInput", QVariant::fromValue(couleurInput)); // Stocker le widget de couleur
 
     // Réinitialiser le style lorsqu'on entre du texte
     connect(nomVaccinInput, &QLineEdit::textEdited, [nomVaccinInput]() {
@@ -1401,7 +1349,6 @@ void MainWindow::setupEditVaccinFormPage() {
         typeInput->setStyleSheet("QLineEdit { background-color: white; }");
     });
 }
-
 void MainWindow::onEditVaccinClicked() {
     // Obtenir la table des vaccins
     QTableWidget *vaccinsTable = nullptr;
@@ -1473,6 +1420,7 @@ void MainWindow::onEditVaccinClicked() {
     // Afficher le formulaire d'édition
     stackedWidget->setCurrentWidget(editVaccinFormPage);
 }
+
 
 QHBoxLayout* MainWindow::createVaccinationRateRow(const QString &ageGroup, double rate) {
     QHBoxLayout *groupRowLayout = new QHBoxLayout();
@@ -1683,6 +1631,7 @@ void MainWindow::setupVaccinsTablePage() {
     searchTypeCombo->addItem("Nom", "nom");
     searchTypeCombo->addItem("Référence", "reference");
     searchTypeCombo->addItem("Type", "type");
+    searchTypeCombo->addItem("Couleur", "couleur");  // Ajout de l'option pour filtrer par couleur
     searchTypeCombo->setStyleSheet(comboStyle);
 
     QComboBox *sortTypeCombo = new QComboBox(this);
@@ -1724,10 +1673,10 @@ void MainWindow::setupVaccinsTablePage() {
 
     // Création du tableau avec le nouveau style
     QTableWidget *vaccinsTable = new QTableWidget(this);
-    vaccinsTable->setColumnCount(8);
+    vaccinsTable->setColumnCount(9);  // Maintenant 9 colonnes pour inclure la couleur
 
     QStringList headers = {"ID", "Nom Vaccin", "Référence", "Type", "Maladie Chronique",
-                           "Nombre de Doses", "Quantité", "Date d'Expiration"};
+                           "Nombre de Doses", "Quantité", "Date d'Expiration", "Couleur"};  // Ajout de "Couleur"
     vaccinsTable->setHorizontalHeaderLabels(headers);
 
     // Application du style PatientManager
@@ -1780,6 +1729,9 @@ void MainWindow::setupVaccinsTablePage() {
     // Initialisation du VaccinManager
     vaccinManager = new VaccinManager(vaccinsTable, this);
 
+    // Appel à updateVaccinTypeStats pour mettre à jour les statistiques
+    updateVaccinTypeStats();
+
     // Connexion des signaux et slots
     connect(addVaccinButton, &QPushButton::clicked, this, &MainWindow::onAddVaccinClicked);
     connect(editVaccinButton, &QPushButton::clicked, this, &MainWindow::onEditVaccinClicked);
@@ -1795,6 +1747,9 @@ void MainWindow::setupVaccinsTablePage() {
         bool ascending = sortOrderCombo->currentData().toBool();
 
         vaccinManager->searchVaccins(searchText, searchType, sortType, ascending);
+
+        // Mise à jour des statistiques après une recherche
+        updateVaccinTypeStats();
     });
 
     connect(resetButton, &QPushButton::clicked, this, [this, searchInput, sortTypeCombo, sortOrderCombo]() {
@@ -1804,6 +1759,9 @@ void MainWindow::setupVaccinsTablePage() {
 
         // Recharger tous les vaccins avec les paramètres de tri actuels
         vaccinManager->loadVaccins(sortType, ascending);
+
+        // Mise à jour des statistiques après réinitialisation
+        updateVaccinTypeStats();
     });
 
     // Permettre la recherche en appuyant sur Entrée dans le champ de recherche
@@ -1814,13 +1772,21 @@ void MainWindow::setupVaccinsTablePage() {
         VaccinManager::SortType sortType = static_cast<VaccinManager::SortType>(sortTypeCombo->currentData().toInt());
         bool ascending = sortOrderCombo->currentData().toBool();
         vaccinManager->loadVaccins(sortType, ascending);
+
+        // Mise à jour des statistiques après changement de tri
+        updateVaccinTypeStats();
     });
 
     connect(sortOrderCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this, sortTypeCombo, sortOrderCombo]() {
         VaccinManager::SortType sortType = static_cast<VaccinManager::SortType>(sortTypeCombo->currentData().toInt());
         bool ascending = sortOrderCombo->currentData().toBool();
         vaccinManager->loadVaccins(sortType, ascending);
+
+        // Mise à jour des statistiques après changement d'ordre de tri
+        updateVaccinTypeStats();
     });
+
+    // Mettre à jour les notifications également
 }
 void MainWindow::setupAddVaccinFormPage() {
     QVBoxLayout *formLayout = new QVBoxLayout(addVaccinFormPage);
@@ -1841,6 +1807,16 @@ void MainWindow::setupAddVaccinFormPage() {
     dateExpInput->setDisplayFormat("dd/MM/yyyy");
     dateExpInput->setMinimumDate(QDate::currentDate().addDays(1));
     dateExpInput->setMaximumDate(QDate::currentDate().addYears(10));
+
+    // Ajout du champ couleur avec QComboBox
+    QComboBox *couleurInput = new QComboBox();
+    couleurInput->addItem("Rouge", "Rouge");
+    couleurInput->addItem("Vert", "Vert");
+    couleurInput->addItem("Bleu", "Bleu");
+    couleurInput->addItem("Jaune", "Jaune");
+    couleurInput->addItem("Orange", "Orange");
+    couleurInput->addItem("Violet", "Violet");
+    couleurInput->setCurrentIndex(0); // Rouge par défaut
 
     // Tooltips pour guider l'utilisateur
     nomVaccinInput->setPlaceholderText("Entrez le nom du vaccin");
@@ -1875,6 +1851,7 @@ void MainWindow::setupAddVaccinFormPage() {
     inputLayout->addRow("Nombre de Doses *:", nbDoseInput);
     inputLayout->addRow("Quantité *:", quantiteInput);
     inputLayout->addRow("Date d'Expiration *:", dateExpInput);
+    inputLayout->addRow("Couleur:", couleurInput);  // Ajout du champ couleur au formulaire
 
     // Label explicatif
     QLabel *infoLabel = new QLabel("Les champs marqués d'un * sont obligatoires");
@@ -1896,7 +1873,7 @@ void MainWindow::setupAddVaccinFormPage() {
 
     // Style the form
     addVaccinFormPage->setStyleSheet(
-        "QLineEdit, QSpinBox, QDateEdit {"
+        "QLineEdit, QSpinBox, QDateEdit, QComboBox {"  // Ajout de QComboBox au style
         "    padding: 8px;"
         "    border: 1px solid #ddd;"
         "    border-radius: 4px;"
@@ -1914,7 +1891,9 @@ void MainWindow::setupAddVaccinFormPage() {
         );
 
     // Connect the submit button
-    connect(submitButton, &QPushButton::clicked, this, [this, nomVaccinInput, referenceInput, typeInput, maladieChronicInput, nbDoseInput, quantiteInput, dateExpInput]() {
+    connect(submitButton, &QPushButton::clicked, this, [this, nomVaccinInput, referenceInput, typeInput,
+                                                        maladieChronicInput, nbDoseInput, quantiteInput,
+                                                        dateExpInput, couleurInput]() {
         // Validation préliminaire côté UI
         bool isValid = true;
 
@@ -1946,6 +1925,7 @@ void MainWindow::setupAddVaccinFormPage() {
         int nbDose = nbDoseInput->value();
         int quantite = quantiteInput->value();
         QDate dateExp = dateExpInput->date();
+        QString couleur = couleurInput->currentData().toString();  // Récupération du nom de la couleur
 
         // Set values in VaccinManager
         vaccinManager->setNomVaccin(nomVaccin);
@@ -1955,6 +1935,7 @@ void MainWindow::setupAddVaccinFormPage() {
         vaccinManager->setNbDose(nbDose);
         vaccinManager->setQuantite(quantite);
         vaccinManager->setDateExp(dateExp);
+        vaccinManager->setCouleur(couleur);  // Ajout de la couleur au VaccinManager
 
         // Add the vaccine to the database
         if (vaccinManager->addVaccin()) {
@@ -1966,6 +1947,7 @@ void MainWindow::setupAddVaccinFormPage() {
             nbDoseInput->setValue(1);
             quantiteInput->setValue(0);
             dateExpInput->setDate(QDate::currentDate().addYears(1));
+            couleurInput->setCurrentIndex(0);  // Réinitialiser la couleur à la valeur par défaut
 
             // Retourner à la page du tableau
             stackedWidget->setCurrentWidget(vaccinsTablePage);
@@ -1986,7 +1968,34 @@ void MainWindow::setupAddVaccinFormPage() {
         typeInput->setStyleSheet("QLineEdit { background-color: white; }");
     });
 }
+// Si vous avez une fonction comme celle-ci ailleurs dans votre code
+void MainWindow::loadVaccinDataToEditForm(int vaccinId) {
+    QMap<QString, QVariant> vaccinData = vaccinManager->getVaccinById(vaccinId);
 
+    if (!vaccinData.isEmpty()) {
+        QLineEdit *idInput = editVaccinFormPage->property("idInput").value<QLineEdit*>();
+        QLineEdit *nomVaccinInput = editVaccinFormPage->property("nomVaccinInput").value<QLineEdit*>();
+        QLineEdit *referenceInput = editVaccinFormPage->property("referenceInput").value<QLineEdit*>();
+        QLineEdit *typeInput = editVaccinFormPage->property("typeInput").value<QLineEdit*>();
+        QLineEdit *maladieChronicInput = editVaccinFormPage->property("maladieChronicInput").value<QLineEdit*>();
+        QSpinBox *nbDoseInput = editVaccinFormPage->property("nbDoseInput").value<QSpinBox*>();
+        QSpinBox *quantiteInput = editVaccinFormPage->property("quantiteInput").value<QSpinBox*>();
+        QDateEdit *dateExpInput = editVaccinFormPage->property("dateExpInput").value<QDateEdit*>();
+        QLineEdit *couleurInput = editVaccinFormPage->property("couleurInput").value<QLineEdit*>(); // Récupérer le widget couleur
+
+        idInput->setText(vaccinData["id"].toString());
+        nomVaccinInput->setText(vaccinData["nom_vaccin"].toString());
+        referenceInput->setText(vaccinData["reference"].toString());
+        typeInput->setText(vaccinData["type"].toString());
+        maladieChronicInput->setText(vaccinData["maladie_chronique"].toString());
+        nbDoseInput->setValue(vaccinData["nb_dose"].toInt());
+        quantiteInput->setValue(vaccinData["quantite"].toInt());
+        dateExpInput->setDate(vaccinData["date_exp"].toDate());
+        couleurInput->setText(vaccinData["couleur"].toString()); // Définir la valeur du champ couleur
+
+        stackedWidget->setCurrentWidget(editVaccinFormPage);
+    }
+}
 
 // Tools-related slots
 void MainWindow::onAddToolClicked() {
@@ -2064,7 +2073,6 @@ void MainWindow::onDeleteVaccinClicked() {
         }
     }
 }
-
 
 ///////////////////////////////////////////
 ///
@@ -2671,6 +2679,230 @@ void MainWindow::onDeleteMessageButtonClicked()
         }
     }
 }
+
+/*
+void MainWindow::setupArduinoPanel()
+{
+    // Créer un widget pour contenir les contrôles Arduino
+    QWidget *arduinoWidget = new QWidget();
+    QVBoxLayout *arduinoLayout = new QVBoxLayout(arduinoWidget);
+
+    // Créer les éléments d'interface
+    QLabel *titleLabel = new QLabel("Détection Arduino");
+    titleLabel->setStyleSheet("font-weight: bold; font-size: 16px;");
+
+    portSelector = new QComboBox();
+    portSelector->addItems(arduinoManager->availablePorts());
+
+    connectButton = new QPushButton("Connecter");
+    statusLabel = new QLabel("Non connecté");
+    statusLabel->setStyleSheet("color: red;");
+
+    detectedColorLabel = new QLabel("Aucune couleur détectée");
+
+    // Ajouter un label pour afficher les informations du vaccin
+    vaccinInfoLabel = new QLabel("Aucun vaccin détecté");
+    vaccinInfoLabel->setWordWrap(true);
+    vaccinInfoLabel->setAlignment(Qt::AlignLeft | Qt::AlignTop);
+    vaccinInfoLabel->setFrameStyle(QFrame::Panel | QFrame::Sunken);
+    vaccinInfoLabel->setMinimumHeight(100);
+
+    QPushButton *refreshButton = new QPushButton("Rafraîchir les ports");
+
+    // Créer le panneau de contrôle Arduino
+    QGridLayout *controlLayout = new QGridLayout();
+    controlLayout->addWidget(new QLabel("Port:"), 0, 0);
+    controlLayout->addWidget(portSelector, 0, 1);
+    controlLayout->addWidget(connectButton, 0, 2);
+    controlLayout->addWidget(refreshButton, 1, 2);
+    controlLayout->addWidget(new QLabel("Statut:"), 2, 0);
+    controlLayout->addWidget(statusLabel, 2, 1, 1, 2);
+    controlLayout->addWidget(new QLabel("Couleur détectée:"), 3, 0);
+    controlLayout->addWidget(detectedColorLabel, 3, 1, 1, 2);
+
+    // Ajouter une section pour les informations du vaccin
+    QLabel *vaccinInfoTitle = new QLabel("Informations du vaccin:");
+    vaccinInfoTitle->setStyleSheet("font-weight: bold;");
+    controlLayout->addWidget(vaccinInfoTitle, 4, 0);
+    controlLayout->addWidget(vaccinInfoLabel, 5, 0, 1, 3);
+
+    // Ajouter au layout principal
+    arduinoLayout->addWidget(titleLabel);
+    arduinoLayout->addLayout(controlLayout);
+    arduinoLayout->addStretch();
+
+    // Créer un groupe pour encadrer le panneau
+    QGroupBox *arduinoGroup = new QGroupBox("Détection Arduino");
+    arduinoGroup->setLayout(arduinoLayout);
+
+    // Ajouter à la barre latérale ou une autre partie de votre interface
+    // Par exemple, on peut l'ajouter à droite du tableau de vaccins
+    QHBoxLayout *mainLayout = new QHBoxLayout();
+    mainLayout->addWidget(vaccinsTablePage, 3); // Votre tableau existant
+    mainLayout->addWidget(arduinoGroup, 1);     // Panneau Arduino
+
+    // Remplacer le layout existant de votre page principale
+    QWidget *container = new QWidget();
+    container->setLayout(mainLayout);
+
+    // Ajouter cette page à votre stackedWidget
+    stackedWidget->addWidget(container);
+    stackedWidget->setCurrentWidget(container);
+
+    // Connecter les signaux et slots
+    connect(connectButton, &QPushButton::clicked, this, [this]() {
+        if (arduinoManager->isConnected()) {
+            arduinoManager->disconnectFromArduino();
+            connectButton->setText("Connecter");
+        } else {
+            QString portName = portSelector->currentText().split(" - ").first();
+            if (arduinoManager->connectToPort(portName)) {
+                connectButton->setText("Déconnecter");
+            }
+        }
+    });
+
+    connect(refreshButton, &QPushButton::clicked, this, [this]() {
+        portSelector->clear();
+        portSelector->addItems(arduinoManager->availablePorts());
+    });
+
+    connect(arduinoManager, &ArduinoManager::connectionStatusChanged, this, [this](bool connected) {
+        if (connected) {
+            statusLabel->setText("Connecté");
+            statusLabel->setStyleSheet("color: green;");
+            connectButton->setText("Déconnecter");
+        } else {
+            statusLabel->setText("Non connecté");
+            statusLabel->setStyleSheet("color: red;");
+            connectButton->setText("Connecter");
+        }
+    });
+}
+void MainWindow::setupArduinoConnection()
+{
+    // Créer le gestionnaire Arduino
+    arduinoManager = new ArduinoManager(this);
+
+    // Connecter les signaux et slots
+    connect(arduinoManager, &ArduinoManager::colorDetected, this, &MainWindow::handleColorDetection);
+    connect(arduinoManager, &ArduinoManager::vaccinExpirationStatus, this, &MainWindow::handleVaccinExpiration);
+    connect(arduinoManager, &ArduinoManager::errorOccurred, this, &MainWindow::handleArduinoError);
+
+    // Configurer le panneau de contrôle Arduino
+    setupArduinoPanel();
+}
+
+void MainWindow::handleColorDetection(const QString &color)
+{
+    // Mettre à jour l'affichage de la couleur détectée
+    detectedColorLabel->setText(color);
+    detectedColorLabel->setStyleSheet("font-weight: bold; color: " + color + ";");
+
+    // Rechercher le vaccin correspondant à cette couleur
+    bool found = vaccinManager->findVaccinByColor(color);
+
+    if (found) {
+        // Récupérer les informations du vaccin trouvé
+        QString vaccinName = vaccinManager->getNomVaccin();
+        QString reference = vaccinManager->getReference();
+        QDate expDate = vaccinManager->getDateExp();
+        QString expDateStr = expDate.toString("dd/MM/yyyy");
+
+        // Vérifier si le vaccin est expiré
+        bool isExpired = expDate < QDate::currentDate();
+
+        // Mettre à jour les informations affichées
+        QString infoText = QString("Vaccin: %1\nRéférence: %2\nExpiration: %3\nStatut: %4")
+                               .arg(vaccinName)
+                               .arg(reference)
+                               .arg(expDateStr)
+                               .arg(isExpired ? "EXPIRÉ" : "VALIDE");
+
+        vaccinInfoLabel->setText(infoText);
+
+        // Appliquer une mise en forme selon le statut d'expiration
+        if (isExpired) {
+            vaccinInfoLabel->setStyleSheet("color: red; font-weight: bold;");
+
+            // Envoyer une commande à l'Arduino pour activer le buzzer en mode expiré
+            if (arduinoManager->isConnected()) {
+                arduinoManager->sendCommand("EXPIRE");
+            }
+
+            // Afficher une notification d'expiration
+            QMessageBox::warning(this, "Vaccin expiré",
+                                 QString("Le vaccin %1 (Réf: %2) est expiré depuis le %3!")
+                                     .arg(vaccinName)
+                                     .arg(reference)
+                                     .arg(expDateStr));
+        } else {
+            vaccinInfoLabel->setStyleSheet("color: green; font-weight: bold;");
+
+            // Ne pas envoyer de commande pour activer le buzzer si le vaccin est valide
+            // Afficher uniquement la notification de validité
+            QMessageBox::information(this, "Vaccin valide",
+                                     QString("Le vaccin %1 (Réf: %2) est valide jusqu'au %3.")
+                                         .arg(vaccinName)
+                                         .arg(reference)
+                                         .arg(expDateStr));
+        }
+    } else {
+        // Aucun vaccin trouvé pour cette couleur
+        vaccinInfoLabel->setText("Aucun vaccin associé à cette couleur");
+        vaccinInfoLabel->setStyleSheet("color: black;");
+    }
+}
+void MainWindow::handleVaccinExpiration(bool isExpired, const QString &vaccinName, const QString &reference, const QString &expDate)
+{
+    // Mettre à jour le label d'informations sur le vaccin
+    QString infoText = QString("Vaccin: %1\nRéférence: %2\nExpiration: %3\nStatut: %4")
+                           .arg(vaccinName)
+                           .arg(reference)
+                           .arg(expDate)
+                           .arg(isExpired ? "EXPIRÉ" : "VALIDE");
+
+    vaccinInfoLabel->setText(infoText);
+
+    // Appliquer une mise en forme selon le statut d'expiration
+    if (isExpired) {
+        vaccinInfoLabel->setStyleSheet("color: red; font-weight: bold;");
+
+        // Afficher une notification d'expiration
+        QMessageBox::warning(this, "Vaccin expiré",
+                             QString("Le vaccin %1 (Réf: %2) est expiré depuis le %3!")
+                                 .arg(vaccinName)
+                                 .arg(reference)
+                                 .arg(expDate));
+
+        // Vous pourriez vouloir ajouter ici la commande pour activer le buzzer
+        if (arduinoManager->isConnected()) {
+            arduinoManager->sendCommand("EXPIRE");
+        }
+    } else {
+        vaccinInfoLabel->setStyleSheet("color: green; font-weight: bold;");
+
+        // Afficher une notification de validité sans activer le buzzer
+        QMessageBox::information(this, "Vaccin valide",
+                                 QString("Le vaccin %1 (Réf: %2) est valide jusqu'au %3.")
+                                     .arg(vaccinName)
+                                     .arg(reference)
+                                     .arg(expDate));
+    }
+}
+void MainWindow::handleArduinoError(const QString &errorMessage)
+{
+    // Afficher l'erreur dans la barre d'état ou dans une boîte de dialogue
+    statusBar()->showMessage("Erreur Arduino: " + errorMessage, 5000);
+
+    // Mettre à jour le statut de connexion si nécessaire
+    if (!arduinoManager->isConnected()) {
+        statusLabel->setText("Non connecté");
+        statusLabel->setStyleSheet("color: red;");
+        connectButton->setText("Connecter");
+    }
+}
+*/
 // Navigation Functions
 void MainWindow::showPatientsPage() {
     stackedWidget->setCurrentWidget(patientsPage);

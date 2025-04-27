@@ -414,6 +414,7 @@ Makefile: ../../interfacemateriels1.pro D:/qt/6.7.3/mingw_64/mkspecs/win32-g++/q
 		D:/qt/6.7.3/mingw_64/lib/Qt6OpenGL.prl \
 		D:/qt/6.7.3/mingw_64/lib/Qt6Gui.prl \
 		D:/qt/6.7.3/mingw_64/lib/Qt6Sql.prl \
+		D:/qt/6.7.3/mingw_64/lib/Qt6SerialPort.prl \
 		D:/qt/6.7.3/mingw_64/lib/Qt6Core.prl \
 		D:/qt/6.7.3/mingw_64/lib/Qt6EntryPoint.prl \
 		D:/qt/6.7.3/mingw_64/mkspecs/features/build_pass.prf \
@@ -763,6 +764,7 @@ D:/qt/6.7.3/mingw_64/lib/Qt6Widgets.prl:
 D:/qt/6.7.3/mingw_64/lib/Qt6OpenGL.prl:
 D:/qt/6.7.3/mingw_64/lib/Qt6Gui.prl:
 D:/qt/6.7.3/mingw_64/lib/Qt6Sql.prl:
+D:/qt/6.7.3/mingw_64/lib/Qt6SerialPort.prl:
 D:/qt/6.7.3/mingw_64/lib/Qt6Core.prl:
 D:/qt/6.7.3/mingw_64/lib/Qt6EntryPoint.prl:
 D:/qt/6.7.3/mingw_64/mkspecs/features/build_pass.prf:

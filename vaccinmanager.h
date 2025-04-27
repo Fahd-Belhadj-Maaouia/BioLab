@@ -33,6 +33,25 @@ public:
     void setNbDose(int doses) { nbDose = doses; }
     void setQuantite(int qty) { quantite = qty; }
     void setDateExp(const QDate &date) { dateExp = date; }
+    void setCouleur(const QString &value) { couleur = value; }
+    // Accesseurs pour les propriétés du vaccin
+    int getId() const { return id; }
+    QString getNomVaccin() const { return nomVaccin; }
+    QString getReference() const { return reference; }
+    QString getType() const { return type; }
+    QString getMaladieChronique() const { return maladieChronique; }
+    int getNbDose() const { return nbDose; }
+    int getQuantite() const { return quantite; }
+    QDate getDateExp() const { return dateExp; }
+    QString getCouleur() const { return couleur; }
+
+
+
+
+
+    bool isVaccinExpiredByColor(const QString &color);
+    QStringList getExpiredVaccinsByColor(const QString &color);
+    bool findVaccinByColor(const QString &color);
 
     QMap<QString, QVariant> getVaccinById(int id);
     QMap<QString, int> getVaccinTypeStats();
@@ -47,12 +66,15 @@ public:
     bool loadVaccinSummary(QTableWidget *summaryTable);
     bool searchVaccins(const QString& searchText, const QString& searchType,
                        SortType sortType = SORT_BY_NAME, bool ascending = true);
+    int getTotalVaccinCount();
 
 signals:
     void editVaccinRequested(int id);
     void deleteVaccinRequested(int id);
     void showVaccinTypeStats();
     void dataModified();  // Nouveau signal pour notifier les changements de données
+    int getSelectedRow();
+    int getSelectedVaccinId();
 
 private:
     // Ajoutez cette méthode de validation
@@ -74,5 +96,8 @@ private:
     int nbDose = 0;
     int quantite = 0;
     QDate dateExp;
+    QString couleur;  // Nouvelle propriété pour stocker la couleur
+
 };
+
 #endif // VACCINMANAGER_H
