@@ -19,7 +19,6 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 
-//#include <opencv2/opencv.hpp>
 
 
 
@@ -608,3 +607,15 @@ void ResearcherManager::sendEmailViaSendGrid(const QString &to, const QString &s
 }
 
 
+void ResearcherManager::updateCardUID(int researcherID, const QString &cardUID) {
+    QSqlQuery query;
+    query.prepare("UPDATE researcher SET card_uid = :cardUID WHERE IDR = :IDR");
+    query.bindValue(":cardUID", cardUID);
+    query.bindValue(":IDR", researcherID);
+
+    if(!query.exec()) {
+        qDebug() << "Error updating card UID:" << query.lastError().text();
+    } else {
+        qDebug() << "Card UID updated for researcher" << researcherID;
+    }
+}

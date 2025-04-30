@@ -21,6 +21,8 @@
 #include <QBarCategoryAxis>
 #include <QValueAxis>
 
+#include "serialmanager.h"
+
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -61,6 +63,9 @@ private slots:
     // Handle submission of modification
     void onModifyResearcherSubmit(int researcherID, QLineEdit *nomInput, QLineEdit *prenomInput, QComboBox *sexeInput, QLineEdit *cinInput, QComboBox *adresseInput, QLineEdit *numtelInput, QLineEdit *specialiteInput, QLineEdit *datedenaissanceInput, QLineEdit *emailInput);
     void showResearchersStatsPage();
+
+
+    void handleCardScanned(const QString &cardUID);
 
 
 private:
@@ -121,6 +126,9 @@ private:
 
     // Initialization Functions
     void setupUI();
+
+    void setupSerialConnection();  // New dedicated method for serial setup
+
     void setupSidebar();
     void setupPages();
     void setupToolsPage();
@@ -141,6 +149,8 @@ private:
     void updateResearchersStatsChart();  // 👈 Add this declaration
     void exportResearchersTableToPDF();
 
+
+    SerialManager *serialManager = nullptr;
 
 
 

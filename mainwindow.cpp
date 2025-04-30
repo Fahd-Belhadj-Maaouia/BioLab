@@ -22,17 +22,25 @@
 #include <QPainter>
 #include <QFileDialog>
 
+#include <QSerialPort>
+#include <QSerialPortInfo>
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent) {
     connection c;
     c.createconnection();
 
     setupUI();
+    setupSerialConnection();  // Initialize serial connection after UI setup
 }
 
-MainWindow::~MainWindow() {}
+MainWindow::~MainWindow() {
+
+    delete serialManager;  // Clean up serial manager
+}
 
 void MainWindow::setupUI() {
+
     // Central Widget and Main Layout
     centralWidget = new QWidget(this);
     setCentralWidget(centralWidget);
@@ -64,6 +72,19 @@ void MainWindow::setupUI() {
     contentLayout->addWidget(contentWrapper, 1);
     mainLayout->addLayout(contentLayout);
 }
+
+
+void MainWindow::setupSerialConnection() {
+    serialManager = new SerialManager(this);
+    if(serialManager->connectToArduino()) {
+        connect(serialManager, &SerialManager::cardScanned,
+                this, &MainWindow::handleCardScanned, Qt::QueuedConnection); // Add Qt::QueuedConnection
+        qDebug() << "Arduino connected and card scanning active";
+    } else {
+        qDebug() << "Failed to connect to Arduino - card scanning disabled";
+    }
+}
+
 
 void MainWindow::setupSidebar() {
     sidebarWidget = new QWidget(this);
@@ -1612,4 +1633,38 @@ void MainWindow::updateSidebarIcons(QPushButton *selectedButton) {
         btnVaccins->setIcon(QIcon(":/icons/svg/syringe-selected.svg"));
     else if (selectedButton == btnSettings)
         btnSettings->setIcon(QIcon(":/icons/svg/settings-selected.svg"));
+}
+
+// Add new method:
+void MainWindow::handleCardScanned(const QString &cardUID) {
+    qDebug() << "Card UID received:" << cardUID;
+
+    // Normalize the UID (remove spaces, uppercase)
+    QString normalizedUID = cardUID.trimmed().replace(" ", "").toUpper();
+    qDebug() << "Normalized UID:" << normalizedUID;
+
+    QSqlQuery query;
+    query.prepare("SELECT Nom, Prenom, CIN FROM researcher WHERE REPLACE(UPPER(card_uid), ' ', '') = ?");
+    query.addBindValue(normalizedUID);
+
+    if (!query.exec()) {
+        qDebug() << "Database error:" << query.lastError().text();
+        return;
+    }
+
+    if (query.next()) {
+        QString message = QString("Bienvenue %1 %2\nCIN: %3")
+            .arg(query.value("Nom").toString())
+            .arg(query.value("Prenom").toString())
+            .arg(query.value("CIN").toString());
+
+        QMessageBox *msgBox = new QMessageBox(this);
+        msgBox->setAttribute(Qt::WA_DeleteOnClose);
+        msgBox->setWindowTitle("Accès Autorisé");
+        msgBox->setText(message);
+        msgBox->setModal(false);
+        msgBox->show();
+    } else {
+        QMessageBox::warning(this, "Accès Refusé", "Carte non enregistrée\nUID: " + normalizedUID);
+    }
 }

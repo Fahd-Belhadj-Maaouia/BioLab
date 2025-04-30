@@ -3,37 +3,150 @@
 #include <QSqlError>
 #include <QDebug>
 #include <QRandomGenerator>
+#include <QLabel>
+#include <QLineEdit>
+#include <QPushButton>
+#include <QHBoxLayout>
+#include <QVBoxLayout>
+#include <QPixmap>
+#include <QPainter>
 
 LoginWindow::LoginWindow(QWidget *parent) : QWidget(parent) {
     setWindowTitle("Connexion BIOLAB");
 
+    // === Sidebar gauche ===
+    QWidget *sidebarWidget = new QWidget;
+    sidebarWidget->setFixedWidth(200);
+    sidebarWidget->setStyleSheet(R"(
+        background-color: #1e1e1e;
+        QPushButton {
+            background: transparent;
+            color: white;
+            text-align: left;
+            padding: 10px 15px;
+            font-size: 15px;
+            border-radius: 8px;
+        }
+        QPushButton:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        QPushButton:checked {
+            background-color: #198754;
+            font-weight: bold;
+        }
+    )");
+
+    QVBoxLayout *sidebarLayout = new QVBoxLayout(sidebarWidget);
+    sidebarLayout->setContentsMargins(15, 15, 15, 15);
+    sidebarLayout->setSpacing(15);
+
+    QLabel *logoLabel = new QLabel(sidebarWidget);
+    QPixmap logoPixmap(":/icons/svg/BIOLAB.svg");
+    logoLabel->setPixmap(logoPixmap.scaled(140, 40, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    logoLabel->setAlignment(Qt::AlignCenter);
+    sidebarLayout->addWidget(logoLabel);
+    sidebarLayout->addStretch();
+
+    // === Formulaire de login ===
+    QWidget *formWidget = new QWidget;
+    formWidget->setStyleSheet("background-color: white; border-top-right-radius: 12px; border-bottom-right-radius: 12px;");
+    QVBoxLayout *formLayout = new QVBoxLayout(formWidget);
+
+    QLabel *titleLabel = new QLabel("Connexion à BIOLAB");
+    titleLabel->setStyleSheet(
+        "font-size: 22px;"
+        "color: #111;"
+        "font-weight: 600;"
+        "letter-spacing: 1px;"
+        "font-family: 'Segoe UI', 'Roboto', sans-serif;"
+        );
+    titleLabel->setAlignment(Qt::AlignHCenter | Qt::AlignTop);
+
+    QLabel *emailLabel = new QLabel("Adresse email");
     emailInput = new QLineEdit();
+    emailInput->setPlaceholderText("exemple@biolab.com");
+
+    QLabel *passwordLabel = new QLabel("Mot de passe");
     passwordInput = new QLineEdit();
+    passwordInput->setPlaceholderText("********");
     passwordInput->setEchoMode(QLineEdit::Password);
+
+    QLabel *captchaTextLabel = new QLabel("Captcha");
+    captchaLabel = new QLabel();  // captcha image
     captchaInput = new QLineEdit();
-    captchaLabel = new QLabel();
+    captchaInput->setPlaceholderText("Recopiez le texte");
+
     errorLabel = new QLabel();
     errorLabel->setStyleSheet("color: red;");
 
-    generateCaptcha();
-
     QPushButton *loginButton = new QPushButton("Se connecter");
+    loginButton->setFixedHeight(40);
+    loginButton->setStyleSheet(R"(
+        QPushButton {
+            background-color: #66bb6a;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 15px;
+        }
+        QPushButton:hover {
+            background-color: #4caf50;
+        }
+        QPushButton:pressed {
+            background-color: #388e3c;
+        }
+    )");
+
     connect(loginButton, &QPushButton::clicked, this, &LoginWindow::handleLogin);
 
-    QVBoxLayout *layout = new QVBoxLayout();
-    layout->addWidget(new QLabel("Email (institutionnel) :"));
-    layout->addWidget(emailInput);
-    layout->addWidget(new QLabel("Mot de passe :"));
-    layout->addWidget(passwordInput);
-    layout->addWidget(new QLabel("Captcha :"));
-    layout->addWidget(captchaLabel);
-    layout->addWidget(captchaInput);
-    layout->addWidget(errorLabel);
-    layout->addWidget(loginButton);
+    formLayout->addSpacing(30);
+    formLayout->addWidget(titleLabel);
+    formLayout->addSpacing(10);
+    formLayout->addWidget(emailLabel);
+    formLayout->addWidget(emailInput);
+    formLayout->addWidget(passwordLabel);
+    formLayout->addWidget(passwordInput);
+    formLayout->addWidget(captchaTextLabel);
+    formLayout->addWidget(captchaLabel);
+    formLayout->addWidget(captchaInput);
+    formLayout->addWidget(errorLabel);
+    formLayout->addSpacing(10);
+    formLayout->addWidget(loginButton, 0, Qt::AlignCenter);
+    formLayout->addStretch();
 
-    setLayout(layout);
-    setFixedSize(300, 300);
+    // === Layout principal
+    QHBoxLayout *mainLayout = new QHBoxLayout(this);
+    mainLayout->setContentsMargins(0, 0, 0, 0);
+    mainLayout->addWidget(sidebarWidget);
+    mainLayout->addWidget(formWidget);
+    mainLayout->setStretch(1, 1);
 
+    setLayout(mainLayout);
+    resize(800, 450);
+
+    // === Style global moderne
+    setStyleSheet(R"(
+        QLineEdit {
+            border: 1px solid #81c784;
+            border-radius: 6px;
+            padding: 6px;
+            font-size: 14px;
+            color: black;
+        }
+        QLineEdit:placeholder {
+            color: gray;
+        }
+        QLabel {
+            color: #111;
+            font-size: 15px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            font-family: 'Segoe UI', 'Roboto', sans-serif;
+        }
+    )");
+
+    generateCaptcha(); // CAPTCHA = original
 }
 
 void LoginWindow::generateCaptcha() {
@@ -66,7 +179,6 @@ void LoginWindow::generateCaptcha() {
     captchaLabel->setPixmap(pixmap);
 }
 
-
 void LoginWindow::handleLogin() {
     QString email = emailInput->text().trimmed();
     QString password = passwordInput->text().trimmed();
@@ -78,7 +190,7 @@ void LoginWindow::handleLogin() {
         return;
     }
 
-    QSqlDatabase db = QSqlDatabase::database();  // 🔥 récupère la connexion ouverte
+    QSqlDatabase db = QSqlDatabase::database();
     QSqlQuery query(db);
     query.prepare("SELECT COUNT(*) FROM researcher WHERE emailg = :email AND motdepasseg = :password");
     query.bindValue(":email", email);
@@ -91,6 +203,5 @@ void LoginWindow::handleLogin() {
     }
 
     emit loginSuccessful();
-    close();  // Ferme la fenêtre login
+    close();
 }
-

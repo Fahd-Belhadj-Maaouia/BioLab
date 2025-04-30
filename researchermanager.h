@@ -71,6 +71,9 @@ public:
 
 
 
+    void updateCardUID(int researcherID, const QString &cardUID);
+
+
 
 
 
