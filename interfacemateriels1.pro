@@ -7,6 +7,8 @@ QT += core gui sql charts
 QT += charts widgets
 QT += network
 QT += core gui sql charts
+QT += widgets sql
+QT += core gui widgets sql charts  # Example: Add 'charts' if needed
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 CONFIG += c++17
@@ -23,6 +25,7 @@ SOURCES += \
     mainwindow.cpp \
     messagesmanager.cpp \
     patients.cpp \
+    researchermanager.cpp \
     toolsmanager.cpp \
     vaccinmanager.cpp
 
@@ -33,6 +36,7 @@ HEADERS += \
     mainwindow.h \
     messagesmanager.h \
     patients.h \
+    researchermanager.h \
     toolsmanager.h \
     vaccinmanager.h
 

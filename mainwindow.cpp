@@ -6,6 +6,7 @@
 #include"arduinomanager.h"
 #include"vaccinmanager.h"
 #include"messagesmanager.h"
+#include "researchermanager.h"
 #include <QHeaderView>
 #include <QMessageBox>
 #include <QInputDialog>
@@ -172,7 +173,7 @@ void MainWindow::setupSidebar() {
     connect(btnPatients, &QPushButton::clicked, this, &MainWindow::showPatientsPage);
     connect(btnPersonel, &QPushButton::clicked, this, &MainWindow::showPersonelPage);
     connect(btnResearches, &QPushButton::clicked, this, &MainWindow::showResearchPage);
-    connect(btnResearchers, &QPushButton::clicked, this, &MainWindow::showResearchersPage);
+    connect(btnResearchers, &QPushButton::clicked, this, &MainWindow::showresearchersPage);
     connect(btnTools, &QPushButton::clicked, this, &MainWindow::showToolsPage);
     connect(btnVaccins, &QPushButton::clicked, this, &MainWindow::showVaccinsPage);
     connect(btnMessagerie, &QPushButton::clicked, this, &MainWindow::showMessagerieePage);
@@ -212,8 +213,23 @@ void MainWindow::setupPages() {
     vaccinsTablePage = new QWidget();
     addVaccinFormPage = new QWidget();
     editVaccinFormPage = new QWidget();
+    ResearchersTablePage = new QWidget();
+    addResearcherFormPage = new QWidget();
+    ModifyResearcherFormPage = new QWidget();
+    researchersStatsPage = new QWidget();
+
+
 
     // Setup Pages
+    //setupresearchersPage();
+    setupResearchersStatsPage();
+
+
+    // Setup Pages
+    setupresearchersPage();
+    setupResearchersTablePage();
+    setupaddResearcherFormPage();
+    setupModifyResearcherFormPage(ID);
     setuppatientsPage();
     setupPatientsTablePage();
     setupaddPatientsFormPage();
@@ -225,6 +241,8 @@ void MainWindow::setupPages() {
     setupToolsPage();
     setupMessagerieePage();
     patientsManager->loadPatients();    // Added setup for messaging page
+
+
 
 
     // Add Pages to Stacked Widget
@@ -244,6 +262,13 @@ void MainWindow::setupPages() {
     stackedWidget->addWidget(addVaccinFormPage);
     stackedWidget->addWidget(editVaccinFormPage);
     stackedWidget->addWidget(messagerieePage);
+
+    stackedWidget->addWidget(ResearchersTablePage);
+    stackedWidget->addWidget(addResearcherFormPage);
+    stackedWidget->addWidget(ModifyResearcherFormPage);
+    stackedWidget->addWidget(researchersStatsPage);
+
+
 
     // Set Default Page
     stackedWidget->setCurrentWidget(patientsPage);
@@ -675,7 +700,7 @@ void MainWindow::setupPatientsTablePage() {
     connect(editPatientButton, &QPushButton::clicked, this, &MainWindow::onEditPatientClicked);
     connect(deletePatientButton, &QPushButton::clicked, this, &MainWindow::onDeletePatientClicked);
     connect(backButton, &QPushButton::clicked, this, &MainWindow::showPatientsPage);
-    connect(pdfButton, &QPushButton::clicked, this, &MainWindow::exportStatsToPDF);
+    //connect(pdfButton, &QPushButton::clicked, this, &MainWindow::exportStatsToPDF);
 
     // Connect search and sort buttons
     connect(searchButton, &QPushButton::clicked, this, [this, searchFieldCombo, searchInput, patientstable]() {
@@ -4054,7 +4079,8 @@ void MainWindow::setupMessagerieePage()
     // Boutons d'action
     QHBoxLayout *buttonLayout = new QHBoxLayout();
     QPushButton *newMessageBtn = new QPushButton("Nouveau message");
-    newMessageBtn->setIcon(QIcon(":/icons/svg/message.svg"));
+    //
+    //newMessageBtn->setIcon(QIcon(":/icons/svg/message.svg"));
 
     QPushButton *deleteMessageBtn = new QPushButton("Supprimer");
     deleteMessageBtn->setIcon(QIcon(":/icons/svg/delete.svg"));
@@ -4877,7 +4903,7 @@ void MainWindow::showResearchPage() {
     updateSidebarIcons(btnResearches);
 }
 
-void MainWindow::showResearchersPage() {
+void MainWindow::showresearchersPage() {
     stackedWidget->setCurrentWidget(researchersPage);
     updateSidebarIcons(btnResearchers);
 }
@@ -4901,6 +4927,10 @@ void MainWindow::showSettingsPage() {
 void MainWindow::showToolsTablePage() {
     stackedWidget->setCurrentWidget(toolsTablePage);
 }
+void MainWindow::showResearchersTablePage() {
+    stackedWidget->setCurrentWidget(ResearchersTablePage);
+}
+
 void MainWindow::updateSidebarIcons(QPushButton *selectedButton) {
     btnPatients->setIcon(QIcon(":/icons/svg/patient.svg"));
     btnPersonel->setIcon(QIcon(":/icons/svg/personel.svg"));
@@ -4927,3 +4957,1104 @@ void MainWindow::updateSidebarIcons(QPushButton *selectedButton) {
     else if (selectedButton == btnSettings)
         btnSettings->setIcon(QIcon(":/icons/svg/settings-selected.svg"));
 }
+
+
+
+//mouheb
+
+
+
+void MainWindow::setupresearchersPage() {
+    QVBoxLayout *researcherLayout = new QVBoxLayout(researchersPage);
+
+    // Add "Voir Chercheurs" Button
+    QPushButton *goToResearchersTableButton = new QPushButton("Voir la table des chercheurs");
+    goToResearchersTableButton->setStyleSheet(
+        "QPushButton {"
+        "    background-color: #198754;"
+        "    color: white;"
+        "    padding: 10px 20px;"
+        "    border-radius: 8px;"
+        "    font-size: 14px;"
+        "}"
+        "QPushButton:hover {"
+        "    background-color: #157347;"
+        "}"
+        );
+
+    // Add "Statistics" Button
+    QPushButton *goToStatsButton = new QPushButton("Voir Statistiques");
+    goToStatsButton->setStyleSheet(
+        "QPushButton {"
+        "    background-color: #1a1a1a;"  // ✅ couleur sidebar
+        "    color: white;"
+        "    padding: 10px 20px;"
+        "    border-radius: 8px;"
+        "    font-size: 14px;"
+        "}"
+        "QPushButton:hover {"
+        "    background-color: #333333;"  // légèrement plus clair au survol
+        "}"
+        );
+
+
+    QHBoxLayout *buttonLayout = new QHBoxLayout();
+    buttonLayout->addWidget(goToResearchersTableButton, 0, Qt::AlignCenter);
+    buttonLayout->addWidget(goToStatsButton, 0, Qt::AlignCenter);
+
+    researcherLayout->addLayout(buttonLayout);
+
+
+    // Connect Buttons to Slots
+    connect(goToResearchersTableButton, &QPushButton::clicked, this, &MainWindow::showResearchersTablePage);
+    connect(goToStatsButton, &QPushButton::clicked, this, &MainWindow::showResearchersStatsPage);
+}
+
+
+
+void MainWindow::setupResearchersStatsPage() {
+    QVBoxLayout *layout = new QVBoxLayout(researchersStatsPage);
+
+    // Back Button
+    QPushButton *backButton = new QPushButton(this);
+    backButton->setIcon(QIcon(":/icons/svg/back.svg"));
+    backButton->setIconSize(QSize(24, 24));
+    backButton->setStyleSheet("background: transparent;");
+    connect(backButton, &QPushButton::clicked, this, &MainWindow::showresearchersPage);
+
+    QHBoxLayout *buttonLayout = new QHBoxLayout();
+    buttonLayout->addWidget(backButton);
+    buttonLayout->addStretch();
+    layout->addLayout(buttonLayout);
+
+    // Chart Setup
+    QChartView *chartView = new QChartView();
+    chartView->setRenderHint(QPainter::Antialiasing);
+    chartView->setMinimumSize(600, 400);
+
+    QChart *chart = new QChart();
+    chart->setTitle("Researchers Statistics");
+    chart->setAnimationOptions(QChart::SeriesAnimations);
+
+    QSqlDatabase db = QSqlDatabase::database();
+    qDebug() << "Database is open:" << db.isOpen();
+
+    if (!db.isOpen()) {
+        QMessageBox::critical(this, "Database Error", "Database is not open.");
+        return;
+    }
+
+    QSqlQuery query;
+    QString sql = "SELECT Specialite, COUNT(*) FROM researcher GROUP BY Specialite";
+
+    if (!query.exec(sql)) {
+        qDebug() << "Query failed:" << query.lastError().text();
+        QMessageBox::critical(this, "Query Error", query.lastError().text());
+        return;
+    }
+
+    qDebug() << "Query executed successfully.";
+
+
+    QBarSet *set = new QBarSet("Researchers by Specialty");
+    QStringList categories;
+
+
+    while (query.next()) {
+        QString specialty = query.value(0).toString();
+        int count = query.value(1).toInt();
+        qDebug() << "Specialty:" << specialty << "| Count:" << count;
+        *set << count;
+        categories << specialty;
+    }
+
+    if (categories.isEmpty()) {
+        *set << 1;
+        categories << "No Data";
+    }
+
+    QBarSeries *series = new QBarSeries();
+    series->append(set);
+    chart->addSeries(series);
+
+    QBarCategoryAxis *axisX = new QBarCategoryAxis();
+    axisX->append(categories);
+    chart->addAxis(axisX, Qt::AlignBottom);
+    series->attachAxis(axisX);
+
+    QValueAxis *axisY = new QValueAxis();
+    axisY->setLabelFormat("%d");
+    chart->addAxis(axisY, Qt::AlignLeft);
+    series->attachAxis(axisY);
+
+    chartView->setChart(chart);
+    layout->addWidget(chartView);
+
+    // Optional debug styling
+    researchersStatsPage->setStyleSheet("background-color: lightgray;");
+    chartView->setStyleSheet("background-color: white;");
+}
+
+void MainWindow::updateResearchersStatsChart() {
+    // Clean old layout
+    QLayout *oldLayout = researchersStatsPage->layout();
+    if (oldLayout)
+        delete oldLayout;
+
+    QVBoxLayout *layout = new QVBoxLayout(researchersStatsPage);
+
+    // Back Button
+    QPushButton *backButton = new QPushButton(this);
+    backButton->setIcon(QIcon(":/icons/svg/back.svg"));
+    backButton->setIconSize(QSize(24, 24));
+    backButton->setStyleSheet("background: transparent;");
+    connect(backButton, &QPushButton::clicked, this, &MainWindow::showresearchersPage);
+
+    QHBoxLayout *buttonLayout = new QHBoxLayout();
+    buttonLayout->addWidget(backButton);
+    buttonLayout->addStretch();
+    layout->addLayout(buttonLayout);
+
+    // Chart Setup
+    QChartView *chartView = new QChartView();
+    chartView->setRenderHint(QPainter::Antialiasing);
+    chartView->setMinimumSize(600, 400);
+
+    QChart *chart = new QChart();
+    chart->setTitle("Researchers Statistics");
+    chart->setAnimationOptions(QChart::SeriesAnimations);
+
+    QSqlDatabase db = QSqlDatabase::database();
+    if (!db.isOpen()) {
+        QMessageBox::critical(this, "Database Error", "Database is not open.");
+        return;
+    }
+
+    QSqlQuery query;
+    if (!query.exec("SELECT Specialite, COUNT(*) FROM researcher GROUP BY Specialite")) {
+        QMessageBox::critical(this, "Query Error", query.lastError().text());
+        return;
+    }
+
+    QBarSet *set = new QBarSet("Researchers by Specialty");
+    QStringList categories;
+
+    while (query.next()) {
+        QString specialty = query.value(0).toString();
+        int count = query.value(1).toInt();
+        *set << count;
+        categories << specialty;
+    }
+
+    if (categories.isEmpty()) {
+        *set << 1;
+        categories << "No Data";
+    }
+
+    QBarSeries *series = new QBarSeries();
+    series->append(set);
+    chart->addSeries(series);
+
+    QBarCategoryAxis *axisX = new QBarCategoryAxis();
+    axisX->append(categories);
+    chart->addAxis(axisX, Qt::AlignBottom);
+    series->attachAxis(axisX);
+
+    QValueAxis *axisY = new QValueAxis();
+    axisY->setLabelFormat("%d");
+    chart->addAxis(axisY, Qt::AlignLeft);
+    series->attachAxis(axisY);
+
+    chartView->setChart(chart);
+    layout->addWidget(chartView);
+}
+
+
+void MainWindow::showResearchersStatsPage() {
+    updateResearchersStatsChart();
+    stackedWidget->setCurrentWidget(researchersStatsPage);
+    updateSidebarIcons(btnResearchers);
+}
+
+void MainWindow::setupResearchersTablePage() {
+    QVBoxLayout *layout = new QVBoxLayout(ResearchersTablePage);
+
+
+
+    // Add "Ajouter Materiels" Button
+    QPushButton *addResearcherButton = new QPushButton("Ajouter Chercheurs", this);
+    addResearcherButton->setStyleSheet(
+                "QPushButton {"
+                "    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #198754, stop:1 #28a745);"
+                "    color: white;"
+                "    padding: 10px 20px;"
+                "    border-radius: 10px;"
+                "    font-size: 15px;"
+                "    font-weight: bold;"
+                "    font-family: 'Segoe UI';"
+                "}"
+                "QPushButton:hover {"
+                "    background-color: #157347;"
+                "}"
+                );
+
+    // Add "Modifier Materiels" Button
+    QPushButton *editResearcherButton = new QPushButton("Modifier Chercheurs", this);
+    editResearcherButton->setStyleSheet(
+                "QPushButton {"
+                "    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #198754, stop:1 #28a745);"
+                "    color: white;"
+                "    padding: 10px 20px;"
+                "    border-radius: 10px;"
+                "    font-size: 15px;"
+                "    font-weight: bold;"
+                "    font-family: 'Segoe UI';"
+                "}"
+                "QPushButton:hover {"
+                "    background-color: #157347;"
+                "}"
+                );
+
+    // Add "Supprimer Materiels" Button
+    QPushButton *deleteResearcherButton = new QPushButton("Supprimer Chercheurs", this);
+    deleteResearcherButton->setStyleSheet(
+                "QPushButton {"
+                "    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #198754, stop:1 #28a745);"
+                "    color: white;"
+                "    padding: 10px 20px;"
+                "    border-radius: 10px;"
+                "    font-size: 15px;"
+                "    font-weight: bold;"
+                "    font-family: 'Segoe UI';"
+                "}"
+                "QPushButton:hover {"
+                "    background-color: #157347;"
+                "}"
+                );
+
+    // Add Back Button
+    QPushButton *backButton = new QPushButton(this);
+    backButton->setIcon(QIcon(":/icons/svg/back.svg"));
+    backButton->setIconSize(QSize(24, 24));
+    backButton->setStyleSheet(
+        "QPushButton {"
+        "    background-color: transparent;"
+        "    border: none;"
+        "    padding: 5px;"
+        "}"
+        "QPushButton:hover {"
+        "    background-color: rgba(0, 0, 0, 0.1);"
+        "    border-radius: 4px;"
+        "}"
+        );
+
+    // Top Button Layout
+    ResearchersTablePage->setLayout(layout);
+
+    QHBoxLayout *topButtonLayout = new QHBoxLayout();
+    topButtonLayout->addWidget(backButton);
+    topButtonLayout->addStretch();
+    topButtonLayout->addWidget(addResearcherButton);
+    topButtonLayout->addWidget(editResearcherButton);
+    topButtonLayout->addWidget(deleteResearcherButton);
+
+
+    // Add Export PDF Button
+    QPushButton *exportPDFButton = new QPushButton("📄 Exporter PDF", this);
+    exportPDFButton->setStyleSheet(
+        "QPushButton {"
+        "    background-color: #1a1a1a;"  // ✅ couleur sidebar
+        "    color: white;"
+        "    padding: 10px 20px;"
+        "    border-radius: 8px;"
+        "    font-size: 14px;"
+        "}"
+        "QPushButton:hover {"
+        "    background-color: #333333;"  // survol
+        "}"
+        );
+
+
+    topButtonLayout->addWidget(exportPDFButton);
+
+    // Connect to export function
+    connect(exportPDFButton, &QPushButton::clicked, this, &MainWindow::exportResearchersTableToPDF);
+
+
+
+    layout->addLayout(topButtonLayout);
+
+    // Set layout for researchertablePage
+
+    //layout->addStretch(1);
+
+
+
+
+
+    QTableWidget *researcherstable = new QTableWidget(this);
+    researcherstable->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    researcherstable->horizontalHeader()->setVisible(true);
+    researcherstable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    researcherstable->verticalHeader()->setVisible(false); // Optional: hides row numbers
+    researcherstable->horizontalHeader()->setStyleSheet(
+        "QHeaderView::section {"
+        "background-color: white;"        // Optional: make header background white
+        "color: black;"                   // ✅ Make header text black
+        "font-weight: bold;"              // Optional: make it bold
+        "padding: 5px;"
+        "border: 1px solid lightgray;"
+        "}"
+        );
+
+    researcherstable->setColumnCount(10);
+    researcherstable->setHorizontalHeaderLabels({"IDR", "Nom", "Prenom", "Sexe", "CIN", "Adresse", "NumTel", "Specialite", "Datedenaissance", "Email"});
+    layout->addWidget(researcherstable);
+
+    // Now set the layout of the PatientsTablePage (no need for an extra QWidget)
+    ResearchersTablePage->setLayout(layout);
+    // Add search widget
+    setupSearchWidget();
+
+
+    // Set thepatientsManager->loadPatients(); PatientsTablePage as the central widget of the MainWindow
+
+    // Initialize PatientsManager with the table
+    researchersManager = new class ResearcherManager(researcherstable, this);
+
+
+
+
+
+
+
+
+
+
+    // Connect Buttons to Slots
+    connect(addResearcherButton, &QPushButton::clicked, this, &MainWindow::onAddResearcherClicked);
+    connect(editResearcherButton, &QPushButton::clicked, this, &MainWindow::onEditResearcherClicked);
+    connect(deleteResearcherButton, &QPushButton::clicked, this, &MainWindow::onDeleteResearcherClicked);
+    connect(backButton, &QPushButton::clicked, this, &MainWindow::showresearchersPage);
+
+}
+void MainWindow::exportResearchersTableToPDF() {
+    QString filePath = QFileDialog::getSaveFileName(this, "Save PDF", "", "PDF files (*.pdf)");
+    if (filePath.isEmpty())
+        return;
+
+    QPdfWriter writer(filePath);
+    writer.setPageSize(QPageSize::A4);
+    writer.setResolution(300);
+
+    QPainter painter(&writer);
+
+    // Setup fonts
+    QFont titleFont("Arial", 16, QFont::Bold);
+    QFont headerFont("Arial", 10, QFont::Bold);
+    QFont cellFont("Arial", 9);
+
+    int margin = 50;
+    int x = margin;
+    int y = margin;
+
+    QTableWidget *table = researchersManager->getTableWidget();
+    if (!table) {
+        QMessageBox::warning(this, "Error", "Table not found.");
+        return;
+    }
+
+    // Title
+    painter.setFont(titleFont);
+    painter.drawText(x, y, "Liste des Chercheurs");
+    y += 40;
+
+    // Setup for table rendering
+    painter.setFont(headerFont);
+    int rowHeight = 45;
+    int colCount = table->columnCount();
+    int tableWidth = writer.width() - 2 * margin;
+    int colWidth = tableWidth / colCount;
+
+    // Draw headers with background
+    painter.fillRect(x, y, tableWidth, rowHeight, QColor("#007bff"));
+    painter.setPen(Qt::white);
+    for (int col = 0; col < colCount; ++col) {
+        painter.drawText(x + col * colWidth + 5, y + 28, table->horizontalHeaderItem(col)->text());
+    }
+
+    // Grid lines for header
+    painter.setPen(Qt::black);
+    for (int col = 0; col <= colCount; ++col) {
+        painter.drawLine(x + col * colWidth, y, x + col * colWidth, y + rowHeight);
+    }
+    painter.drawLine(x, y, x + tableWidth, y);
+    painter.drawLine(x, y + rowHeight, x + tableWidth, y + rowHeight);
+
+    y += rowHeight;
+
+    // Table body
+    painter.setFont(cellFont);
+    for (int row = 0; row < table->rowCount(); ++row) {
+        for (int col = 0; col < colCount; ++col) {
+            QTableWidgetItem *item = table->item(row, col);
+            if (item)
+                painter.drawText(x + col * colWidth + 5, y + 28, item->text());
+        }
+
+        // Grid lines
+        for (int col = 0; col <= colCount; ++col) {
+            painter.drawLine(x + col * colWidth, y, x + col * colWidth, y + rowHeight);
+        }
+        painter.drawLine(x, y + rowHeight, x + tableWidth, y + rowHeight);
+
+        y += rowHeight;
+
+        // Page break
+        if (y > writer.height() - margin - rowHeight) {
+            writer.newPage();
+            y = margin;
+        }
+    }
+
+    painter.end();
+    QMessageBox::information(this, "Exporté", "Le PDF a été généré avec succès !");
+}
+void MainWindow::setupSearchWidget() {
+    QWidget *searchWidget = new QWidget();
+    QHBoxLayout *searchLayout = new QHBoxLayout(searchWidget);
+
+    QComboBox *searchTypeCombo = new QComboBox();
+    searchTypeCombo->addItem("🔍 Choisir un type de recherche");
+    searchTypeCombo->addItem("Recherche par Nom");
+    searchTypeCombo->addItem("Recherche par CIN");
+    searchTypeCombo->addItem("Recherche par Spécialité");
+    searchTypeCombo->setCurrentIndex(0);
+    searchTypeCombo->setStyleSheet(
+        "QComboBox {"
+        "    padding: 6px 12px;"
+        "    font-size: 14px;"
+        "    color: black;"                   // 👈 combo box text color
+        "    border: 1px solid #ccc;"
+        "    border-radius: 6px;"
+        "    background-color: white;"
+        "}"
+        "QComboBox QAbstractItemView {"
+        "    background-color: white;"
+        "    color: black;"                  // 👈 dropdown text color
+        "    selection-background-color: #007bff;"
+        "    selection-color: white;"
+        "    font-size: 14px;"
+        "    padding: 8px;"
+        "}"
+        );
+
+
+
+
+    QLineEdit *searchInput = new QLineEdit();
+    searchInput->setPlaceholderText("Rechercher...");
+
+    QPushButton *searchButton = new QPushButton("Chercher");
+    QPushButton *resetButton = new QPushButton("Réinitialiser");
+
+    QComboBox *alphabetSortCombo = new QComboBox();
+    alphabetSortCombo->addItem("🔤 Filtrage par nom");
+    alphabetSortCombo->addItem("A → Z");
+    alphabetSortCombo->addItem("Z → A");
+
+    QComboBox *ageFilterCombo = new QComboBox();
+    ageFilterCombo->addItem("🎂 Filtrage par age");
+    ageFilterCombo->addItem("Age < 25");
+    ageFilterCombo->addItem("Age 25 - 35");
+    ageFilterCombo->addItem("Age > 35");
+
+    QComboBox *specialiteSortCombo = new QComboBox();
+    specialiteSortCombo->addItem("🔬 Filtrage par spécialité");
+    specialiteSortCombo->addItem("A → Z");
+    specialiteSortCombo->addItem("Z → A");
+
+
+
+    searchLayout->addWidget(searchTypeCombo);
+    searchLayout->addWidget(searchInput);
+    searchLayout->addWidget(searchButton);
+    searchLayout->addWidget(resetButton);
+    searchLayout->addWidget(alphabetSortCombo);
+    searchLayout->addWidget(ageFilterCombo);
+    searchLayout->addWidget(specialiteSortCombo);  // 👈 Add this line
+
+
+    // Add search widget to the main layout
+    QVBoxLayout *mainLayout = qobject_cast<QVBoxLayout*>(ResearchersTablePage->layout());
+    if (mainLayout) {
+        mainLayout->insertWidget(1, searchWidget); // Insert after the top button layout
+    }
+
+    searchWidget->setStyleSheet(
+        "QComboBox, QLineEdit {"
+        "    padding: 10px 14px;"
+        "    border: 1px solid #ccc;"
+        "    border-radius: 6px;"
+        "    font-size: 15px;"
+        "    color: #2c3e50;"
+        "    background-color: #fdfdfd;"
+        "}"
+        "QComboBox::drop-down {"
+        "    subcontrol-origin: padding;"
+        "    subcontrol-position: top right;"
+        "    width: 30px;"
+        "    border-left: 1px solid #ccc;"
+        "}"
+        "QComboBox::down-arrow {"
+        "    image: url(:/icons/down-arrow.png);" // optionnel: icône personnalisée
+        "    width: 12px;"
+        "    height: 12px;"
+        "}"
+        "QComboBox QAbstractItemView {"
+        "    background-color: white;"
+        "    border: 1px solid #ddd;"
+        "    selection-background-color: #198754;"
+        "    selection-color: white;"
+        "    font-size: 14px;"
+        "}"
+        "QPushButton {"
+        "    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #198754, stop:1 #28a745);"
+        "    color: white;"
+        "    padding: 10px 20px;"
+        "    border-radius: 10px;"
+        "    font-size: 15px;"
+        "    font-weight: bold;"
+        "    font-family: 'Segoe UI';"
+        "}"
+        "QPushButton:hover {"
+        "    background-color: #157347;"
+        "}"
+        );
+
+    specialiteSortCombo->setStyleSheet(searchTypeCombo->styleSheet());
+
+    alphabetSortCombo->setStyleSheet(searchTypeCombo->styleSheet());
+    ageFilterCombo->setStyleSheet(searchTypeCombo->styleSheet());
+
+
+
+
+    connect(searchButton, &QPushButton::clicked, this, [this, searchTypeCombo, searchInput]() {
+        QString searchTerm = searchInput->text().trimmed();
+        if (searchTerm.isEmpty()) {
+            researchersManager->loadResearcher();
+            return;
+        }
+
+        int selectedIndex = searchTypeCombo->currentIndex();
+        if (selectedIndex == 1) {
+            researchersManager->searchResearcherByName(searchTerm);
+        } else if (selectedIndex == 2) {
+            researchersManager->searchResearcherByCIN(searchTerm);
+        } else if (selectedIndex == 3) {
+            researchersManager->searchResearcherBySpecialite(searchTerm);
+        }
+    });
+
+    connect(resetButton, &QPushButton::clicked, this, [this, searchInput]() {
+        searchInput->clear();
+        researchersManager->loadResearcher();
+    });
+    connect(alphabetSortCombo, &QComboBox::currentTextChanged, this, [this](const QString &selected) {
+        if (selected == "A → Z") {
+            researchersManager->sortResearchersByName(true);
+        } else if (selected == "Z → A") {
+            researchersManager->sortResearchersByName(false);
+        } else {
+            researchersManager->loadResearcher(); // default or no sorting
+        }
+    });
+
+    connect(specialiteSortCombo, &QComboBox::currentTextChanged, this, [this](const QString &selected) {
+        if (selected == "A → Z") {
+            researchersManager->sortResearchersBySpecialite(true);
+        } else if (selected == "Z → A") {
+            researchersManager->sortResearchersBySpecialite(false);
+        } else {
+            researchersManager->loadResearcher(); // default reset
+        }
+    });
+
+
+    connect(ageFilterCombo, &QComboBox::currentTextChanged, this, [this, ageFilterCombo]() {
+        QString selected = ageFilterCombo->currentText();
+        if (selected == "🎂 Filter by Age") {
+            researchersManager->loadResearcher();
+        } else if (selected == "Age < 25") {
+            researchersManager->filterByAgeRange(0, 24);
+        } else if (selected == "Age 25 - 35") {
+            researchersManager->filterByAgeRange(25, 35);
+        } else if (selected == "Age > 35") {
+            researchersManager->filterByAgeRange(36, 150);
+        }
+    });
+
+}
+
+void MainWindow::setupaddResearcherFormPage() {
+    addResearcherFormPage = new QWidget();
+    QVBoxLayout *formLayout = new QVBoxLayout(addResearcherFormPage);
+
+    QLabel *titleLabel = new QLabel("Ajout d'un Chercheur");
+    titleLabel->setStyleSheet("font-size: 18px; font-weight: bold; margin-bottom: 10px;");
+    formLayout->addWidget(titleLabel, 0, Qt::AlignCenter);
+
+    QLabel *nomLabel = new QLabel("Nom:");
+    QLineEdit *nomInput = new QLineEdit();
+    QLabel *prenomLabel = new QLabel("Prénom:");
+    QLineEdit *prenomInput = new QLineEdit();
+    QLabel *sexeLabel = new QLabel("Sexe:");
+    QComboBox *sexeInput = new QComboBox();
+    sexeInput->addItem("Homme");  // Male
+    sexeInput->addItem("Femme");  // Female
+    QLabel *cinLabel = new QLabel("CIN:");
+    QLineEdit *cinInput = new QLineEdit();
+    QLabel *adresseLabel = new QLabel("Gouvernorat:");
+    QComboBox *adresseInput = new QComboBox();
+    // Add all the governorates of Tunisia to the dropdown
+    adresseInput->addItems({
+        "Ariana", "Beja", "Ben Arous", "Bizerte", "Gabes", "Gafsa", "Jendouba", "Kairouan",
+        "Kasserine", "Kebili", "Kef", "Mahdia", "Manouba", "Medenine", "Monastir", "Nabeul",
+        "Sfax", "Sidi Bouzid", "Siliana", "Tataouine", "Tozeur", "Tunis", "Zaghouan"
+    });
+    sexeInput->setCurrentIndex(0);
+    adresseInput->setCurrentIndex(0);
+
+
+    QLabel *numtelLabel = new QLabel("Numéro de Téléphone:");
+    QLineEdit *numtelInput = new QLineEdit();
+    QLabel *specialiteLabel = new QLabel("Spécialité:");
+    QLineEdit *specialiteInput = new QLineEdit();
+    QLabel *datedenaissanceLabel = new QLabel("Date de naissance:");
+    QLineEdit *datedenaissanceInput = new QLineEdit();
+    QLabel *emailLabel = new QLabel("Email:");
+    QLineEdit *emailInput = new QLineEdit();
+
+    QFormLayout *inputLayout = new QFormLayout();
+    inputLayout->addRow(nomLabel, nomInput);
+    inputLayout->addRow(prenomLabel, prenomInput);
+    inputLayout->addRow(sexeLabel, sexeInput);
+    inputLayout->addRow(cinLabel, cinInput);
+    inputLayout->addRow(adresseLabel, adresseInput);
+    inputLayout->addRow(numtelLabel, numtelInput);
+    inputLayout->addRow(specialiteLabel, specialiteInput);
+    inputLayout->addRow(datedenaissanceLabel, datedenaissanceInput);
+    inputLayout->addRow(emailLabel, emailInput);
+
+    formLayout->addLayout(inputLayout);
+
+    QPushButton *submitButton = new QPushButton("Ajouter");
+    QPushButton *backButton = new QPushButton("Retour");
+
+    QHBoxLayout *buttonLayout = new QHBoxLayout();
+    buttonLayout->addWidget(backButton);
+    buttonLayout->addWidget(submitButton);
+    formLayout->addLayout(buttonLayout);
+
+    addResearcherFormPage->setStyleSheet(
+        "QLabel {"
+        "    font-size: 14px;"
+        "    font-weight: bold;"
+        "    margin-top: 5px;"
+        "    color: black"
+        "}"
+        "QLineEdit {"
+        "    padding: 8px;"
+        "    border: 1px solid #ddd;"
+        "    border-radius: 4px;"
+        "    margin-bottom: 5px;"
+        "    color: black;"
+
+        "}"
+        "QComboBox {"
+        "    padding: 8px;"
+        "    border: 1px solid #ddd;"  // Border color same as QLineEdit
+        "    border-radius: 4px;"  // Rounded corners for a modern look
+        "    margin-bottom: 5px;"
+        "    color: black;"  // Black text color
+        "    font-size: 14px;"  // Consistent font size
+        "    font-family: Arial;"  // Consistent font family
+        "    transition: border-color 0.3s ease, box-shadow 0.3s ease;"  // Smooth transitions
+        "}"
+        "QComboBox:hover {"
+        "    border-color: #198754;"  // Green border on hover for a modern feel
+        "    box-shadow: 0 0 5px rgba(0, 155, 74, 0.3);"
+        "}"
+        "QComboBox::drop-down {"
+        "    border: 1px solid #ddd;"
+        "    background-color: #f7f7f7;"  // Lighter gray background for the dropdown
+        "    border-top-right-radius: 4px;"
+        "    border-top-left-radius: 4px;"
+        "}"
+        "QComboBox::down-arrow {"
+        "    border-radius: 3px;"
+        "    width: 15px;"
+        "    height: 15px;"
+        "    image: url(:/images/down-arrow.svg);"
+        "}"
+        "QComboBox::down-arrow:hover {"
+        "    background-color: #198754;"  // Green color on hover for the arrow
+        "    border-radius: 3px;"
+        "}"
+        "QComboBox QAbstractItemView {"
+        "    border: 1px solid #ddd;"
+        "    border-radius: 4px;"
+        "    selection-background-color: #198754;"  // Green background for selected item
+        "    selection-color: white;"  // White text color for selected item // White background for the list
+        "    padding: 5px 0;"  // Padding around the list
+        "}"
+        "QComboBox QAbstractItemView::item {"
+        "    padding: 10px 15px;"
+        "    font-size: 14px;"
+        "    color: black;"  // Default text color
+        "}"
+        "QComboBox QAbstractItemView::item:hover {"
+        "    background-color: #f1f1f1;"  // Slight gray background on hover for items
+        "    color: #198754;"  // Green text color on hover
+        "}"
+        "QPushButton {"
+        "    background-color: #198754;"
+        "    color: white;"
+        "    padding: 10px 20px;"
+        "    border-radius: 8px;"
+        "    font-size: 14px;"
+        "}"
+        "QPushButton:hover {"
+        "    background-color: #157347;"
+        "}"
+        );
+
+    connect(submitButton, &QPushButton::clicked, this, [this, nomInput, prenomInput, sexeInput, cinInput, adresseInput, numtelInput, specialiteInput, datedenaissanceInput, emailInput]() {
+        if (!researchersManager) {
+            qDebug() << "Error: researchersManager is not initialized!";
+            return;
+        }
+
+        // Debugging - Print Input Values
+        qDebug() << "Nom: " << nomInput->text();
+        qDebug() << "Prenom: " << prenomInput->text();
+        qDebug() << "Sexe: " << sexeInput->currentText();
+        qDebug() << "CIN: " << cinInput->text();
+        qDebug() << "Adresse: " << adresseInput->currentText();
+        qDebug() << "NumTel: " << numtelInput->text();
+        qDebug() << " Specialite: " << specialiteInput->text();
+        qDebug() << " Datedenaissance: " << datedenaissanceInput->text();
+        qDebug() << " Email: " << emailInput->text();
+
+
+        // Debug which field is empty
+        if (nomInput->text().trimmed().isEmpty()) qDebug() << "Nom is empty!";
+        if (prenomInput->text().trimmed().isEmpty()) qDebug() << "Prenom is empty!";
+        if (sexeInput->currentText().trimmed().isEmpty()) qDebug() << "Sexe is empty!";
+        if (cinInput->text().trimmed().isEmpty()) qDebug() << "CIN is empty!";
+        if (adresseInput->currentText().trimmed().isEmpty()) qDebug() << "Adresse is empty!";
+        if (numtelInput->text().trimmed().isEmpty()) qDebug() << "NumTel is empty!";
+
+
+
+        if (nomInput->text().trimmed().isEmpty() || prenomInput->text().trimmed().isEmpty() ||
+            sexeInput->currentText().trimmed().isEmpty() || cinInput->text().trimmed().isEmpty() ||
+            adresseInput->currentText().trimmed().isEmpty() || numtelInput->text().trimmed().isEmpty()) {
+
+            QMessageBox::warning(nullptr, "Validation Error", "Please fill all required fields.");
+            qDebug() << "Validation Failed: Some fields are empty!";
+            return;
+        }
+
+
+        // Insert values into patientsManager
+        researchersManager->setNom(nomInput->text());
+        researchersManager->setprenom(prenomInput->text());
+        researchersManager->setsexe(sexeInput->currentText());
+        researchersManager->setcin(cinInput->text());
+        researchersManager->setadresse(adresseInput->currentText());
+        researchersManager->setnumtel(numtelInput->text());
+        researchersManager->setspecialite(specialiteInput->text());
+        researchersManager->setdatedenaissance(datedenaissanceInput->text());
+        researchersManager->setemail(emailInput->text());
+
+
+        // Now call addPatient with the correct arguments
+        researchersManager->addResearcher(
+            researchersManager->getNom(),
+            researchersManager->getprenom(),
+            researchersManager->getsexe(),
+            researchersManager->getcin(),
+            researchersManager->getadresse(),
+            researchersManager->getnumtel(),
+            researchersManager->getspecialite(),
+            researchersManager->getdatedenaissance(),
+            researchersManager->getemail()
+            );
+        researchersManager->loadResearcher();
+
+        stackedWidget->setCurrentWidget(ResearchersTablePage);
+    });
+
+
+
+
+    connect(backButton, &QPushButton::clicked, this, [this]() {
+        stackedWidget->setCurrentWidget(ResearchersTablePage);
+    });
+}
+
+void MainWindow::setupModifyResearcherFormPage(const int ID) {
+    // Clear any existing layout and widgets
+
+    if (ModifyResearcherFormPage->layout()) {
+        QLayoutItem* child;
+        while ((child = ModifyResearcherFormPage->layout()->takeAt(0)) != nullptr) {
+            delete child->widget();
+            delete child;
+        }
+        delete ModifyResearcherFormPage->layout();
+    }
+
+    QVBoxLayout *formLayout = new QVBoxLayout(ModifyResearcherFormPage);
+
+    QLabel *titleLabel = new QLabel("Modifier Chercheur");
+    titleLabel->setStyleSheet("font-size: 18px; font-weight: bold; margin-bottom: 10px;");
+    formLayout->addWidget(titleLabel, 0, Qt::AlignCenter);
+
+    // Create form inputs
+    QLabel *nomLabel = new QLabel("Nom:");
+    QLineEdit *nomInput = new QLineEdit();
+    QLabel *prenomLabel = new QLabel("Prénom:");
+    QLineEdit *prenomInput = new QLineEdit();
+    QLabel *sexeLabel = new QLabel("Sexe:");
+    QComboBox *sexeInput = new QComboBox();
+    sexeInput->addItem("Homme");
+    sexeInput->addItem("Femme");
+    QLabel *cinLabel = new QLabel("CIN:");
+    QLineEdit *cinInput = new QLineEdit();
+    QLabel *adresseLabel = new QLabel("Gouvernorat:");
+    QComboBox *adresseInput = new QComboBox();
+    adresseInput->addItems({
+        "Ariana", "Beja", "Ben Arous", "Bizerte", "Gabes", "Gafsa", "Jendouba", "Kairouan",
+        "Kasserine", "Kebili", "Kef", "Mahdia", "Manouba", "Medenine", "Monastir", "Nabeul",
+        "Sfax", "Sidi Bouzid", "Siliana", "Tataouine", "Tozeur", "Tunis", "Zaghouan"
+    });
+    QLabel *numtelLabel = new QLabel("Numéro de Téléphone:");
+    QLineEdit *numtelInput = new QLineEdit();
+    QLabel *specialiteLabel = new QLabel("Spécialité:");
+    QLineEdit *specialiteInput = new QLineEdit();
+    QLabel *datedenaissanceLabel = new QLabel("Date de naissance:");
+    QLineEdit *datedenaissanceInput = new QLineEdit();
+    QLabel *emailLabel = new QLabel("Email:");
+    QLineEdit *emailInput = new QLineEdit();
+
+    // Load existing data
+    loadResearcherData(ID, nomInput, prenomInput, sexeInput, cinInput, adresseInput,
+                       numtelInput, specialiteInput, datedenaissanceInput, emailInput);
+
+    // Add fields to form
+    QFormLayout *inputLayout = new QFormLayout();
+    inputLayout->addRow(nomLabel, nomInput);
+    inputLayout->addRow(prenomLabel, prenomInput);
+    inputLayout->addRow(sexeLabel, sexeInput);
+    inputLayout->addRow(cinLabel, cinInput);
+    inputLayout->addRow(adresseLabel, adresseInput);
+    inputLayout->addRow(numtelLabel, numtelInput);
+    inputLayout->addRow(specialiteLabel, specialiteInput);
+    inputLayout->addRow(datedenaissanceLabel, datedenaissanceInput);
+    inputLayout->addRow(emailLabel, emailInput);
+    formLayout->addLayout(inputLayout);
+
+    // Add buttons
+    QPushButton *submitButton = new QPushButton("Modifier");
+    QPushButton *backButton = new QPushButton("Retour");
+
+    QHBoxLayout *buttonLayout = new QHBoxLayout();
+    buttonLayout->addWidget(backButton);
+    buttonLayout->addWidget(submitButton);
+    formLayout->addLayout(buttonLayout);
+
+    // Set stylesheet
+    ModifyResearcherFormPage->setStyleSheet(
+        "QLabel {"
+        "    font-size: 14px;"
+        "    font-weight: bold;"
+        "    margin-top: 5px;"
+        "    color: black;"
+        "}"
+        "QLineEdit {"
+        "    padding: 8px;"
+        "    border: 1px solid #ddd;"
+        "    border-radius: 4px;"
+        "    margin-bottom: 5px;"
+        "    color: black;"
+        "}"
+        "QComboBox {"
+        "    padding: 8px;"
+        "    border: 1px solid #ddd;"
+        "    border-radius: 4px;"
+        "    margin-bottom: 5px;"
+        "    color: black;"
+        "    font-size: 14px;"
+        "}"
+        "QPushButton {"
+        "    background-color: #198754;"
+        "    color: white;"
+        "    padding: 10px 20px;"
+        "    border-radius: 8px;"
+        "    font-size: 14px;"
+        "}"
+        "QPushButton:hover {"
+        "    background-color: #157347;"
+        "}"
+        );
+
+    connect(submitButton, &QPushButton::clicked, this, [this, ID, nomInput, prenomInput, sexeInput, cinInput,
+                                                        adresseInput, numtelInput, specialiteInput,
+                                                        datedenaissanceInput, emailInput]() {
+        // Extract text from widgets
+        QString nom = nomInput->text();
+        QString prenom = prenomInput->text();
+        QString sexe = sexeInput->currentText();
+        QString cin = cinInput->text();
+        QString adresse = adresseInput->currentText();
+        QString numtel = numtelInput->text();
+        QString specialite = specialiteInput->text();
+        QString datedenaissance = datedenaissanceInput->text().split("T")[0]; // Fix: Remove time part
+        QString email = emailInput->text();
+
+        // Update the researcher data in the manager first
+        researchersManager->setNom(nom);
+        researchersManager->setprenom(prenom);
+        researchersManager->setsexe(sexe);
+        researchersManager->setcin(cin);
+        researchersManager->setadresse(adresse);
+        researchersManager->setnumtel(numtel);
+        researchersManager->setspecialite(specialite);
+        researchersManager->setdatedenaissance(datedenaissance);
+        researchersManager->setemail(email);
+
+        // Then call update with extracted strings (not widgets!)
+        researchersManager->updateResearcher(ID, nom, prenom, sexe, cin, adresse, numtel, specialite, datedenaissance, email);
+        researchersManager->loadResearcher();
+
+        // Return to table view
+        stackedWidget->setCurrentWidget(ResearchersTablePage);
+    });
+    // Connect the back button to return to the table page
+    connect(backButton, &QPushButton::clicked, this, [this]() {
+        stackedWidget->setCurrentWidget(ResearchersTablePage);
+    });
+}
+
+
+void MainWindow::loadResearcherData(int researcherID, QLineEdit *nomInput, QLineEdit *prenomInput, QComboBox *sexeInput, QLineEdit *cinInput, QComboBox *adresseInput, QLineEdit *numtelInput, QLineEdit *specialiteInput, QLineEdit *datedenaissanceInput, QLineEdit *emailInput) {
+    QSqlQuery query;
+    query.prepare("SELECT Nom, Prenom, Sexe, CIN, Adresse, NumTel, Specialite, Datedenaissance, Email FROM researcher WHERE IDR = :IDR");
+    query.bindValue(":IDR", researcherID);
+
+    if (query.exec()) {
+        if (query.next()) {
+            nomInput->setText(query.value("Nom").toString());
+            prenomInput->setText(query.value("Prenom").toString());
+            sexeInput->setCurrentText(query.value("Sexe").toString());
+            cinInput->setText(query.value("CIN").toString());
+            adresseInput->setCurrentText(query.value("Adresse").toString());
+            numtelInput->setText(query.value("NumTel").toString());
+            specialiteInput->setText(query.value("Specialite").toString());
+            datedenaissanceInput->setText(query.value("Datedenaissance").toString());
+            emailInput->setText(query.value("Email").toString());
+
+        }
+    } else {
+        qDebug() << "Error loading researcher data:" << query.lastError().text();
+    }
+}
+
+void MainWindow::onAddResearcherClicked() {
+    stackedWidget->setCurrentWidget(addResearcherFormPage);
+}
+
+void MainWindow::onEditResearcherClicked() {
+    bool ok;
+    int researcherID = QInputDialog::getInt(this, "Modifier Chercheur", "Entrez l'ID du chercheur à modifier:", 1, 1, 10000, 1, &ok);
+
+    if (ok) {
+        // First check if the researcher exists
+        QSqlQuery checkQuery;
+        checkQuery.prepare("SELECT COUNT(*) FROM researcher WHERE IDR = :IDR");
+        checkQuery.bindValue(":IDR", researcherID);
+
+        if (!checkQuery.exec() || !checkQuery.next()) {
+            QMessageBox::warning(this, "Erreur", "Impossible de vérifier l'existence du chercheur.");
+            return;
+        }
+
+        if (checkQuery.value(0).toInt() == 0) {
+            QMessageBox::warning(this, "Non trouvé", "Aucun chercheur trouvé avec cet ID.");
+            return;
+        }
+
+        // Create or reuse the modify form
+        if (ModifyResearcherFormPage == nullptr) {
+            ModifyResearcherFormPage = new QWidget();
+            stackedWidget->addWidget(ModifyResearcherFormPage);
+        }
+
+        // Setup the form with the researcher's data
+        setupModifyResearcherFormPage(researcherID);
+
+        // Switch to the modify page
+        stackedWidget->setCurrentWidget(ModifyResearcherFormPage);
+    }
+}
+
+void MainWindow::onDeleteResearcherClicked() {
+    bool ok;
+    int id = QInputDialog::getInt(this, "Supprimer Chercheur", "Entrez l'ID du chercheur à supprimer:", 1, 1, 10000, 1, &ok);
+    if (ok) {
+        researchersManager->deleteResearcher(id);
+    }
+}
+
+
+void MainWindow::onModifyResearcherSubmit(int researcherID, QLineEdit *nomInput, QLineEdit *prenomInput, QComboBox *sexeInput, QLineEdit *cinInput, QComboBox *adresseInput, QLineEdit *numtelInput, QLineEdit *specialiteInput, QLineEdit *datedenaissanceInput, QLineEdit *emailInput)
+{
+    // Extract text from widgets
+    QString nom = nomInput->text();
+    QString prenom = prenomInput->text();
+    QString sexe = sexeInput->currentText();  // For QComboBox, use currentText()
+    QString cin = cinInput->text();
+    QString adresse = adresseInput->currentText();
+    QString numtel = numtelInput->text();
+    QString specialite = specialiteInput->text();
+    QString datedenaissance = datedenaissanceInput->text();
+    QString email = emailInput->text();
+
+    // Validate required fields
+    if (nom.isEmpty() || prenom.isEmpty() || cin.isEmpty() || numtel.isEmpty()) {
+        QMessageBox::warning(this, "Validation Error", "Please fill in all required fields.");
+        return;
+    }
+
+    // Pass extracted strings instead of widgets
+    researchersManager->updateResearcher(
+        researcherID,
+        nom,
+        prenom,
+        sexe,
+        cin,
+        adresse,
+        numtel,
+        specialite,
+        datedenaissance,
+        email
+        );
+
+    QMessageBox::information(this, "Success", "Researcher information updated successfully!");
+}
+
+
+

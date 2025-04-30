@@ -37,6 +37,7 @@
 #include <QEasingCurve>
 #include <QVariantMap>
 #include "arduinomanager.h"
+#include "researchermanager.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -47,6 +48,8 @@ class ToolsManager;
 class VaccinManager;
 class MessagesManager;
 class PatientsManager;
+class ResearcherManager;
+
 
 // Add before MainWindow class declaration
 class ClickableWidget : public QWidget {
@@ -77,13 +80,14 @@ private slots:
     void showPatientsPage();
     void showPersonelPage();
     void showResearchPage();
-    void showResearchersPage();
+    void showresearchersPage();
     void showToolsPage();
     void showVaccinsPage();
     void showSettingsPage();
     void showToolsTablePage();
     void showMessagerieePage();
     void showPatientsTablePage();
+    void showResearchersTablePage();
     void updateSidebarIcons(QPushButton *selectedButton);
 
     // Arduino-related slots
@@ -125,6 +129,15 @@ private slots:
     void onSendMessageClicked();
     void onRefreshMessagesButtonClicked();
     void displayConversation(int contactId);
+
+    //chercheur-related slots
+    void onAddResearcherClicked();
+    void onEditResearcherClicked();
+    void onDeleteResearcherClicked();
+    void loadResearcherData(int researcherID, QLineEdit *nomInput, QLineEdit *prenomInput, QComboBox *sexeInput, QLineEdit *cinInput, QComboBox *adresseInput, QLineEdit *numtelInput, QLineEdit *specialiteInput, QLineEdit *datedenaissanceInput, QLineEdit *emailInput);
+    // Handle submission of modification
+    void onModifyResearcherSubmit(int researcherID, QLineEdit *nomInput, QLineEdit *prenomInput, QComboBox *sexeInput, QLineEdit *cinInput, QComboBox *adresseInput, QLineEdit *numtelInput, QLineEdit *specialiteInput, QLineEdit *datedenaissanceInput, QLineEdit *emailInput);
+    void showResearchersStatsPage();
 
     // Arduino related slots
     // Kept as comments to preserve Arduino-related functionality
@@ -208,6 +221,11 @@ private:
     int currentContactId;
     QTableWidget *messageTable;
 
+    //researcher components
+    QWidget *ResearchersTablePage;
+    QWidget *addResearcherFormPage;
+    QWidget *ModifyResearcherFormPage;
+
     // Chart components
     QChartView *chartView;
     QTimer *updateTimer;
@@ -236,6 +254,7 @@ private:
     QLineEdit *numtelInput;
     QLineEdit *maladiechroniqueInput;
 
+
     // Statistics widgets
     QWidget *totalCard;
     QWidget *genderCard;
@@ -243,6 +262,13 @@ private:
     QWidget *cityCard;
     QWidget *statsContainer;
     QHBoxLayout *statsLayout;
+
+    // --- Statistiques chercheurs ---
+    //class ResearcherManager *researcherManager = nullptr;
+
+
+
+
 
     // Dark mode toggle
     bool darkModeEnabled = false;
@@ -264,6 +290,9 @@ private:
     VaccinManager *vaccinManager;
     MessagesManager *messagesManager;
     PatientsManager *patientsManager;
+    ResearcherManager *researchersManager;
+
+
 
     // Image upload data
     QByteArray uploadImageData;
@@ -284,6 +313,22 @@ private:
     void setupPatientsTablePage();
     void setupaddPatientsFormPage();
     void setupModifyPatientFormPage(const int patientID);
+
+    void setupresearchersPage();
+    void setupResearchersTablePage();
+    void setupaddResearcherFormPage();
+    void setupModifyResearcherFormPage(const int researcherID);
+    void setupSearchWidget();
+    void onSearchButtonClicked();
+
+    QWidget *researchersStatsPage;
+    void setupResearchersStatsPage();
+
+
+
+    void updateResearchersStatsChart();  // 👈 Add this declaration
+    void exportResearchersTableToPDF();
+
    // void setupArduinoPanel();
 
     // Statistics methods

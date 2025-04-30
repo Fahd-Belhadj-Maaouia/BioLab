@@ -5,6 +5,7 @@ debug/main.o
 debug/mainwindow.o
 debug/messagesmanager.o
 debug/patients.o
+debug/researchermanager.o
 debug/toolsmanager.o
 debug/vaccinmanager.o
 debug/qrc_Resources.o
@@ -12,5 +13,6 @@ debug/moc_arduinomanager.o
 debug/moc_mainwindow.o
 debug/moc_messagesmanager.o
 debug/moc_patients.o
+debug/moc_researchermanager.o
 debug/moc_toolsmanager.o
 debug/moc_vaccinmanager.o

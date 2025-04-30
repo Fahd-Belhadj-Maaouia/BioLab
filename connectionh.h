@@ -13,7 +13,7 @@ public:
     bool createConnection(
         const QString& driverName = "QODBC",
         const QString& databaseName = "Source_Projet2A",
-        const QString& userName = "houssem",
+        const QString& userName = "amdouni",
         const QString& password = "123"
         );
 
