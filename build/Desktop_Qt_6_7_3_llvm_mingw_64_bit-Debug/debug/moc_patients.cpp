@@ -37,7 +37,7 @@ namespace {
 struct qt_meta_stringdata_CLASSPatientsManagerENDCLASS_t {};
 constexpr auto qt_meta_stringdata_CLASSPatientsManagerENDCLASS = QtMocHelpers::stringData(
     "PatientsManager",
-    "onAddPatientSubmitted",
+    "dataChanged",
     ""
 );
 #else  // !QT_MOC_HAS_STRINGDATA
@@ -56,12 +56,12 @@ Q_CONSTINIT static const uint qt_meta_data_CLASSPatientsManagerENDCLASS[] = {
        0,    0, // enums/sets
        0,    0, // constructors
        0,       // flags
-       0,       // signalCount
+       1,       // signalCount
 
- // slots: name, argc, parameters, tag, flags, initial metatype offsets
-       1,    0,   20,    2, 0x08,    1 /* Private */,
+ // signals: name, argc, parameters, tag, flags, initial metatype offsets
+       1,    0,   20,    2, 0x06,    1 /* Public */,
 
- // slots: parameters
+ // signals: parameters
     QMetaType::Void,
 
        0        // eod
@@ -76,7 +76,7 @@ Q_CONSTINIT const QMetaObject PatientsManager::staticMetaObject = { {
     qt_incomplete_metaTypeArray<qt_meta_stringdata_CLASSPatientsManagerENDCLASS_t,
         // Q_OBJECT / Q_GADGET
         QtPrivate::TypeAndForceComplete<PatientsManager, std::true_type>,
-        // method 'onAddPatientSubmitted'
+        // method 'dataChanged'
         QtPrivate::TypeAndForceComplete<void, std::false_type>
     >,
     nullptr
@@ -88,8 +88,17 @@ void PatientsManager::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int 
         auto *_t = static_cast<PatientsManager *>(_o);
         (void)_t;
         switch (_id) {
-        case 0: _t->onAddPatientSubmitted(); break;
+        case 0: _t->dataChanged(); break;
         default: ;
+        }
+    } else if (_c == QMetaObject::IndexOfMethod) {
+        int *result = reinterpret_cast<int *>(_a[0]);
+        {
+            using _t = void (PatientsManager::*)();
+            if (_t _q_method = &PatientsManager::dataChanged; *reinterpret_cast<_t *>(_a[1]) == _q_method) {
+                *result = 0;
+                return;
+            }
         }
     }
     (void)_a;
@@ -123,5 +132,11 @@ int PatientsManager::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
         _id -= 1;
     }
     return _id;
+}
+
+// SIGNAL 0
+void PatientsManager::dataChanged()
+{
+    QMetaObject::activate(this, &staticMetaObject, 0, nullptr);
 }
 QT_WARNING_POP

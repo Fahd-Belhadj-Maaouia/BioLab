@@ -22,10 +22,12 @@ SOURCES += \
     arduinomanager.cpp \
     connection.cpp \
     connectionh.cpp \
+    connectionn.cpp \
     main.cpp \
     mainwindow.cpp \
     messagesmanager.cpp \
     patients.cpp \
+    personnelmanager.cpp \
     researchermanager.cpp \
     toolsmanager.cpp \
     vaccinmanager.cpp \
@@ -40,9 +42,11 @@ HEADERS += \
     arduinomanager.h \
     connection.h \
     connectionh.h \
+    connectionn.h \
     mainwindow.h \
     messagesmanager.h \
     patients.h \
+    personnelmanager.h \
     researchermanager.h \
     toolsmanager.h \
     vaccinmanager.h \

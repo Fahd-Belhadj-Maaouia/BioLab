@@ -72,6 +72,7 @@ using qrcodegen::QrSegment;
 #include "projetderecherche.h"
 #include "buttondelegate.h"
 #include "todolist.h"
+#include "personnelmanager.h"
 
 
 // Forward declarations
@@ -102,6 +103,7 @@ class ClickableWidget : public QWidget {
     Q_OBJECT
 public:
     explicit ClickableWidget(QWidget *parent = nullptr) : QWidget(parent) {}
+    void setCurrentUser(int userId, const QString &nom, const QString &prenom);
 signals:
     void clicked();
 protected:
@@ -151,6 +153,9 @@ private slots:
     void exportToExcel();
     void sendMessageToChatbot(const QString &userMessage);
     void onKeypadPressed(char key);
+    void updateStats();
+    void onDeletePersonelClicked();
+
 
     // Arduino-related slots
     void readSerialData();
@@ -208,6 +213,16 @@ private slots:
     void handleColorDetection(const QString &color);
     void handleVaccinExpiration(bool isExpired, const QString &vaccinName, const QString &reference, const QString &expDate);
     void handleArduinoError(const QString &errorMessage);*/
+
+    //weal
+    void onBackToSummaryClicked();
+    void onSearchTextChanged(const QString &text);
+    void onFilterByVille(int index);
+    void onSortByRecent();
+    void showPersonnelTablePage();
+    void onAddPersonelClicked();
+    void onEditPersonelClicked();
+
 
 private:
     // Utility methods
@@ -267,6 +282,8 @@ private:
     QChartView* costChartView = nullptr;
 
 
+    PersonnelManager *personnelManager;
+
     // Arduino components
     ArduinoManager *arduinoManager;
     QComboBox *portSelector;
@@ -298,6 +315,27 @@ private:
     QListWidget *todoList;
     QListWidget *completedList;
 
+    //weal
+
+     QChartView *villeChartView;
+    QChartView *genderChartView;
+    QLabel *totalLabel;
+    QLabel *infirmiersLabel;
+    QLabel *secretairesLabel;
+     QPushButton *voirPlusButton;
+    QWidget *addPersonelFormPage;
+    QWidget *editPersonelFormPage;
+
+
+     QLineEdit *nomEdit;
+     QLineEdit *prenomEdit;
+     QLineEdit *cinEdit;
+     QLineEdit *numTelEdit;
+     QLineEdit *emailEdit;
+     QComboBox *villeEdit;
+     QComboBox *roleEdit;
+     QComboBox *sexeEdit;
+     QDateEdit *dateAjoutEdit;
 
     //searchTableVariables
     QSqlQueryModel *sqlModel;
@@ -394,6 +432,14 @@ private:
     QLineEdit *numtelInput;
     QLineEdit *maladiechroniqueInput;
 
+    //weal
+    QWidget *PersonelTablePage;
+    QPushButton *sortRecentButton;
+    QComboBox *villeFilterCombo;
+    QLineEdit *searchInput;
+    QPushButton *backButton;
+     void styleTableView(QTableWidget *tableView);
+
 
     // Statistics widgets
     QWidget *totalCard;
@@ -434,6 +480,8 @@ private:
 
 
 
+
+
     // Image upload data
     QByteArray uploadImageData;
 
@@ -453,6 +501,9 @@ private:
     void setupPatientsTablePage();
     void setupaddPatientsFormPage();
     void setupModifyPatientFormPage(const int patientID);
+     void setupPersonnelTablePage();
+    void setupPersonelTablePage();
+
 
     void setupresearchersPage();
     void setupResearchersTablePage();
@@ -460,6 +511,16 @@ private:
     void setupModifyResearcherFormPage(const int researcherID);
     void setupSearchWidget();
     void onSearchButtonClicked();
+    void setupPersonelPage();
+
+    void setupAddPersonelFormPage();
+    void setupEditPersonelFormPage();
+
+     QString convertImageToBase64(const QString& imagePath);
+
+
+
+
 
     QWidget *researchersStatsPage;
     QLineEdit *searchLineEdit;

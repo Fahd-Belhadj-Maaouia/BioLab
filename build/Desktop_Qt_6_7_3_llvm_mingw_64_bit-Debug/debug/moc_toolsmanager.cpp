@@ -37,9 +37,18 @@ namespace {
 struct qt_meta_stringdata_CLASSToolsManagerENDCLASS_t {};
 constexpr auto qt_meta_stringdata_CLASSToolsManagerENDCLASS = QtMocHelpers::stringData(
     "ToolsManager",
-    "onAddToolSubmitted",
+    "editToolRequested",
     "",
-    "onUploadImageClicked"
+    "id",
+    "deleteToolRequested",
+    "paginationChanged",
+    "currentPage",
+    "totalPages",
+    "dataChanged",
+    "qrCodeRequested",
+    "toolId",
+    "fournisseurClicked",
+    "name"
 );
 #else  // !QT_MOC_HAS_STRINGDATA
 #error "qtmochelpers.h not found or too old."
@@ -52,20 +61,28 @@ Q_CONSTINIT static const uint qt_meta_data_CLASSToolsManagerENDCLASS[] = {
       12,       // revision
        0,       // classname
        0,    0, // classinfo
-       2,   14, // methods
+       6,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
        0,       // flags
-       0,       // signalCount
+       6,       // signalCount
 
- // slots: name, argc, parameters, tag, flags, initial metatype offsets
-       1,    0,   26,    2, 0x08,    1 /* Private */,
-       3,    0,   27,    2, 0x08,    2 /* Private */,
+ // signals: name, argc, parameters, tag, flags, initial metatype offsets
+       1,    1,   50,    2, 0x06,    1 /* Public */,
+       4,    1,   53,    2, 0x06,    3 /* Public */,
+       5,    2,   56,    2, 0x06,    5 /* Public */,
+       8,    0,   61,    2, 0x06,    8 /* Public */,
+       9,    1,   62,    2, 0x06,    9 /* Public */,
+      11,    1,   65,    2, 0x06,   11 /* Public */,
 
- // slots: parameters
+ // signals: parameters
+    QMetaType::Void, QMetaType::Int,    3,
+    QMetaType::Void, QMetaType::Int,    3,
+    QMetaType::Void, QMetaType::Int, QMetaType::Int,    6,    7,
     QMetaType::Void,
-    QMetaType::Void,
+    QMetaType::Void, QMetaType::Int,   10,
+    QMetaType::Void, QMetaType::QString,   12,
 
        0        // eod
 };
@@ -79,10 +96,24 @@ Q_CONSTINIT const QMetaObject ToolsManager::staticMetaObject = { {
     qt_incomplete_metaTypeArray<qt_meta_stringdata_CLASSToolsManagerENDCLASS_t,
         // Q_OBJECT / Q_GADGET
         QtPrivate::TypeAndForceComplete<ToolsManager, std::true_type>,
-        // method 'onAddToolSubmitted'
+        // method 'editToolRequested'
         QtPrivate::TypeAndForceComplete<void, std::false_type>,
-        // method 'onUploadImageClicked'
-        QtPrivate::TypeAndForceComplete<void, std::false_type>
+        QtPrivate::TypeAndForceComplete<int, std::false_type>,
+        // method 'deleteToolRequested'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        QtPrivate::TypeAndForceComplete<int, std::false_type>,
+        // method 'paginationChanged'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        QtPrivate::TypeAndForceComplete<int, std::false_type>,
+        QtPrivate::TypeAndForceComplete<int, std::false_type>,
+        // method 'dataChanged'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'qrCodeRequested'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        QtPrivate::TypeAndForceComplete<int, std::false_type>,
+        // method 'fournisseurClicked'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        QtPrivate::TypeAndForceComplete<const QString &, std::false_type>
     >,
     nullptr
 } };
@@ -93,12 +124,59 @@ void ToolsManager::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id
         auto *_t = static_cast<ToolsManager *>(_o);
         (void)_t;
         switch (_id) {
-        case 0: _t->onAddToolSubmitted(); break;
-        case 1: _t->onUploadImageClicked(); break;
+        case 0: _t->editToolRequested((*reinterpret_cast< std::add_pointer_t<int>>(_a[1]))); break;
+        case 1: _t->deleteToolRequested((*reinterpret_cast< std::add_pointer_t<int>>(_a[1]))); break;
+        case 2: _t->paginationChanged((*reinterpret_cast< std::add_pointer_t<int>>(_a[1])),(*reinterpret_cast< std::add_pointer_t<int>>(_a[2]))); break;
+        case 3: _t->dataChanged(); break;
+        case 4: _t->qrCodeRequested((*reinterpret_cast< std::add_pointer_t<int>>(_a[1]))); break;
+        case 5: _t->fournisseurClicked((*reinterpret_cast< std::add_pointer_t<QString>>(_a[1]))); break;
         default: ;
         }
+    } else if (_c == QMetaObject::IndexOfMethod) {
+        int *result = reinterpret_cast<int *>(_a[0]);
+        {
+            using _t = void (ToolsManager::*)(int );
+            if (_t _q_method = &ToolsManager::editToolRequested; *reinterpret_cast<_t *>(_a[1]) == _q_method) {
+                *result = 0;
+                return;
+            }
+        }
+        {
+            using _t = void (ToolsManager::*)(int );
+            if (_t _q_method = &ToolsManager::deleteToolRequested; *reinterpret_cast<_t *>(_a[1]) == _q_method) {
+                *result = 1;
+                return;
+            }
+        }
+        {
+            using _t = void (ToolsManager::*)(int , int );
+            if (_t _q_method = &ToolsManager::paginationChanged; *reinterpret_cast<_t *>(_a[1]) == _q_method) {
+                *result = 2;
+                return;
+            }
+        }
+        {
+            using _t = void (ToolsManager::*)();
+            if (_t _q_method = &ToolsManager::dataChanged; *reinterpret_cast<_t *>(_a[1]) == _q_method) {
+                *result = 3;
+                return;
+            }
+        }
+        {
+            using _t = void (ToolsManager::*)(int );
+            if (_t _q_method = &ToolsManager::qrCodeRequested; *reinterpret_cast<_t *>(_a[1]) == _q_method) {
+                *result = 4;
+                return;
+            }
+        }
+        {
+            using _t = void (ToolsManager::*)(const QString & );
+            if (_t _q_method = &ToolsManager::fournisseurClicked; *reinterpret_cast<_t *>(_a[1]) == _q_method) {
+                *result = 5;
+                return;
+            }
+        }
     }
-    (void)_a;
 }
 
 const QMetaObject *ToolsManager::metaObject() const
@@ -120,14 +198,55 @@ int ToolsManager::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 2)
+        if (_id < 6)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 2;
+        _id -= 6;
     } else if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 2)
+        if (_id < 6)
             *reinterpret_cast<QMetaType *>(_a[0]) = QMetaType();
-        _id -= 2;
+        _id -= 6;
     }
     return _id;
+}
+
+// SIGNAL 0
+void ToolsManager::editToolRequested(int _t1)
+{
+    void *_a[] = { nullptr, const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t1))) };
+    QMetaObject::activate(this, &staticMetaObject, 0, _a);
+}
+
+// SIGNAL 1
+void ToolsManager::deleteToolRequested(int _t1)
+{
+    void *_a[] = { nullptr, const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t1))) };
+    QMetaObject::activate(this, &staticMetaObject, 1, _a);
+}
+
+// SIGNAL 2
+void ToolsManager::paginationChanged(int _t1, int _t2)
+{
+    void *_a[] = { nullptr, const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t1))), const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t2))) };
+    QMetaObject::activate(this, &staticMetaObject, 2, _a);
+}
+
+// SIGNAL 3
+void ToolsManager::dataChanged()
+{
+    QMetaObject::activate(this, &staticMetaObject, 3, nullptr);
+}
+
+// SIGNAL 4
+void ToolsManager::qrCodeRequested(int _t1)
+{
+    void *_a[] = { nullptr, const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t1))) };
+    QMetaObject::activate(this, &staticMetaObject, 4, _a);
+}
+
+// SIGNAL 5
+void ToolsManager::fournisseurClicked(const QString & _t1)
+{
+    void *_a[] = { nullptr, const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t1))) };
+    QMetaObject::activate(this, &staticMetaObject, 5, _a);
 }
 QT_WARNING_POP

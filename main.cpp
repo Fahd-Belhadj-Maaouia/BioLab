@@ -2,6 +2,7 @@
 #include <QApplication>
 #include <QMessageBox>
 #include "connection.h"
+#include "connectionn.h"
 
 
 int main(int argc, char *argv[])
