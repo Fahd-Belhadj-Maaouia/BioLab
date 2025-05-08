@@ -145,8 +145,9 @@ namespace {
 struct qt_meta_stringdata_CLASSMainWindowENDCLASS_t {};
 constexpr auto qt_meta_stringdata_CLASSMainWindowENDCLASS = QtMocHelpers::stringData(
     "MainWindow",
-    "taskMovedToCompleted",
+    "logoutRequested",
     "",
+    "taskMovedToCompleted",
     "task",
     "taskMovedToTodo",
     "projectDataChanged",
@@ -268,98 +269,100 @@ Q_CONSTINIT static const uint qt_meta_data_CLASSMainWindowENDCLASS[] = {
       12,       // revision
        0,       // classname
        0,    0, // classinfo
-      74,   14, // methods
+      75,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
        0,       // flags
-       3,       // signalCount
+       4,       // signalCount
 
  // signals: name, argc, parameters, tag, flags, initial metatype offsets
-       1,    1,  458,    2, 0x06,    1 /* Public */,
-       4,    1,  461,    2, 0x06,    3 /* Public */,
-       5,    0,  464,    2, 0x06,    5 /* Public */,
+       1,    0,  464,    2, 0x06,    1 /* Public */,
+       3,    1,  465,    2, 0x06,    2 /* Public */,
+       5,    1,  468,    2, 0x06,    4 /* Public */,
+       6,    0,  471,    2, 0x06,    6 /* Public */,
 
  // slots: name, argc, parameters, tag, flags, initial metatype offsets
-       6,    1,  465,    2, 0x0a,    6 /* Public */,
-       8,    0,  468,    2, 0x08,    8 /* Private */,
-       9,    0,  469,    2, 0x08,    9 /* Private */,
-      10,    0,  470,    2, 0x08,   10 /* Private */,
-      11,    0,  471,    2, 0x08,   11 /* Private */,
-      12,    0,  472,    2, 0x08,   12 /* Private */,
-      13,    0,  473,    2, 0x08,   13 /* Private */,
-      14,    0,  474,    2, 0x08,   14 /* Private */,
-      15,    0,  475,    2, 0x08,   15 /* Private */,
-      16,    0,  476,    2, 0x08,   16 /* Private */,
-      17,    0,  477,    2, 0x08,   17 /* Private */,
-      18,    0,  478,    2, 0x08,   18 /* Private */,
-      19,    0,  479,    2, 0x08,   19 /* Private */,
-      20,    0,  480,    2, 0x08,   20 /* Private */,
-      21,    1,  481,    2, 0x08,   21 /* Private */,
-      24,    0,  484,    2, 0x08,   23 /* Private */,
-      25,    0,  485,    2, 0x08,   24 /* Private */,
-      26,    0,  486,    2, 0x08,   25 /* Private */,
-      27,    1,  487,    2, 0x08,   26 /* Private */,
-      29,    0,  490,    2, 0x08,   28 /* Private */,
-      30,    1,  491,    2, 0x08,   29 /* Private */,
-      33,    0,  494,    2, 0x08,   31 /* Private */,
-      34,    0,  495,    2, 0x08,   32 /* Private */,
-      35,    0,  496,    2, 0x08,   33 /* Private */,
-      36,    1,  497,    2, 0x08,   34 /* Private */,
-      38,    1,  500,    2, 0x08,   36 /* Private */,
-      40,    0,  503,    2, 0x08,   38 /* Private */,
-      41,    0,  504,    2, 0x08,   39 /* Private */,
-      42,    0,  505,    2, 0x08,   40 /* Private */,
-      43,    1,  506,    2, 0x08,   41 /* Private */,
-      44,    2,  509,    2, 0x08,   43 /* Private */,
-      47,    0,  514,    2, 0x08,   46 /* Private */,
-      48,    0,  515,    2, 0x08,   47 /* Private */,
-      49,    0,  516,    2, 0x08,   48 /* Private */,
-      50,    0,  517,    2, 0x08,   49 /* Private */,
-      51,    0,  518,    2, 0x08,   50 /* Private */,
-      52,    0,  519,    2, 0x08,   51 /* Private */,
-      53,    0,  520,    2, 0x08,   52 /* Private */,
-      54,    1,  521,    2, 0x08,   53 /* Private */,
-      57,    2,  524,    2, 0x08,   55 /* Private */,
-      61,    1,  529,    2, 0x08,   58 /* Private */,
-      63,    0,  532,    2, 0x08,   60 /* Private */,
-      64,    1,  533,    2, 0x08,   61 /* Private */,
-      66,    1,  536,    2, 0x08,   63 /* Private */,
-      68,    0,  539,    2, 0x08,   65 /* Private */,
-      69,    0,  540,    2, 0x08,   66 /* Private */,
-      70,    0,  541,    2, 0x08,   67 /* Private */,
-      71,    0,  542,    2, 0x08,   68 /* Private */,
-      72,    8,  543,    2, 0x08,   69 /* Private */,
-      83,    8,  560,    2, 0x08,   78 /* Private */,
-      84,    1,  577,    2, 0x08,   87 /* Private */,
-      85,    0,  580,    2, 0x08,   89 /* Private */,
-      86,    0,  581,    2, 0x08,   90 /* Private */,
-      87,    0,  582,    2, 0x08,   91 /* Private */,
-      88,    1,  583,    2, 0x08,   92 /* Private */,
-      90,    0,  586,    2, 0x08,   94 /* Private */,
-      91,    0,  587,    2, 0x08,   95 /* Private */,
-      92,    1,  588,    2, 0x08,   96 /* Private */,
-      94,    0,  591,    2, 0x08,   98 /* Private */,
-      95,    0,  592,    2, 0x08,   99 /* Private */,
-      96,    0,  593,    2, 0x08,  100 /* Private */,
-      97,   10,  594,    2, 0x08,  101 /* Private */,
-     102,   10,  615,    2, 0x08,  112 /* Private */,
-     103,    0,  636,    2, 0x08,  123 /* Private */,
-     104,    0,  637,    2, 0x08,  124 /* Private */,
-     105,    1,  638,    2, 0x08,  125 /* Private */,
-     107,    1,  641,    2, 0x08,  127 /* Private */,
-     108,    0,  644,    2, 0x08,  129 /* Private */,
-     109,    0,  645,    2, 0x08,  130 /* Private */,
-     110,    0,  646,    2, 0x08,  131 /* Private */,
-     111,    0,  647,    2, 0x08,  132 /* Private */,
+       7,    1,  472,    2, 0x0a,    7 /* Public */,
+       9,    0,  475,    2, 0x08,    9 /* Private */,
+      10,    0,  476,    2, 0x08,   10 /* Private */,
+      11,    0,  477,    2, 0x08,   11 /* Private */,
+      12,    0,  478,    2, 0x08,   12 /* Private */,
+      13,    0,  479,    2, 0x08,   13 /* Private */,
+      14,    0,  480,    2, 0x08,   14 /* Private */,
+      15,    0,  481,    2, 0x08,   15 /* Private */,
+      16,    0,  482,    2, 0x08,   16 /* Private */,
+      17,    0,  483,    2, 0x08,   17 /* Private */,
+      18,    0,  484,    2, 0x08,   18 /* Private */,
+      19,    0,  485,    2, 0x08,   19 /* Private */,
+      20,    0,  486,    2, 0x08,   20 /* Private */,
+      21,    0,  487,    2, 0x08,   21 /* Private */,
+      22,    1,  488,    2, 0x08,   22 /* Private */,
+      25,    0,  491,    2, 0x08,   24 /* Private */,
+      26,    0,  492,    2, 0x08,   25 /* Private */,
+      27,    0,  493,    2, 0x08,   26 /* Private */,
+      28,    1,  494,    2, 0x08,   27 /* Private */,
+      30,    0,  497,    2, 0x08,   29 /* Private */,
+      31,    1,  498,    2, 0x08,   30 /* Private */,
+      34,    0,  501,    2, 0x08,   32 /* Private */,
+      35,    0,  502,    2, 0x08,   33 /* Private */,
+      36,    0,  503,    2, 0x08,   34 /* Private */,
+      37,    1,  504,    2, 0x08,   35 /* Private */,
+      39,    1,  507,    2, 0x08,   37 /* Private */,
+      41,    0,  510,    2, 0x08,   39 /* Private */,
+      42,    0,  511,    2, 0x08,   40 /* Private */,
+      43,    0,  512,    2, 0x08,   41 /* Private */,
+      44,    1,  513,    2, 0x08,   42 /* Private */,
+      45,    2,  516,    2, 0x08,   44 /* Private */,
+      48,    0,  521,    2, 0x08,   47 /* Private */,
+      49,    0,  522,    2, 0x08,   48 /* Private */,
+      50,    0,  523,    2, 0x08,   49 /* Private */,
+      51,    0,  524,    2, 0x08,   50 /* Private */,
+      52,    0,  525,    2, 0x08,   51 /* Private */,
+      53,    0,  526,    2, 0x08,   52 /* Private */,
+      54,    0,  527,    2, 0x08,   53 /* Private */,
+      55,    1,  528,    2, 0x08,   54 /* Private */,
+      58,    2,  531,    2, 0x08,   56 /* Private */,
+      62,    1,  536,    2, 0x08,   59 /* Private */,
+      64,    0,  539,    2, 0x08,   61 /* Private */,
+      65,    1,  540,    2, 0x08,   62 /* Private */,
+      67,    1,  543,    2, 0x08,   64 /* Private */,
+      69,    0,  546,    2, 0x08,   66 /* Private */,
+      70,    0,  547,    2, 0x08,   67 /* Private */,
+      71,    0,  548,    2, 0x08,   68 /* Private */,
+      72,    0,  549,    2, 0x08,   69 /* Private */,
+      73,    8,  550,    2, 0x08,   70 /* Private */,
+      84,    8,  567,    2, 0x08,   79 /* Private */,
+      85,    1,  584,    2, 0x08,   88 /* Private */,
+      86,    0,  587,    2, 0x08,   90 /* Private */,
+      87,    0,  588,    2, 0x08,   91 /* Private */,
+      88,    0,  589,    2, 0x08,   92 /* Private */,
+      89,    1,  590,    2, 0x08,   93 /* Private */,
+      91,    0,  593,    2, 0x08,   95 /* Private */,
+      92,    0,  594,    2, 0x08,   96 /* Private */,
+      93,    1,  595,    2, 0x08,   97 /* Private */,
+      95,    0,  598,    2, 0x08,   99 /* Private */,
+      96,    0,  599,    2, 0x08,  100 /* Private */,
+      97,    0,  600,    2, 0x08,  101 /* Private */,
+      98,   10,  601,    2, 0x08,  102 /* Private */,
+     103,   10,  622,    2, 0x08,  113 /* Private */,
+     104,    0,  643,    2, 0x08,  124 /* Private */,
+     105,    0,  644,    2, 0x08,  125 /* Private */,
+     106,    1,  645,    2, 0x08,  126 /* Private */,
+     108,    1,  648,    2, 0x08,  128 /* Private */,
+     109,    0,  651,    2, 0x08,  130 /* Private */,
+     110,    0,  652,    2, 0x08,  131 /* Private */,
+     111,    0,  653,    2, 0x08,  132 /* Private */,
+     112,    0,  654,    2, 0x08,  133 /* Private */,
 
  // signals: parameters
-    QMetaType::Void, QMetaType::QString,    3,
-    QMetaType::Void, QMetaType::QString,    3,
+    QMetaType::Void,
+    QMetaType::Void, QMetaType::QString,    4,
+    QMetaType::Void, QMetaType::QString,    4,
     QMetaType::Void,
 
  // slots: parameters
-    QMetaType::Void, QMetaType::Int,    7,
+    QMetaType::Void, QMetaType::Int,    8,
     QMetaType::Void,
     QMetaType::Void,
     QMetaType::Void,
@@ -373,23 +376,23 @@ Q_CONSTINIT static const uint qt_meta_data_CLASSMainWindowENDCLASS[] = {
     QMetaType::Void,
     QMetaType::Void,
     QMetaType::Void,
-    QMetaType::Void, 0x80000000 | 22,   23,
+    QMetaType::Void, 0x80000000 | 23,   24,
     QMetaType::Void,
     QMetaType::Void,
     QMetaType::Void,
-    QMetaType::Void, QMetaType::Int,   28,
+    QMetaType::Void, QMetaType::Int,   29,
     QMetaType::Void,
-    QMetaType::Void, 0x80000000 | 31,   32,
+    QMetaType::Void, 0x80000000 | 32,   33,
     QMetaType::Void,
     QMetaType::Void,
     QMetaType::Void,
-    QMetaType::Void, QMetaType::QString,   37,
-    QMetaType::Void, QMetaType::Char,   39,
+    QMetaType::Void, QMetaType::QString,   38,
+    QMetaType::Void, QMetaType::Char,   40,
     QMetaType::Void,
     QMetaType::Void,
     QMetaType::Void,
     QMetaType::Void, QMetaType::Int,    2,
-    QMetaType::Void, QMetaType::Int, QMetaType::Int,   45,   46,
+    QMetaType::Void, QMetaType::Int, QMetaType::Int,   46,   47,
     QMetaType::Void,
     QMetaType::Void,
     QMetaType::Void,
@@ -397,35 +400,35 @@ Q_CONSTINIT static const uint qt_meta_data_CLASSMainWindowENDCLASS[] = {
     QMetaType::Void,
     QMetaType::Void,
     QMetaType::Void,
-    QMetaType::Void, 0x80000000 | 55,   56,
-    QMetaType::Void, 0x80000000 | 58, QMetaType::Int,   59,   60,
-    QMetaType::Void, QMetaType::QString,   62,
+    QMetaType::Void, 0x80000000 | 56,   57,
+    QMetaType::Void, 0x80000000 | 59, QMetaType::Int,   60,   61,
+    QMetaType::Void, QMetaType::QString,   63,
     QMetaType::Void,
-    QMetaType::Void, 0x80000000 | 55,   65,
-    QMetaType::Void, QMetaType::Int,   67,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void, QMetaType::Int, 0x80000000 | 74, 0x80000000 | 74, 0x80000000 | 77, 0x80000000 | 74, 0x80000000 | 77, 0x80000000 | 74, 0x80000000 | 74,   73,   75,   76,   78,   79,   80,   81,   82,
-    QMetaType::Void, QMetaType::Int, 0x80000000 | 74, 0x80000000 | 74, 0x80000000 | 77, 0x80000000 | 74, 0x80000000 | 77, 0x80000000 | 74, 0x80000000 | 74,   73,   75,   76,   78,   79,   80,   81,   82,
-    QMetaType::Bool, QMetaType::Int,   73,
+    QMetaType::Void, 0x80000000 | 56,   66,
+    QMetaType::Void, QMetaType::Int,   68,
     QMetaType::Void,
     QMetaType::Void,
     QMetaType::Void,
-    QMetaType::Void, QMetaType::Int,   89,
+    QMetaType::Void,
+    QMetaType::Void, QMetaType::Int, 0x80000000 | 75, 0x80000000 | 75, 0x80000000 | 78, 0x80000000 | 75, 0x80000000 | 78, 0x80000000 | 75, 0x80000000 | 75,   74,   76,   77,   79,   80,   81,   82,   83,
+    QMetaType::Void, QMetaType::Int, 0x80000000 | 75, 0x80000000 | 75, 0x80000000 | 78, 0x80000000 | 75, 0x80000000 | 78, 0x80000000 | 75, 0x80000000 | 75,   74,   76,   77,   79,   80,   81,   82,   83,
+    QMetaType::Bool, QMetaType::Int,   74,
     QMetaType::Void,
     QMetaType::Void,
-    QMetaType::Void, QMetaType::Int,   93,
+    QMetaType::Void,
+    QMetaType::Void, QMetaType::Int,   90,
+    QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void, QMetaType::Int,   94,
     QMetaType::Void,
     QMetaType::Void,
     QMetaType::Void,
-    QMetaType::Void, QMetaType::Int, 0x80000000 | 74, 0x80000000 | 74, 0x80000000 | 77, 0x80000000 | 74, 0x80000000 | 77, 0x80000000 | 74, 0x80000000 | 74, 0x80000000 | 74, 0x80000000 | 74,   98,   75,   76,   78,   79,   80,   81,   99,  100,  101,
-    QMetaType::Void, QMetaType::Int, 0x80000000 | 74, 0x80000000 | 74, 0x80000000 | 77, 0x80000000 | 74, 0x80000000 | 77, 0x80000000 | 74, 0x80000000 | 74, 0x80000000 | 74, 0x80000000 | 74,   98,   75,   76,   78,   79,   80,   81,   99,  100,  101,
+    QMetaType::Void, QMetaType::Int, 0x80000000 | 75, 0x80000000 | 75, 0x80000000 | 78, 0x80000000 | 75, 0x80000000 | 78, 0x80000000 | 75, 0x80000000 | 75, 0x80000000 | 75, 0x80000000 | 75,   99,   76,   77,   79,   80,   81,   82,  100,  101,  102,
+    QMetaType::Void, QMetaType::Int, 0x80000000 | 75, 0x80000000 | 75, 0x80000000 | 78, 0x80000000 | 75, 0x80000000 | 78, 0x80000000 | 75, 0x80000000 | 75, 0x80000000 | 75, 0x80000000 | 75,   99,   76,   77,   79,   80,   81,   82,  100,  101,  102,
     QMetaType::Void,
     QMetaType::Void,
-    QMetaType::Void, QMetaType::QString,  106,
-    QMetaType::Void, QMetaType::Int,   32,
+    QMetaType::Void, QMetaType::QString,  107,
+    QMetaType::Void, QMetaType::Int,   33,
     QMetaType::Void,
     QMetaType::Void,
     QMetaType::Void,
@@ -443,6 +446,8 @@ Q_CONSTINIT const QMetaObject MainWindow::staticMetaObject = { {
     qt_incomplete_metaTypeArray<qt_meta_stringdata_CLASSMainWindowENDCLASS_t,
         // Q_OBJECT / Q_GADGET
         QtPrivate::TypeAndForceComplete<MainWindow, std::true_type>,
+        // method 'logoutRequested'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
         // method 'taskMovedToCompleted'
         QtPrivate::TypeAndForceComplete<void, std::false_type>,
         QtPrivate::TypeAndForceComplete<const QString &, std::false_type>,
@@ -659,119 +664,106 @@ void MainWindow::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, 
         auto *_t = static_cast<MainWindow *>(_o);
         (void)_t;
         switch (_id) {
-        case 0: _t->taskMovedToCompleted((*reinterpret_cast< std::add_pointer_t<QString>>(_a[1]))); break;
-        case 1: _t->taskMovedToTodo((*reinterpret_cast< std::add_pointer_t<QString>>(_a[1]))); break;
-        case 2: _t->projectDataChanged(); break;
-        case 3: _t->showVaccinationHistory((*reinterpret_cast< std::add_pointer_t<int>>(_a[1]))); break;
-        case 4: _t->showPatientsPage(); break;
-        case 5: _t->showPersonelPage(); break;
-        case 6: _t->showResearchPage(); break;
-        case 7: _t->showresearchersPage(); break;
-        case 8: _t->showToolsPage(); break;
-        case 9: _t->showVaccinsPage(); break;
-        case 10: _t->showSettingsPage(); break;
-        case 11: _t->showResearchTablePage(); break;
-        case 12: _t->showToolsTablePage(); break;
-        case 13: _t->showAddToolPage(); break;
-        case 14: _t->showMessagerieePage(); break;
-        case 15: _t->showPatientsTablePage(); break;
-        case 16: _t->showResearchersTablePage(); break;
-        case 17: _t->updateSidebarIcons((*reinterpret_cast< std::add_pointer_t<QPushButton*>>(_a[1]))); break;
-        case 18: _t->setupResearchCards(); break;
-        case 19: _t->setupResearchesFormAddPage(); break;
-        case 20: _t->showResearchFormAdd(); break;
-        case 21: _t->setupResearchesFormUpdatePage((*reinterpret_cast< std::add_pointer_t<int>>(_a[1]))); break;
-        case 22: _t->setupResearchesTablePage(); break;
-        case 23: _t->handleDeleteRow((*reinterpret_cast< std::add_pointer_t<QModelIndex>>(_a[1]))); break;
-        case 24: _t->searchProjects(); break;
-        case 25: _t->refreshCostChart(); break;
-        case 26: _t->exportToExcel(); break;
-        case 27: _t->sendMessageToChatbot((*reinterpret_cast< std::add_pointer_t<QString>>(_a[1]))); break;
-        case 28: _t->onKeypadPressed((*reinterpret_cast< std::add_pointer_t<char>>(_a[1]))); break;
-        case 29: _t->updateStats(); break;
-        case 30: _t->onDeletePersonelClicked(); break;
-       // case 31: _t->readSerialData(); break;
-        case 32: _t->onDeleteToolClicked((*reinterpret_cast< std::add_pointer_t<int>>(_a[1]))); break;
-        case 33: _t->updatePaginationControls((*reinterpret_cast< std::add_pointer_t<int>>(_a[1])),(*reinterpret_cast< std::add_pointer_t<int>>(_a[2]))); break;
-        case 34: _t->exportToolsToPDF(); break;
-        case 35: _t->exportStatsToPDF(); break;
-        case 36: _t->showVaccinsTablePage(); break;
-        case 37: _t->onAddVaccinClicked(); break;
-        case 38: _t->onEditVaccinClicked(); break;
-        case 39: _t->onDeleteVaccinClicked(); break;
-        //case 40: _t->showVaccinTypeStats(); break;
-        case 41: _t->displayVaccinTypeStats((*reinterpret_cast< std::add_pointer_t<QWidget*>>(_a[1]))); break;
-        case 42: _t->exportVaccinStatsToPDF((*reinterpret_cast< std::add_pointer_t<QMap<QString,int>>>(_a[1])),(*reinterpret_cast< std::add_pointer_t<int>>(_a[2]))); break;
-        case 43: _t->showExpirationPopup((*reinterpret_cast< std::add_pointer_t<QString>>(_a[1]))); break;
-        case 44: _t->loadNotifications(); break;
-        case 45: _t->styleNotificationsWidget((*reinterpret_cast< std::add_pointer_t<QWidget*>>(_a[1]))); break;
-        case 46: _t->loadVaccinDataToEditForm((*reinterpret_cast< std::add_pointer_t<int>>(_a[1]))); break;
-        case 47: _t->exportVaccinsTableToPDF(); break;
-        case 48: _t->onAddPatientClicked(); break;
-        case 49: _t->onEditPatientClicked(); break;
-        case 50: _t->onDeletePatientClicked(); break;
-        case 51: _t->loadPatientData((*reinterpret_cast< std::add_pointer_t<int>>(_a[1])),(*reinterpret_cast< std::add_pointer_t<QLineEdit*>>(_a[2])),(*reinterpret_cast< std::add_pointer_t<QLineEdit*>>(_a[3])),(*reinterpret_cast< std::add_pointer_t<QComboBox*>>(_a[4])),(*reinterpret_cast< std::add_pointer_t<QLineEdit*>>(_a[5])),(*reinterpret_cast< std::add_pointer_t<QComboBox*>>(_a[6])),(*reinterpret_cast< std::add_pointer_t<QLineEdit*>>(_a[7])),(*reinterpret_cast< std::add_pointer_t<QLineEdit*>>(_a[8]))); break;
-        case 52: _t->onModifyPatientSubmit((*reinterpret_cast< std::add_pointer_t<int>>(_a[1])),(*reinterpret_cast< std::add_pointer_t<QLineEdit*>>(_a[2])),(*reinterpret_cast< std::add_pointer_t<QLineEdit*>>(_a[3])),(*reinterpret_cast< std::add_pointer_t<QComboBox*>>(_a[4])),(*reinterpret_cast< std::add_pointer_t<QLineEdit*>>(_a[5])),(*reinterpret_cast< std::add_pointer_t<QComboBox*>>(_a[6])),(*reinterpret_cast< std::add_pointer_t<QLineEdit*>>(_a[7])),(*reinterpret_cast< std::add_pointer_t<QLineEdit*>>(_a[8]))); break;
-        case 53: { bool _r = _t->patientExists((*reinterpret_cast< std::add_pointer_t<int>>(_a[1])));
+        case 0: _t->logoutRequested(); break;
+        case 1: _t->taskMovedToCompleted((*reinterpret_cast< std::add_pointer_t<QString>>(_a[1]))); break;
+        case 2: _t->taskMovedToTodo((*reinterpret_cast< std::add_pointer_t<QString>>(_a[1]))); break;
+        case 3: _t->projectDataChanged(); break;
+        case 4: _t->showVaccinationHistory((*reinterpret_cast< std::add_pointer_t<int>>(_a[1]))); break;
+        case 5: _t->showPatientsPage(); break;
+        case 6: _t->showPersonelPage(); break;
+        case 7: _t->showResearchPage(); break;
+        case 8: _t->showresearchersPage(); break;
+        case 9: _t->showToolsPage(); break;
+        case 10: _t->showVaccinsPage(); break;
+        case 11: _t->showSettingsPage(); break;
+        case 12: _t->showResearchTablePage(); break;
+        case 13: _t->showToolsTablePage(); break;
+        case 14: _t->showAddToolPage(); break;
+        case 15: _t->showMessagerieePage(); break;
+        case 16: _t->showPatientsTablePage(); break;
+        case 17: _t->showResearchersTablePage(); break;
+        case 18: _t->updateSidebarIcons((*reinterpret_cast< std::add_pointer_t<QPushButton*>>(_a[1]))); break;
+        case 19: _t->setupResearchCards(); break;
+        case 20: _t->setupResearchesFormAddPage(); break;
+        case 21: _t->showResearchFormAdd(); break;
+        case 22: _t->setupResearchesFormUpdatePage((*reinterpret_cast< std::add_pointer_t<int>>(_a[1]))); break;
+        case 23: _t->setupResearchesTablePage(); break;
+        case 24: _t->handleDeleteRow((*reinterpret_cast< std::add_pointer_t<QModelIndex>>(_a[1]))); break;
+        case 25: _t->searchProjects(); break;
+        case 26: _t->refreshCostChart(); break;
+        case 27: _t->exportToExcel(); break;
+        case 28: _t->sendMessageToChatbot((*reinterpret_cast< std::add_pointer_t<QString>>(_a[1]))); break;
+        case 29: _t->onKeypadPressed((*reinterpret_cast< std::add_pointer_t<char>>(_a[1]))); break;
+        case 30: _t->updateStats(); break;
+        case 31: _t->onDeletePersonelClicked(); break;
+        //case 32: _t->readSerialData(); break;
+        case 33: _t->onDeleteToolClicked((*reinterpret_cast< std::add_pointer_t<int>>(_a[1]))); break;
+        case 34: _t->updatePaginationControls((*reinterpret_cast< std::add_pointer_t<int>>(_a[1])),(*reinterpret_cast< std::add_pointer_t<int>>(_a[2]))); break;
+        case 35: _t->exportToolsToPDF(); break;
+        case 36: _t->exportStatsToPDF(); break;
+        case 37: _t->showVaccinsTablePage(); break;
+        case 38: _t->onAddVaccinClicked(); break;
+        case 39: _t->onEditVaccinClicked(); break;
+        case 40: _t->onDeleteVaccinClicked(); break;
+        //case 41: _t->showVaccinTypeStats(); break;
+        case 42: _t->displayVaccinTypeStats((*reinterpret_cast< std::add_pointer_t<QWidget*>>(_a[1]))); break;
+        case 43: _t->exportVaccinStatsToPDF((*reinterpret_cast< std::add_pointer_t<QMap<QString,int>>>(_a[1])),(*reinterpret_cast< std::add_pointer_t<int>>(_a[2]))); break;
+        case 44: _t->showExpirationPopup((*reinterpret_cast< std::add_pointer_t<QString>>(_a[1]))); break;
+        case 45: _t->loadNotifications(); break;
+        case 46: _t->styleNotificationsWidget((*reinterpret_cast< std::add_pointer_t<QWidget*>>(_a[1]))); break;
+        case 47: _t->loadVaccinDataToEditForm((*reinterpret_cast< std::add_pointer_t<int>>(_a[1]))); break;
+        case 48: _t->exportVaccinsTableToPDF(); break;
+        case 49: _t->onAddPatientClicked(); break;
+        case 50: _t->onEditPatientClicked(); break;
+        case 51: _t->onDeletePatientClicked(); break;
+        case 52: _t->loadPatientData((*reinterpret_cast< std::add_pointer_t<int>>(_a[1])),(*reinterpret_cast< std::add_pointer_t<QLineEdit*>>(_a[2])),(*reinterpret_cast< std::add_pointer_t<QLineEdit*>>(_a[3])),(*reinterpret_cast< std::add_pointer_t<QComboBox*>>(_a[4])),(*reinterpret_cast< std::add_pointer_t<QLineEdit*>>(_a[5])),(*reinterpret_cast< std::add_pointer_t<QComboBox*>>(_a[6])),(*reinterpret_cast< std::add_pointer_t<QLineEdit*>>(_a[7])),(*reinterpret_cast< std::add_pointer_t<QLineEdit*>>(_a[8]))); break;
+        case 53: _t->onModifyPatientSubmit((*reinterpret_cast< std::add_pointer_t<int>>(_a[1])),(*reinterpret_cast< std::add_pointer_t<QLineEdit*>>(_a[2])),(*reinterpret_cast< std::add_pointer_t<QLineEdit*>>(_a[3])),(*reinterpret_cast< std::add_pointer_t<QComboBox*>>(_a[4])),(*reinterpret_cast< std::add_pointer_t<QLineEdit*>>(_a[5])),(*reinterpret_cast< std::add_pointer_t<QComboBox*>>(_a[6])),(*reinterpret_cast< std::add_pointer_t<QLineEdit*>>(_a[7])),(*reinterpret_cast< std::add_pointer_t<QLineEdit*>>(_a[8]))); break;
+        case 54: { bool _r = _t->patientExists((*reinterpret_cast< std::add_pointer_t<int>>(_a[1])));
             if (_a[0]) *reinterpret_cast< bool*>(_a[0]) = std::move(_r); }  break;
-        case 54: _t->onReadMessageButtonClicked(); break;
-        case 55: _t->onNewMessageButtonClicked(); break;
-        case 56: _t->onDeleteMessageButtonClicked(); break;
-        case 57: _t->onContactSelected((*reinterpret_cast< std::add_pointer_t<int>>(_a[1]))); break;
-        case 58: _t->onSendMessageClicked(); break;
-        case 59: _t->onRefreshMessagesButtonClicked(); break;
-        case 60: _t->displayConversation((*reinterpret_cast< std::add_pointer_t<int>>(_a[1]))); break;
-        case 61: _t->onAddResearcherClicked(); break;
-        case 62: _t->onEditResearcherClicked(); break;
-        case 63: _t->onDeleteResearcherClicked(); break;
-        case 64: _t->loadResearcherData((*reinterpret_cast< std::add_pointer_t<int>>(_a[1])),(*reinterpret_cast< std::add_pointer_t<QLineEdit*>>(_a[2])),(*reinterpret_cast< std::add_pointer_t<QLineEdit*>>(_a[3])),(*reinterpret_cast< std::add_pointer_t<QComboBox*>>(_a[4])),(*reinterpret_cast< std::add_pointer_t<QLineEdit*>>(_a[5])),(*reinterpret_cast< std::add_pointer_t<QComboBox*>>(_a[6])),(*reinterpret_cast< std::add_pointer_t<QLineEdit*>>(_a[7])),(*reinterpret_cast< std::add_pointer_t<QLineEdit*>>(_a[8])),(*reinterpret_cast< std::add_pointer_t<QLineEdit*>>(_a[9])),(*reinterpret_cast< std::add_pointer_t<QLineEdit*>>(_a[10]))); break;
-        case 65: _t->onModifyResearcherSubmit((*reinterpret_cast< std::add_pointer_t<int>>(_a[1])),(*reinterpret_cast< std::add_pointer_t<QLineEdit*>>(_a[2])),(*reinterpret_cast< std::add_pointer_t<QLineEdit*>>(_a[3])),(*reinterpret_cast< std::add_pointer_t<QComboBox*>>(_a[4])),(*reinterpret_cast< std::add_pointer_t<QLineEdit*>>(_a[5])),(*reinterpret_cast< std::add_pointer_t<QComboBox*>>(_a[6])),(*reinterpret_cast< std::add_pointer_t<QLineEdit*>>(_a[7])),(*reinterpret_cast< std::add_pointer_t<QLineEdit*>>(_a[8])),(*reinterpret_cast< std::add_pointer_t<QLineEdit*>>(_a[9])),(*reinterpret_cast< std::add_pointer_t<QLineEdit*>>(_a[10]))); break;
-        case 66: _t->showResearchersStatsPage(); break;
-        case 67: _t->onBackToSummaryClicked(); break;
-        case 68: _t->onSearchTextChanged((*reinterpret_cast< std::add_pointer_t<QString>>(_a[1]))); break;
-        case 69: _t->onFilterByVille((*reinterpret_cast< std::add_pointer_t<int>>(_a[1]))); break;
-        case 70: _t->onSortByRecent(); break;
-        case 71: _t->showPersonnelTablePage(); break;
-        case 72: _t->onAddPersonelClicked(); break;
-        case 73: _t->onEditPersonelClicked(); break;
+        case 55: _t->onReadMessageButtonClicked(); break;
+        case 56: _t->onNewMessageButtonClicked(); break;
+        case 57: _t->onDeleteMessageButtonClicked(); break;
+        case 58: _t->onContactSelected((*reinterpret_cast< std::add_pointer_t<int>>(_a[1]))); break;
+        case 59: _t->onSendMessageClicked(); break;
+        case 60: _t->onRefreshMessagesButtonClicked(); break;
+        case 61: _t->displayConversation((*reinterpret_cast< std::add_pointer_t<int>>(_a[1]))); break;
+        case 62: _t->onAddResearcherClicked(); break;
+        case 63: _t->onEditResearcherClicked(); break;
+        case 64: _t->onDeleteResearcherClicked(); break;
+        case 65: _t->loadResearcherData((*reinterpret_cast< std::add_pointer_t<int>>(_a[1])),(*reinterpret_cast< std::add_pointer_t<QLineEdit*>>(_a[2])),(*reinterpret_cast< std::add_pointer_t<QLineEdit*>>(_a[3])),(*reinterpret_cast< std::add_pointer_t<QComboBox*>>(_a[4])),(*reinterpret_cast< std::add_pointer_t<QLineEdit*>>(_a[5])),(*reinterpret_cast< std::add_pointer_t<QComboBox*>>(_a[6])),(*reinterpret_cast< std::add_pointer_t<QLineEdit*>>(_a[7])),(*reinterpret_cast< std::add_pointer_t<QLineEdit*>>(_a[8])),(*reinterpret_cast< std::add_pointer_t<QLineEdit*>>(_a[9])),(*reinterpret_cast< std::add_pointer_t<QLineEdit*>>(_a[10]))); break;
+        case 66: _t->onModifyResearcherSubmit((*reinterpret_cast< std::add_pointer_t<int>>(_a[1])),(*reinterpret_cast< std::add_pointer_t<QLineEdit*>>(_a[2])),(*reinterpret_cast< std::add_pointer_t<QLineEdit*>>(_a[3])),(*reinterpret_cast< std::add_pointer_t<QComboBox*>>(_a[4])),(*reinterpret_cast< std::add_pointer_t<QLineEdit*>>(_a[5])),(*reinterpret_cast< std::add_pointer_t<QComboBox*>>(_a[6])),(*reinterpret_cast< std::add_pointer_t<QLineEdit*>>(_a[7])),(*reinterpret_cast< std::add_pointer_t<QLineEdit*>>(_a[8])),(*reinterpret_cast< std::add_pointer_t<QLineEdit*>>(_a[9])),(*reinterpret_cast< std::add_pointer_t<QLineEdit*>>(_a[10]))); break;
+        case 67: _t->showResearchersStatsPage(); break;
+        case 68: _t->onBackToSummaryClicked(); break;
+        case 69: _t->onSearchTextChanged((*reinterpret_cast< std::add_pointer_t<QString>>(_a[1]))); break;
+        case 70: _t->onFilterByVille((*reinterpret_cast< std::add_pointer_t<int>>(_a[1]))); break;
+        case 71: _t->onSortByRecent(); break;
+        case 72: _t->showPersonnelTablePage(); break;
+        case 73: _t->onAddPersonelClicked(); break;
+        case 74: _t->onEditPersonelClicked(); break;
         default: ;
         }
     } else if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
         switch (_id) {
         default: *reinterpret_cast<QMetaType *>(_a[0]) = QMetaType(); break;
-        case 17:
+        case 18:
             switch (*reinterpret_cast<int*>(_a[1])) {
             default: *reinterpret_cast<QMetaType *>(_a[0]) = QMetaType(); break;
             case 0:
                 *reinterpret_cast<QMetaType *>(_a[0]) = QMetaType::fromType< QPushButton* >(); break;
             }
             break;
-        case 41:
+        case 42:
             switch (*reinterpret_cast<int*>(_a[1])) {
             default: *reinterpret_cast<QMetaType *>(_a[0]) = QMetaType(); break;
             case 0:
                 *reinterpret_cast<QMetaType *>(_a[0]) = QMetaType::fromType< QWidget* >(); break;
             }
             break;
-        case 45:
+        case 46:
             switch (*reinterpret_cast<int*>(_a[1])) {
             default: *reinterpret_cast<QMetaType *>(_a[0]) = QMetaType(); break;
             case 0:
                 *reinterpret_cast<QMetaType *>(_a[0]) = QMetaType::fromType< QWidget* >(); break;
-            }
-            break;
-        case 51:
-            switch (*reinterpret_cast<int*>(_a[1])) {
-            default: *reinterpret_cast<QMetaType *>(_a[0]) = QMetaType(); break;
-            case 5:
-            case 3:
-                *reinterpret_cast<QMetaType *>(_a[0]) = QMetaType::fromType< QComboBox* >(); break;
-            case 7:
-            case 6:
-            case 4:
-            case 2:
-            case 1:
-                *reinterpret_cast<QMetaType *>(_a[0]) = QMetaType::fromType< QLineEdit* >(); break;
             }
             break;
         case 52:
@@ -788,14 +780,12 @@ void MainWindow::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, 
                 *reinterpret_cast<QMetaType *>(_a[0]) = QMetaType::fromType< QLineEdit* >(); break;
             }
             break;
-        case 64:
+        case 53:
             switch (*reinterpret_cast<int*>(_a[1])) {
             default: *reinterpret_cast<QMetaType *>(_a[0]) = QMetaType(); break;
             case 5:
             case 3:
                 *reinterpret_cast<QMetaType *>(_a[0]) = QMetaType::fromType< QComboBox* >(); break;
-            case 9:
-            case 8:
             case 7:
             case 6:
             case 4:
@@ -820,27 +810,50 @@ void MainWindow::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, 
                 *reinterpret_cast<QMetaType *>(_a[0]) = QMetaType::fromType< QLineEdit* >(); break;
             }
             break;
+        case 66:
+            switch (*reinterpret_cast<int*>(_a[1])) {
+            default: *reinterpret_cast<QMetaType *>(_a[0]) = QMetaType(); break;
+            case 5:
+            case 3:
+                *reinterpret_cast<QMetaType *>(_a[0]) = QMetaType::fromType< QComboBox* >(); break;
+            case 9:
+            case 8:
+            case 7:
+            case 6:
+            case 4:
+            case 2:
+            case 1:
+                *reinterpret_cast<QMetaType *>(_a[0]) = QMetaType::fromType< QLineEdit* >(); break;
+            }
+            break;
         }
     } else if (_c == QMetaObject::IndexOfMethod) {
         int *result = reinterpret_cast<int *>(_a[0]);
         {
-            using _t = void (MainWindow::*)(const QString & );
-            if (_t _q_method = &MainWindow::taskMovedToCompleted; *reinterpret_cast<_t *>(_a[1]) == _q_method) {
+            using _t = void (MainWindow::*)();
+            if (_t _q_method = &MainWindow::logoutRequested; *reinterpret_cast<_t *>(_a[1]) == _q_method) {
                 *result = 0;
                 return;
             }
         }
         {
             using _t = void (MainWindow::*)(const QString & );
-            if (_t _q_method = &MainWindow::taskMovedToTodo; *reinterpret_cast<_t *>(_a[1]) == _q_method) {
+            if (_t _q_method = &MainWindow::taskMovedToCompleted; *reinterpret_cast<_t *>(_a[1]) == _q_method) {
                 *result = 1;
+                return;
+            }
+        }
+        {
+            using _t = void (MainWindow::*)(const QString & );
+            if (_t _q_method = &MainWindow::taskMovedToTodo; *reinterpret_cast<_t *>(_a[1]) == _q_method) {
+                *result = 2;
                 return;
             }
         }
         {
             using _t = void (MainWindow::*)();
             if (_t _q_method = &MainWindow::projectDataChanged; *reinterpret_cast<_t *>(_a[1]) == _q_method) {
-                *result = 2;
+                *result = 3;
                 return;
             }
         }
@@ -866,34 +879,40 @@ int MainWindow::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 74)
+        if (_id < 75)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 74;
+        _id -= 75;
     } else if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 74)
+        if (_id < 75)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 74;
+        _id -= 75;
     }
     return _id;
 }
 
 // SIGNAL 0
-void MainWindow::taskMovedToCompleted(const QString & _t1)
+void MainWindow::logoutRequested()
 {
-    void *_a[] = { nullptr, const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t1))) };
-    QMetaObject::activate(this, &staticMetaObject, 0, _a);
+    QMetaObject::activate(this, &staticMetaObject, 0, nullptr);
 }
 
 // SIGNAL 1
-void MainWindow::taskMovedToTodo(const QString & _t1)
+void MainWindow::taskMovedToCompleted(const QString & _t1)
 {
     void *_a[] = { nullptr, const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t1))) };
     QMetaObject::activate(this, &staticMetaObject, 1, _a);
 }
 
 // SIGNAL 2
+void MainWindow::taskMovedToTodo(const QString & _t1)
+{
+    void *_a[] = { nullptr, const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t1))) };
+    QMetaObject::activate(this, &staticMetaObject, 2, _a);
+}
+
+// SIGNAL 3
 void MainWindow::projectDataChanged()
 {
-    QMetaObject::activate(this, &staticMetaObject, 2, nullptr);
+    QMetaObject::activate(this, &staticMetaObject, 3, nullptr);
 }
 QT_WARNING_POP

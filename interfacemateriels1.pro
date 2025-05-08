@@ -21,11 +21,13 @@ QT += printsupport
 SOURCES += \
     arduinomanager.cpp \
     connection.cpp \
-    connectionh.cpp \
-    connectionn.cpp \
+    #connectionh.cpp \
+    #connectionn.cpp \
+    loginwindow.cpp \
     main.cpp \
     mainwindow.cpp \
     messagesmanager.cpp \
+    passwordrecoverydialog.cpp \
     patients.cpp \
     personnelmanager.cpp \
     researchermanager.cpp \
@@ -35,16 +37,18 @@ SOURCES += \
     projetderecherche.cpp \
     todolist.cpp \
     materialinputdialog.cpp \
-    serialmanager.cpp \
+    #serialmanager.cpp \
     qrcodegen.cpp
 
 HEADERS += \
     arduinomanager.h \
     connection.h \
-    connectionh.h \
-    connectionn.h \
+    #connectionh.h \
+    #connectionn.h \
+    loginwindow.h \
     mainwindow.h \
     messagesmanager.h \
+    passwordrecoverydialog.h \
     patients.h \
     personnelmanager.h \
     researchermanager.h \
@@ -54,7 +58,7 @@ HEADERS += \
     projetderecherche.h \
     todolist.h \
     materialinputdialog.h \
-    serialmanager.h \
+    #serialmanager.h \
     qrcodegen.hpp
 
 FORMS += \

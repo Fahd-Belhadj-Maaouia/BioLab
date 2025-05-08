@@ -321,6 +321,28 @@ void MainWindow::setupSidebar() {
     connect(btnVaccins, &QPushButton::clicked, this, &MainWindow::showVaccinsPage);
     connect(btnMessagerie, &QPushButton::clicked, this, &MainWindow::showMessagerieePage);
     connect(btnSettings, &QPushButton::clicked, this, &MainWindow::showSettingsPage);
+    connect(btnLogout, &QPushButton::clicked, this, &MainWindow::logout);
+
+    // Bouton de déconnexion
+    btnLogout = new QPushButton("  Déconnexion", this);
+    btnLogout->setIcon(QIcon(":/icons/svg/logout.svg")); // Ajoutez une icône si disponible
+    btnLogout->setStyleSheet(
+        "QPushButton {"
+        "    background: transparent;"
+        "    color: #e74c3c;"
+        "    text-align: left;"
+        "    padding: 15px;"
+        "    font-size: 16px;"
+        "    border-radius: 8px;"
+        "}"
+        "QPushButton:hover {"
+        "    background: rgba(231, 76, 60, 0.1);"
+        "}"
+        "QPushButton::icon {"
+        "    margin-right: 10px;"
+        "}"
+        );
+
 }
 
 QPushButton* MainWindow::createSidebarButton(const QString &text, const QString &iconPath) {
@@ -8815,6 +8837,24 @@ void MainWindow::onDeletePersonelClicked() {
             QMessageBox::warning(this, "Erreur", "Échec de la suppression du personnel");
         }
     }
+}
+
+void MainWindow::logout()
+{
+    if (QMessageBox::question(this, "Déconnexion",
+                              "Êtes-vous sûr de vouloir vous déconnecter?",
+                              QMessageBox::Yes|QMessageBox::No) == QMessageBox::Yes) {
+        emit logoutRequested();  // Emit the signal
+    }
+}
+void MainWindow::setCurrentUser(int userId, const QString &nom, const QString &prenom)
+{
+    currentUserId = userId;
+    currentUserName = nom + " " + prenom;
+
+    // Charger les données initiales
+    personnelManager->loadPersonnel();
+    updateStats(); // Force la mise à jour des graphiques
 }
 
 

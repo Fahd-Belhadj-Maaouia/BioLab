@@ -103,17 +103,16 @@ class ClickableWidget : public QWidget {
     Q_OBJECT
 public:
     explicit ClickableWidget(QWidget *parent = nullptr) : QWidget(parent) {}
-    void setCurrentUser(int userId, const QString &nom, const QString &prenom);
+
 signals:
     void clicked();
+
 protected:
     void mousePressEvent(QMouseEvent *event) override {
         QWidget::mousePressEvent(event);
         emit clicked();
     }
 };
-
-
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -122,9 +121,15 @@ protected:
 public:
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
+    void logout();
+    void setCurrentUser(int userId, const QString &nom, const QString &prenom); // Déplacé ici
+
+signals: // Ajout de la section signals
+    void logoutRequested(); // Déplacé ici
 
 public slots:
     void showVaccinationHistory(int patientId);
+
 
 private slots:
     // Navigation slots
@@ -237,7 +242,10 @@ private:
     QTableView *tableView;
     ProjetDeRecherche Etmp;
     QWidget *researchesFormUpdatePage;
-
+    QPushButton *btnLogout;
+    int currentUserId;
+    QString currentUserName;
+    QString currentUserRole;
     // UI Components
     QWidget *centralWidget;
     QWidget *contentWrapper;

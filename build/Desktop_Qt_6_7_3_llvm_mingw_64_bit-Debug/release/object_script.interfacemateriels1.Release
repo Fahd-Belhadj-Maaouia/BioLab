@@ -1,10 +1,10 @@
 release/arduinomanager.o
 release/connection.o
-release/connectionh.o
-release/connectionn.o
+release/loginwindow.o
 release/main.o
 release/mainwindow.o
 release/messagesmanager.o
+release/passwordrecoverydialog.o
 release/patients.o
 release/personnelmanager.o
 release/researchermanager.o
@@ -14,12 +14,13 @@ release/buttondelegate.o
 release/projetderecherche.o
 release/todolist.o
 release/materialinputdialog.o
-release/serialmanager.o
 release/qrcodegen.o
 release/qrc_Resources.o
 release/moc_arduinomanager.o
+release/moc_loginwindow.o
 release/moc_mainwindow.o
 release/moc_messagesmanager.o
+release/moc_passwordrecoverydialog.o
 release/moc_patients.o
 release/moc_personnelmanager.o
 release/moc_researchermanager.o
@@ -28,4 +29,3 @@ release/moc_vaccinmanager.o
 release/moc_buttondelegate.o
 release/moc_todolist.o
 release/moc_materialinputdialog.o
-release/moc_serialmanager.o
